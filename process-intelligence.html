@@ -2536,7 +2536,7 @@
     capTitle.innerHTML = step === 0
       ? 'How does <span class="hl">Apromore</span><br/>Process Intelligence <span class="hl">solve this?</span>'
       : step === FINALE
-        ? '<span class="hl">This is how.</span>'
+        ? '<span class="hl">Now you can.</span>'
         : ALL[step - 1].name + ': <span class="hl">' + ALL[step - 1].claim + '</span>';
     capSub.innerHTML = step === 0
       ? ''
@@ -2601,7 +2601,7 @@
     FT(() => {
       // 2) stage the question and the (hidden) sub while the caption is
       //    invisible, so the layout the stack slides into never reflows
-      capTitle.innerHTML = '<span class="fin-q">How does Apromore Process Intelligence solve this?</span>';
+      capTitle.innerHTML = '<span class="fin-q">Do you actually know how your business runs?</span>';
       capSub.innerHTML = 'See how you run. Size what\'s at stake. Fix it, test it, keep it fixed. And anyone can ask, anytime.';
       capSub.style.opacity = '0';                   // space reserved, revealed at the end
       capSub.classList.remove('cap-bounce');        // its filled animation would override the inline opacity
@@ -2612,7 +2612,7 @@
       const p2 = pillarWrap.getBoundingClientRect();
       slideFrom(railWrap, r1.top - r2.top);
       slideFrom(pillarWrap, p1.top - p2.top);
-      // 3) the chapter question rises in once the stack has settled
+      // 3) the deck's master question returns once the stack has settled
       FT(() => {
         caption.classList.remove('cap-hidden');
         capTitle.classList.remove('cap-bounce'); void capTitle.offsetWidth; capTitle.classList.add('cap-bounce');
