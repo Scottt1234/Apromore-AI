@@ -1008,7 +1008,15 @@
   </style>
 </head>
 <body>
-  <script>if (new URLSearchParams(location.search).get('embed') === '1') document.body.classList.add('embed');</script>
+  <script>
+    const _q = new URLSearchParams(location.search);
+    if (_q.get('embed') === '1') document.body.classList.add('embed');
+    // A/B mock: ?nosubs=1 hides the per-frame subs (the finale recap stays).
+    if (_q.get('nosubs') === '1') document.body.classList.add('nosubs');
+  </script>
+  <style>
+    body.nosubs #app:not(.finale-mode) #cap-sub { display: none; }
+  </style>
 
   <div class="brand">
     <span class="nm">Apromore</span><span class="x">×</span>

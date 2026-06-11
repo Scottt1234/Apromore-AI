@@ -850,6 +850,11 @@
   </div>
 
   <script>
+    // A/B mock: forward ?nosubs=1 into the embedded slides (hides their per-frame subs).
+    if (new URLSearchParams(location.search).get('nosubs') === '1') {
+      document.querySelectorAll('.slide-embed iframe').forEach(f => { f.src = f.src + '&nosubs=1'; });
+    }
+
     // Visible slides only — filter by class (not computed display) so the mobile
     // media query that hides inactive slides via `display: none` doesn't remove them.
     const slides = [...document.querySelectorAll('.slide:not(.deck-hidden)')];
