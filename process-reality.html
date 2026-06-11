@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Process You Think You Have · Apromore</title>
+  <link rel="stylesheet" href="tokens.css" />
+  <style>
+    /* ───────────────────────────────────────────────────────────────
+       Process Reality — animated "designed vs. believed vs. actual".
+       Single-file token-replay animation, no external JS libraries.
+       Autoplay through three acts + click-to-trace a single case.
+       Built on the Salesforce 2026 token palette (tokens.css).
+       ─────────────────────────────────────────────────────────────── */
+    html, body { margin: 0; }
+    html { height: 100%; }
+    body {
+      height: 100%; overflow: hidden;
+      /* Match the deck's .sd slide background — same gradient stack used on every dark slide. */
+      background:
+        radial-gradient(80% 60% at 82% -4%, rgba(20,86,220,0.42), transparent 60%),
+        radial-gradient(70% 60% at 4% 104%, rgba(10,60,200,0.32), transparent 60%),
+        linear-gradient(165deg, #04102f 0%, #061d52 60%, #0a3aa0 130%);
+      background-attachment: fixed;
+      font-family: var(--font-body); color: #fff;
+    }
+
+    /* Sticky stage */
+    #stage { position: fixed; inset: 0; z-index: 0; }
+    #fx { position: absolute; inset: 0; width: 100%; height: 100%; cursor: crosshair; }
+    #labels { position: absolute; inset: 0; pointer-events: none; }
+
+    .nlabel {
+      position: absolute; transform: translate(-50%, -50%);
+      font-size: 13px; font-weight: 600; line-height: 1.15; white-space: nowrap;
+      color: rgba(255,255,255,0.92); text-shadow: 0 1px 8px rgba(0,0,0,0.6);
+      opacity: 0; transition: opacity 0.4s ease; will-change: transform, opacity;
+    }
+    .vbadge {
+      position: absolute; transform: translate(-50%, -50%);
+      font-size: 11px; font-weight: 700; color: #fff; background: rgba(0,0,0,0.45);
+      border: 1px solid rgba(255,255,255,0.18); padding: 2px 7px; border-radius: 5px;
+      opacity: 0; transition: opacity 0.4s ease; will-change: transform, opacity;
+    }
+
+    /* Fixed overlays (pinned in both modes) */
+    .brand {
+      position: fixed; top: 26px; left: 30px; z-index: 6;
+      display: inline-flex; align-items: center; gap: 10px;
+      background: rgba(255,255,255,0.94); border-radius: 40px; padding: 7px 15px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.35);
+    }
+    .brand .nm { font-size: 12px; font-weight: 700; color: #5B3BD0; }
+    .brand .x  { font-size: 13px; color: var(--gray-500); }
+    .brand img { display: block; }
+    /* Embed mode: deck already shows the Apromore × Salesforce pill; hide the duplicate. */
+    body.embed .brand { display: none; }
+
+    /* Caption block — matches the deck's .sd slide-body typography (eyebrow / section-title / section-sub),
+       anchored top-left in a 1080px centered column like slide-body does. */
+    #caption { position: fixed; top: 0; left: 0; right: 0; z-index: 5; pointer-events: none; }
+    #caption > .inner { max-width: 1080px; margin: 0 auto; padding: 56px 48px 0; text-align: left; }
+    #cap-eyebrow {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--sf-blue-l); margin-bottom: 10px;
+    }
+    #cap-title {
+      font-family: var(--font-body);
+      font-size: clamp(26px, 3vw, 38px); font-weight: 700; line-height: 1.15;
+      letter-spacing: -0.025em; color: #fff; margin: 0 0 12px;
+    }
+    #cap-title .hl { color: var(--sf-blue-l); }
+    #cap-sub {
+      font-size: 16px; line-height: 1.7; color: rgba(255,255,255,0.66);
+      max-width: 960px; margin: 0;  /* matches the deck's wider-sub override pattern */
+    }
+    .cap-fade { animation: capIn 0.7s cubic-bezier(0,0,0.2,1) both; }
+    @keyframes capIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+    /* Stats live inside the deck's 1080px content column rather than at the viewport
+       edge — same alignment as slide-body content and the caption block above. */
+    #stats {
+      position: fixed; left: 0; right: 0; bottom: 28px; z-index: 5;
+      max-width: 1080px; margin: 0 auto; padding: 0 48px; box-sizing: border-box;
+      display: flex; gap: 26px; pointer-events: none;
+    }
+    .stat .v { font-family: var(--font-display); font-weight: 700; font-size: clamp(22px, 3vw, 34px); line-height: 1; letter-spacing: -0.01em; color: #fff; font-variant-numeric: tabular-nums; }
+    .stat .v.hot { color: var(--sf-blue-l); }
+    .stat .k { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-top: 7px; }
+    /* disclaimer — shares the stats baseline, right edge of the same content column */
+    #stats .disclaim {
+      margin-left: auto; align-self: flex-end; padding-bottom: 1px;
+      font-size: 11.5px; font-style: italic; color: rgba(255,255,255,0.42);
+      letter-spacing: 0.02em; white-space: nowrap;
+    }
+    @media (max-width: 680px) { #stats .disclaim { display: none; } }
+
+    /* Trace UI */
+    #tracehint { position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%); z-index: 6; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.92); background: rgba(0,10,31,0.78); backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,0.18); padding: 9px 18px; border-radius: 24px; display: none; pointer-events: none; box-shadow: 0 6px 24px rgba(0,0,0,0.4); }
+    #tracehint b { color: var(--sf-blue-l); }
+    #traceread { position: fixed; left: 50%; bottom: 92px; transform: translateX(-50%); z-index: 6; display: none; align-items: center; gap: 22px; background: rgba(0,10,31,0.78); backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,0.18); padding: 11px 20px 11px 18px; border-radius: 14px; box-shadow: 0 6px 28px rgba(0,0,0,0.4); }
+    #traceread .lab { font-size: 10px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--sf-blue-l); }
+    #traceread .grp { text-align: center; }
+    #traceread .grp .n { font-family: var(--font-display); font-weight: 700; font-size: 22px; line-height: 1; color: #fff; font-variant-numeric: tabular-nums; }
+    #traceread .grp .t { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(255,255,255,0.55); margin-top: 5px; }
+    #traceclear { appearance: none; cursor: pointer; font-family: var(--font-body); font-size: 11px; font-weight: 700; color: #fff; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 20px; padding: 6px 12px; }
+    #traceclear:hover { background: rgba(255,255,255,0.2); }
+
+    @media (max-width: 680px) {
+      #stats { gap: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <script>if (new URLSearchParams(location.search).get('embed') === '1') document.body.classList.add('embed');</script>
+  <div id="stage">
+    <canvas id="fx"></canvas>
+    <div id="labels"></div>
+  </div>
+
+  <div class="brand">
+    <span class="nm">Apromore</span><span class="x">×</span>
+    <img src="assets/logos/Salesforce-Corporate-Logo-Cloud-RBG.svg" width="22" height="22" alt="Salesforce" onerror="this.style.display='none'"/>
+  </div>
+  <div id="caption">
+    <div class="inner">
+      <div id="cap-eyebrow"></div>
+      <h1 id="cap-title"></h1>
+      <p id="cap-sub"></p>
+    </div>
+  </div>
+
+  <div id="stats">
+    <div class="stat"><div class="v" id="s-cases">0</div><div class="k">Commercial submissions</div></div>
+    <div class="stat"><div class="v" id="s-variants">1</div><div class="k">Distinct variants</div></div>
+    <div class="stat"><div class="v" id="s-paths">7</div><div class="k">Connections</div></div>
+    <div class="disclaim">Illustrative example &mdash; process and figures are indicative only</div>
+  </div>
+
+  <div id="tracehint"><b>Click any case</b> to trace its real journey →</div>
+  <div id="traceread">
+    <div class="lab">Case<br/>trace</div>
+    <div class="grp"><div class="n" id="tr-steps">0</div><div class="t">Steps</div></div>
+    <div class="grp"><div class="n" id="tr-loops">0</div><div class="t">Rework loops</div></div>
+    <button id="traceclear">✕ Clear</button>
+  </div>
+
+
+<script>
+(() => {
+  'use strict';
+
+  // ── Canvas setup ───────────────────────────────────────────────
+  const cv = document.getElementById('fx');
+  const ctx = cv.getContext('2d');
+  const labelLayer = document.getElementById('labels');
+  let W = 0, H = 0, DPR = 1;
+
+  function resize() {
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth; H = window.innerHeight;
+    cv.width = W * DPR; cv.height = H * DPR;
+    cv.style.width = W + 'px'; cv.style.height = H + 'px';
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    updatePadding();
+  }
+  window.addEventListener('resize', resize);
+
+  const clamp = (v, a=0, b=1) => v < a ? a : v > b ? b : v;
+  const easeOut = t => 1 - Math.pow(1 - t, 3);
+
+  // Normalised → pixel projection.
+  //
+  // Horizontal: bound to a 1080px centred column matching the deck's .slide-body
+  // max-width. On wider screens the column has empty side margins (the gradient
+  // background fills the full viewport, but cloud / nodes / edges live in the same
+  // column the rest of the deck uses). Narrower screens shrink the column to fit
+  // with a 48px side padding mirroring slide-body's padding rhythm.
+  //
+  // Vertical: PAD_TOP / PAD_BOT are computed dynamically from the actual rendered
+  // caption + stats heights so the cloud fills whatever space remains, regardless
+  // of viewport size, browser zoom, or system display scaling.
+  const COL_MAX = 1080, COL_PAD = 48;
+  let PAD_TOP = 0.34, PAD_BOT = 0.16;
+  const px = nx => {
+    const colW = Math.min(W, COL_MAX);
+    const usableW = colW - 2 * COL_PAD;
+    const colLeft = (W - colW) / 2 + COL_PAD;
+    return colLeft + nx * usableW;
+  };
+  const py = ny => (PAD_TOP + ny * (1 - PAD_TOP - PAD_BOT)) * H;
+
+  // Read the rendered caption / stats heights and convert to viewport-relative padding.
+  // Clamped to defensive min/max so a missing or weirdly-sized DOM doesn't break layout.
+  function updatePadding() {
+    if (!H) return;
+    const cap = document.getElementById('caption');
+    const stats = document.getElementById('stats');
+    if (cap) {
+      const captionBottomPx = cap.getBoundingClientRect().bottom + 24;
+      PAD_TOP = Math.max(0.16, Math.min(0.40, captionBottomPx / H));
+    }
+    if (stats) {
+      const statsTopPx = stats.getBoundingClientRect().top - 24;
+      const padBotPx = Math.max(0, H - statsTopPx);
+      PAD_BOT = Math.max(0.08, Math.min(0.22, padBotPx / H));
+    }
+  }
+
+  // Seeded RNG so the "reality" layout is stable between runs
+  function mulberry32(a) {
+    return () => { a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  }
+  const rnd = mulberry32(20260606);
+
+  // ── Palette ────────────────────────────────────────────────────
+  const C = { gray:'#9AA0AE', teal:'#06A59A', dgreen:'#0E7C5A', green:'#2FA45C',
+    lblue:'#00B3FF', blue:'#3B82F6', violetL:'#D17DFE', violet:'#A855F7',
+    yellow:'#E4A201', yellowL:'#FCC003', lgreen:'#7CB342' };
+  const CLOUD_COLORS = [C.teal,C.green,C.lblue,C.blue,C.violetL,C.violet,C.yellow,C.yellowL,C.lgreen,C.dgreen,'#5AC8FA','#34C759'];
+
+  // ── Nodes ──────────────────────────────────────────────────────
+  const MAIN = [
+    { label:'Process Start',         color:C.gray },
+    { label:'Submission received',   color:C.teal },
+    { label:'Triage & appetite',     color:C.green },
+    { label:'Underwriter review',    color:C.lblue },
+    { label:'Quote issued',          color:C.blue },
+    { label:'Bound',                 color:C.violetL },
+    { label:'Policy issued',         color:C.violet },
+    { label:'Process End',           color:C.gray },
+  ];
+  const BRANCH = [
+    { label:'Refer to senior UW',     color:C.dgreen },  // 8
+    { label:'Request broker info',    color:C.yellow },  // 9
+    { label:'Declined',               color:C.yellowL }, // 10
+    { label:'Decline rationale',      color:C.lgreen },  // 11
+  ];
+
+  const nodes = [];
+  const colY = i => 0.05 + i * (0.92 / 7);
+  const MAIN_X1 = 0.50, MAIN_X2 = 0.50;  // keep the stem fixed in frame 1 → frame 2
+  MAIN.forEach((m, i) => nodes.push({ label:m.label, color:m.color, kind:'main', r:9,
+    a1:{x:MAIN_X1, y:colY(i)}, a2:{x:MAIN_X2, y:colY(i)}, a3:null }));
+  // Branches pushed out to the column edges so frame 2 fills the deck's content
+  // column rather than clustering near the central spine.
+  const bPlace = [
+    { x:0.00, y:(colY(1)+colY(2))/2 - 0.02 },  // Refer to senior UW (left)
+    { x:1.00, y:(colY(2)+colY(3))/2 },          // Request broker info (right)
+    { x:0.00, y:(colY(4)+colY(5))/2 },          // Declined (left)
+    { x:0.00, y:colY(5)+0.04 },                 // Decline rationale (left)
+  ];
+  const bParent = [1,2,4,4];
+  BRANCH.forEach((b, i) => nodes.push({ label:b.label, color:b.color, kind:'branch', r:8,
+    a1:{ x:nodes[bParent[i]].a1.x, y:nodes[bParent[i]].a1.y }, a2:bPlace[i], a3:null }));
+  const CLOUD_N = 17;
+  for (let i = 0; i < CLOUD_N; i++)
+    nodes.push({ label:'', color:CLOUD_COLORS[i % CLOUD_COLORS.length], kind:'cloud', r:6+rnd()*2, a1:null, a2:null, a3:null });
+  // Cloud x spans 90% of the column (was 0.14–0.86 of viewport-padded space).
+  nodes.forEach(n => { n.a3 = { x:0.05 + rnd()*0.90, y:0.04 + rnd()*0.92 }; });
+  // Pin Process Start and Process End to the exact spots they sit in frames 1 & 2 — so
+  // when the transition to frame 3 happens, those two nodes stay still and everything else
+  // explodes into chaos around them. Reads as "the start and end are fixed, the middle is
+  // wildly more complex than the diagram on the wall said."
+  nodes[0].a3 = { ...nodes[0].a2 };  // Process Start — top of column
+  nodes[7].a3 = { ...nodes[7].a2 };  // Process End — bottom of column
+  nodes.forEach(n => { if (n.kind === 'cloud') { n.a1 = {x:0.5,y:0.5}; n.a2 = {x:0.5,y:0.5}; } });
+  nodes.forEach(n => {
+    const s = n.a1;
+    n.nx = s.x; n.ny = s.y; n.tx = s.x; n.ty = s.y;
+    n.alpha = n.kind === 'main' ? 1 : 0; n.talpha = n.alpha;
+    n.labA = 0; n.labT = 0; n.sx = 0; n.sy = 0; n.pulse = rnd() * Math.PI * 2;
+  });
+
+  // ── Edges ──────────────────────────────────────────────────────
+  function mkEdge(a, b, cat, curv, label) {
+    return { a, b, cat, curv: curv ?? 0, label: label || null, alpha: 0, talpha: 0, order: 0 };
+  }
+  const edges = [];
+  for (let i = 0; i < 7; i++) edges.push(mkEdge(i, i+1, 'main', 0));
+  const e_create_onb = mkEdge(1, 8, 'think', -0.35, '70,650');
+  const e_onb_verify = mkEdge(8, 2, 'think', -0.35, '70,650');
+  const e_verify_req = mkEdge(2, 9, 'think',  0.40, '40,460');
+  const e_req_submit = mkEdge(9, 3, 'think',  0.40, '40,460');
+  const e_app_nogo   = mkEdge(4, 10,'think', -0.35, '19,710');
+  const e_nogo_just  = mkEdge(10,11,'think', -0.30, null);
+  const e_just_end   = mkEdge(11, 7,'think', -0.45, '19,710');
+  const thinkEdges = [e_create_onb,e_onb_verify,e_verify_req,e_req_submit,e_app_nogo,e_nogo_just,e_just_end];
+  thinkEdges.forEach(e => edges.push(e));
+
+  const NN = nodes.length;
+  const realityEdges = [];
+  const seen = new Set();
+  function addReality(a, b) {
+    if (a === b) return;
+    const key = a < b ? a+'-'+b : b+'-'+a;
+    if (seen.has(key)) return;
+    seen.add(key);
+    const e = mkEdge(a, b, 'real', (rnd()*2-1)*0.5);
+    edges.push(e); realityEdges.push(e);
+  }
+  for (let i = 0; i < NN; i++) {
+    const ni = nodes[i];
+    const links = 3 + Math.floor(rnd() * 4);
+    const cand = [];
+    for (let j = 0; j < NN; j++) if (j !== i) {
+      const dx = ni.a3.x - nodes[j].a3.x, dy = ni.a3.y - nodes[j].a3.y;
+      cand.push([j, dx*dx + dy*dy]);
+    }
+    cand.sort((p,q) => p[1] - q[1]);
+    for (let k = 0; k < links; k++) {
+      const idx = rnd() < 0.78 ? Math.floor(rnd()*6) : Math.floor(rnd()*cand.length);
+      addReality(i, cand[Math.min(idx, cand.length-1)][0]);
+    }
+  }
+  realityEdges.forEach((e, i) => e.order = i);
+  const REAL_TOTAL = realityEdges.length;
+
+  const incident = nodes.map(() => []);
+  realityEdges.forEach(e => { incident[e.a].push(e); incident[e.b].push(e); });
+  for (let i = 0; i < 7; i++) { incident[i].push(edges[i]); incident[i+1].push(edges[i]); }
+
+  // ── Geometry helpers ───────────────────────────────────────────
+  function ctrlPoints(e) {
+    const A = nodes[e.a], B = nodes[e.b];
+    const ax = A.sx, ay = A.sy, bx = B.sx, by = B.sy;
+    const dx = bx - ax, dy = by - ay, len = Math.hypot(dx, dy) || 1;
+    const nxp = -dy / len, nyp = dx / len, off = e.curv * len;
+    return { ax, ay, bx, by, len,
+      c1x: ax + dx*0.33 + nxp*off, c1y: ay + dy*0.33 + nyp*off,
+      c2x: ax + dx*0.66 + nxp*off, c2y: ay + dy*0.66 + nyp*off };
+  }
+  function cubic(p, t) {
+    const u = 1 - t, tt = t*t, uu = u*u;
+    const a = uu*u, b = 3*uu*t, c = 3*u*tt, d = tt*t;
+    return { x: a*p.ax + b*p.c1x + c*p.c2x + d*p.bx, y: a*p.ay + b*p.c1y + c*p.c2y + d*p.by };
+  }
+  function pointFrom(e, fromNode, t) {
+    const p = ctrlPoints(e);
+    return cubic(p, fromNode === e.a ? t : 1 - t);
+  }
+  function tokenPoint(tk) {
+    return tk.mode === 'route' ? cubic(ctrlPoints(tk.route[tk.ri]), tk.t)
+                               : pointFrom(tk.edge, tk.from, tk.t);
+  }
+
+  // ── Tokens ─────────────────────────────────────────────────────
+  const tokens = [];
+  function spawnRouted(route, color, speed, r) {
+    tokens.push({ mode:'route', route, ri:0, t:0, color, speed, r, life:0 });
+  }
+  function spawnWalk() {
+    const node = [0,1,2,3,4][(rnd()*5)|0];
+    const list = incident[node]; if (!list.length) return;
+    tokens.push({ mode:'walk', edge:list[(rnd()*list.length)|0], from:node, t:0,
+      color:nodes[node].color, speed:130 + rnd()*120, r:1.6 + rnd()*1.4, life:0, ttl:4 + rnd()*6 });
+  }
+  const baseRoute = [edges[0],edges[1],edges[2],edges[3],edges[4],edges[5],edges[6]];
+  const routeOnb  = [edges[0],e_create_onb,e_onb_verify,edges[2],edges[3],edges[4],edges[5],edges[6]];
+  const routeReq  = [edges[0],edges[1],e_verify_req,e_req_submit,edges[3],edges[4],edges[5],edges[6]];
+  const routeNogo = [edges[0],edges[1],edges[2],edges[3],e_app_nogo,e_nogo_just,e_just_end];
+
+  // ── Case-trace state ───────────────────────────────────────────
+  const trace = { active:false, edgesPath:[], visited:new Set(), steps:0, loops:0 };
+  let tracedToken = null;
+  const elTraceHint = document.getElementById('tracehint');
+  const elTraceRead = document.getElementById('traceread');
+  const elTrSteps = document.getElementById('tr-steps');
+  const elTrLoops = document.getElementById('tr-loops');
+
+  function startTrace(node) {
+    clearTrace(false);
+    trace.active = true;
+    trace.edgesPath = []; trace.visited = new Set([node]); trace.steps = 0; trace.loops = 0;
+    const list = incident[node];
+    const e = list && list.length ? list[(rnd()*list.length)|0] : edges[0];
+    tracedToken = { edge:e, from:node, t:0, speed:140 };
+    elTraceHint.style.display = 'none';
+    elTraceRead.style.display = 'flex';
+    elTrSteps.textContent = '0'; elTrLoops.textContent = '0';
+  }
+  function clearTrace(showHint = true) {
+    trace.active = false; tracedToken = null; trace.edgesPath = [];
+    elTraceRead.style.display = 'none';
+    elTraceHint.style.display = (showHint && act === 3) ? 'block' : 'none';
+  }
+  document.getElementById('traceclear').addEventListener('click', () => clearTrace(true));
+
+  cv.addEventListener('click', (e) => {
+    if (act !== 3) return;
+    const x = e.clientX, y = e.clientY;
+    // nearest live swarm token to the cursor
+    let best = null, bd = 1e9;
+    for (const tk of tokens) {
+      if (tk.mode !== 'walk') continue;
+      const p = tokenPoint(tk);
+      const d = (p.x - x) ** 2 + (p.y - y) ** 2;
+      if (d < bd) { bd = d; best = tk; }
+    }
+    let startNode;
+    if (best && bd < 80 * 80) startNode = best.from;
+    else { // fall back to the nearest node
+      let nb = 0, nbd = 1e9;
+      nodes.forEach((n, i) => { const d = (n.sx - x) ** 2 + (n.sy - y) ** 2; if (d < nbd) { nbd = d; nb = i; } });
+      startNode = nb;
+    }
+    startTrace(startNode);
+  });
+
+  // ── Act / phase state ──────────────────────────────────────────
+  // Captions support innerHTML — wrap the highlighted clause in <span class="hl">…</span> to colour it sf-blue-l,
+  // matching the deck's section-title pattern (white setup line + blue payoff line).
+  const CAPTIONS = {
+    1: { eyebrow:'HOW WELL DO YOU KNOW YOUR BUSINESS?',
+         title:'Here is the process you designed.<br/><span class="hl">One clean path. Eight steps.</span>',
+         sub:'This is the model on the wall - the way the process is supposed to run, every single time.' },
+    2: { eyebrow:'HOW YOU THINK IT RUNS',
+         title:'The process you think you have.<br/><span class="hl">A few detours you already know about.</span>',
+         sub:'Senior referrals. Broker info requests. Declines. The exceptions everyone can name from memory.' },
+    3: { eyebrow:'AND HOW IT REALLY LOOKS',
+         title:'The process you actually have.<br/><span class="hl">312,847 cases rarely follow the same route twice.</span>',
+         sub:'Every line is a path real cases actually took. Thousands of variants, hidden rework, loops nobody designed.' },
+  };
+
+  let act = 1;
+  let actStart = performance.now();
+  const REVEAL_MS = 5200;
+  let spawnAcc = 0;
+
+  function setCaption(n) {
+    const c = CAPTIONS[n];
+    const wrap = document.getElementById('caption');
+    document.getElementById('cap-eyebrow').textContent = c.eyebrow;
+    document.getElementById('cap-title').innerHTML = c.title;  // innerHTML to allow <span class="hl"> highlight
+    document.getElementById('cap-sub').textContent = c.sub;
+    wrap.classList.remove('cap-fade'); void wrap.offsetWidth; wrap.classList.add('cap-fade');
+    // Caption height changes with the text — re-measure on the next frame so the cloud
+    // padding stays in step with what's actually rendered.
+    requestAnimationFrame(updatePadding);
+  }
+
+  function goToAct(n) {
+    const leaving3 = act === 3 && n !== 3;
+    act = n;
+    actStart = performance.now();
+    setCaption(n);
+    document.querySelectorAll('#seg button').forEach(b => b.classList.toggle('on', +b.dataset.act === n));
+    if (leaving3) clearTrace(false);
+    elTraceHint.style.display = (n === 3 && !trace.active) ? 'block' : 'none';
+
+    nodes.forEach(nd => {
+      const layout = n === 1 ? nd.a1 : n === 2 ? nd.a2 : nd.a3;
+      nd.tx = layout.x; nd.ty = layout.y;
+      if (nd.kind === 'main') nd.talpha = 1;
+      else if (nd.kind === 'branch') nd.talpha = (n >= 2) ? 1 : 0;
+      else nd.talpha = (n === 3) ? 0.95 : 0;
+      const named = nd.kind !== 'cloud';
+      nd.labT = (n < 3 && named && nd.talpha > 0.5) ? 1 : 0;
+    });
+    edges.forEach(e => {
+      if (e.cat === 'main') e.talpha = n === 3 ? 0.5 : 1;
+      else if (e.cat === 'think') e.talpha = n === 2 ? 0.95 : (n === 3 ? 0.18 : 0);
+      else e.talpha = 0;
+    });
+    tokens.length = 0;
+    // Seed one token immediately so frame 1 has motion the moment it lands; the interval
+    // spawner below adds more so density matches frame 2.
+    if (n === 1) spawnRouted(baseRoute, '#CFF6FF', 130, 3);
+  }
+
+  // ── Stats ──────────────────────────────────────────────────────
+  const stat = {
+    cases:    { el:document.getElementById('s-cases'),    cur:0, tgt:0 },
+    variants: { el:document.getElementById('s-variants'), cur:1, tgt:1 },
+    paths:    { el:document.getElementById('s-paths'),    cur:7, tgt:7 },
+  };
+  const fmt = n => Math.round(n).toLocaleString();
+
+  // ── Main loop ──────────────────────────────────────────────────
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    // Slower lerp when entering act 3 so the morph into the chaos cloud reads as a "settling" reveal,
+    // not a snap. Acts 1 & 2 keep the original snappier pace.
+    const lerpRate = (act === 3) ? 0.05 : 0.001;
+    const k = 1 - Math.pow(lerpRate, dt);
+
+    // reveal progress for act 3 (time-driven)
+    let P3 = 0;
+    if (act === 3) P3 = clamp((now - actStart) / REVEAL_MS);
+
+    // nodes
+    nodes.forEach(n => {
+      n.nx += (n.tx - n.nx) * k; n.ny += (n.ty - n.ny) * k;
+      n.alpha += (n.talpha - n.alpha) * k;
+      n.labA += (n.labT - n.labA) * k;
+      n.sx = px(n.nx); n.sy = py(n.ny); n.pulse += dt * 2;
+    });
+
+    // reality edge reveal
+    if (act === 3) {
+      const shown = Math.floor(REAL_TOTAL * easeOut(P3));
+      for (let i = 0; i < realityEdges.length; i++)
+        realityEdges[i].talpha = (realityEdges[i].order < shown) ? 0.16 : 0;
+    }
+    edges.forEach(e => { e.alpha += (e.talpha - e.alpha) * k; });
+
+    // spawn tokens
+    spawnAcc += dt;
+    if (act === 1) {
+      // Same cadence as act 2 so visual density matches; only the clean baseRoute is used.
+      if (spawnAcc > 0.42) {
+        spawnAcc = 0;
+        spawnRouted(baseRoute, '#CFF6FF', 120 + rnd()*40, 2.6 + rnd()*1.2);
+      }
+    } else if (act === 2) {
+      if (spawnAcc > 0.42) {
+        spawnAcc = 0;
+        const roll = rnd();
+        const route = roll < 0.55 ? baseRoute : roll < 0.72 ? routeOnb : roll < 0.88 ? routeReq : routeNogo;
+        spawnRouted(route, '#CFF6FF', 120 + rnd()*40, 2.6 + rnd()*1.2);
+      }
+    } else if (act === 3) {
+      const targetTokens = Math.floor(60 + easeOut(P3) * 470);
+      let budget = 8;
+      while (tokens.length < targetTokens && budget-- > 0) spawnWalk();
+    }
+
+    // advance swarm tokens
+    for (let i = tokens.length - 1; i >= 0; i--) {
+      const tk = tokens[i]; tk.life += dt;
+      if (tk.mode === 'route') {
+        const p = ctrlPoints(tk.route[tk.ri]);
+        tk.t += (tk.speed * dt) / p.len;
+        if (tk.t >= 1) {
+          tk.t -= 1; tk.ri++;
+          if (tk.ri >= tk.route.length) {
+            tokens.splice(i, 1);
+            // (Old behaviour spawned a single replacement after 700ms. The act-1 interval spawner
+            //  now keeps the path populated, matching act-2 density.)
+            continue;
+          }
+        }
+      } else {
+        const e = tk.edge, p = ctrlPoints(e);
+        tk.t += (tk.speed * dt) / p.len;
+        if (tk.t >= 1) {
+          tk.t -= 1;
+          const dest = (tk.from === e.a) ? e.b : e.a;
+          const list = incident[dest];
+          let ne = list[(rnd()*list.length)|0];
+          if (list.length > 1 && ne === e) ne = list[(rnd()*list.length)|0];
+          tk.edge = ne; tk.from = dest;
+        }
+        tk.ttl -= dt;
+        if (tk.ttl <= 0 && act === 3) { tokens.splice(i, 1); continue; }
+      }
+    }
+
+    // advance the traced case
+    if (tracedToken) {
+      const e = tracedToken.edge, p = ctrlPoints(e);
+      tracedToken.t += (tracedToken.speed * dt) / p.len;
+      if (tracedToken.t >= 1) {
+        tracedToken.t -= 1;
+        const dest = (tracedToken.from === e.a) ? e.b : e.a;
+        trace.edgesPath.push(e);
+        if (trace.edgesPath.length > 160) trace.edgesPath.shift();
+        trace.steps++;
+        if (trace.visited.has(dest)) trace.loops++;
+        trace.visited.add(dest);
+        const list = incident[dest];
+        let ne = list[(rnd()*list.length)|0], guard = 0;
+        while (list.length > 2 && ne === e && guard++ < 4) ne = list[(rnd()*list.length)|0];
+        tracedToken.edge = ne; tracedToken.from = dest;
+        elTrSteps.textContent = trace.steps;
+        elTrLoops.textContent = trace.loops;
+      }
+    }
+
+    // ── RENDER ──
+    const fade = act === 3 ? 0.10 : 0.34;
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.fillStyle = `rgba(0,0,0,${fade})`;
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalCompositeOperation = 'source-over';
+
+    const dim = trace.active ? 0.16 : 1;
+
+    // edges
+    for (const e of edges) {
+      if (e.alpha < 0.01) continue;
+      const p = ctrlPoints(e);
+      ctx.beginPath(); ctx.moveTo(p.ax, p.ay);
+      ctx.bezierCurveTo(p.c1x, p.c1y, p.c2x, p.c2y, p.bx, p.by);
+      if (e.cat === 'real') { ctx.strokeStyle = `rgba(150,170,215,${e.alpha*dim})`; ctx.lineWidth = 1; }
+      // Detour ('think') edges share the main spine's blue-white tone so they read as the
+      // same kind of process flow — the volume badges + branch node labels do the work of
+      // saying "these are the exceptions you already know about." Trace highlight stays gold.
+      else if (e.cat === 'think') { ctx.strokeStyle = `rgba(150,205,255,${e.alpha*0.7*dim})`; ctx.lineWidth = 2; }
+      else { ctx.strokeStyle = `rgba(150,205,255,${e.alpha*0.85*dim})`; ctx.lineWidth = 2.4; }
+      ctx.stroke();
+    }
+
+    // traced path (bright, persistent)
+    if (trace.active && trace.edgesPath.length) {
+      ctx.lineCap = 'round';
+      for (const e of trace.edgesPath) {
+        const p = ctrlPoints(e);
+        ctx.beginPath(); ctx.moveTo(p.ax, p.ay);
+        ctx.bezierCurveTo(p.c1x, p.c1y, p.c2x, p.c2y, p.bx, p.by);
+        ctx.strokeStyle = 'rgba(255,200,60,0.9)'; ctx.lineWidth = 2.6; ctx.stroke();
+      }
+      ctx.lineCap = 'butt';
+    }
+
+    // nodes
+    nodes.forEach((n, i) => {
+      if (n.alpha < 0.02) return;
+      const na = n.alpha * (trace.active && !trace.visited.has(i) ? 0.3 : 1);
+      const r = n.r + Math.sin(n.pulse) * 0.6;
+      ctx.beginPath(); ctx.fillStyle = hexA(n.color, 0.18 * na); ctx.arc(n.sx, n.sy, r*2.1, 0, 6.283); ctx.fill();
+      ctx.beginPath(); ctx.fillStyle = hexA(n.color, na); ctx.arc(n.sx, n.sy, r, 0, 6.283); ctx.fill();
+      const ringGold = trace.active && trace.visited.has(i);
+      ctx.beginPath(); ctx.strokeStyle = ringGold ? 'rgba(255,215,64,0.95)' : `rgba(255,255,255,${0.5*na})`;
+      ctx.lineWidth = ringGold ? 2 : 1; ctx.arc(n.sx, n.sy, r + (ringGold?1.5:0), 0, 6.283); ctx.stroke();
+    });
+
+    // swarm tokens (additive)
+    ctx.globalCompositeOperation = 'lighter';
+    for (const tk of tokens) {
+      const pt = tokenPoint(tk);
+      let a = dim;
+      if (tk.mode === 'walk') a *= Math.min(1, tk.life*3) * Math.min(1, Math.max(0, tk.ttl));
+      ctx.beginPath(); ctx.fillStyle = hexA(tk.color, 0.30 * a); ctx.arc(pt.x, pt.y, tk.r*2.6, 0, 6.283); ctx.fill();
+      ctx.beginPath(); ctx.fillStyle = hexA('#ffffff', 0.85 * a); ctx.arc(pt.x, pt.y, tk.r, 0, 6.283); ctx.fill();
+    }
+    // traced head token (bright)
+    if (tracedToken) {
+      const pt = pointFrom(tracedToken.edge, tracedToken.from, tracedToken.t);
+      ctx.beginPath(); ctx.fillStyle = 'rgba(255,200,60,0.55)'; ctx.arc(pt.x, pt.y, 11, 0, 6.283); ctx.fill();
+      ctx.beginPath(); ctx.fillStyle = 'rgba(255,215,64,0.8)';  ctx.arc(pt.x, pt.y, 6, 0, 6.283); ctx.fill();
+      ctx.beginPath(); ctx.fillStyle = 'rgba(255,255,255,0.98)';ctx.arc(pt.x, pt.y, 3, 0, 6.283); ctx.fill();
+    }
+    ctx.globalCompositeOperation = 'source-over';
+
+    syncLabels();
+
+    // stat counters
+    stat.cases.tgt = 312847;
+    if (act === 1) { stat.variants.tgt = 1; stat.paths.tgt = 7; }
+    else if (act === 2) { stat.variants.tgt = 6; stat.paths.tgt = 14; }
+    else { stat.variants.tgt = Math.round(6 + easeOut(P3)*3211); stat.paths.tgt = 7 + Math.round(REAL_TOTAL*easeOut(P3)); }
+    for (const key in stat) {
+      const s = stat[key];
+      s.cur += (s.tgt - s.cur) * (1 - Math.pow(0.004, dt));
+      s.el.textContent = fmt(s.cur);
+    }
+    stat.variants.el.classList.toggle('hot', act === 3);
+
+    requestAnimationFrame(frame);
+  }
+
+  function hexA(hex, a) {
+    let h = hex.replace('#','');
+    if (h.length === 3) h = h.split('').map(c=>c+c).join('');
+    const n = parseInt(h, 16);
+    return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`;
+  }
+
+  // ── DOM labels / volume badges ─────────────────────────────────
+  const labelEls = [];
+  nodes.forEach((n, i) => {
+    if (n.kind === 'cloud') { labelEls.push(null); return; }
+    const el = document.createElement('div');
+    el.className = 'nlabel'; el.textContent = n.label;
+    labelLayer.appendChild(el); labelEls.push(el);
+  });
+  const badgeEls = thinkEdges.filter(e => e.label).map(e => {
+    const el = document.createElement('div');
+    el.className = 'vbadge'; el.textContent = e.label;
+    labelLayer.appendChild(el);
+    return { el, e };
+  });
+  function syncLabels() {
+    for (let i = 0; i < nodes.length; i++) {
+      const el = labelEls[i]; if (!el) continue;
+      const n = nodes[i];
+      const right = n.nx <= 0.6;
+      el.style.left = (n.sx + (right ? 16 : -16)) + 'px';
+      el.style.top  = n.sy + 'px';
+      el.style.transform = `translate(${right ? '0' : '-100%'}, -50%)`;
+      el.style.opacity = n.labA.toFixed(3);
+    }
+    for (const { el, e } of badgeEls) {
+      const mid = cubic(ctrlPoints(e), 0.5);
+      el.style.left = mid.x + 'px'; el.style.top = mid.y + 'px';
+      el.style.opacity = (act === 2 ? e.alpha : 0).toFixed(3);
+    }
+  }
+
+  // ── Keyboard, parent messaging, boot ───────────────────────────
+  // No autoplay — act stepping is driven by the deck's arrow-key flow:
+  //   • Embedded: arrow keys land on the parent deck (or are relayed up from the
+  //     iframe if focus is here). The deck decides whether each press advances the
+  //     act inside this iframe or moves to the next/previous slide, and posts a
+  //     {type:'set-act', act:N} message back to drive the act change.
+  //   • Standalone: arrow keys step acts locally so the file still works on its own.
+  // Escape clears any in-progress case trace.
+  const isArrowKey = k => k === 'ArrowRight' || k === 'ArrowLeft' || k === 'ArrowDown' || k === 'ArrowUp';
+  const isFwdKey   = k => k === 'ArrowRight' || k === 'ArrowDown';
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { clearTrace(true); return; }
+    if (!isArrowKey(e.key)) return;
+    if (window.parent !== window) {
+      // Embedded — relay to parent so the deck owns navigation.
+      try { window.parent.postMessage({ type: 'arrow', key: e.key }, '*'); } catch (err) {}
+      e.preventDefault();
+    } else {
+      // Standalone — step acts locally.
+      if (isFwdKey(e.key)) goToAct(Math.min(3, act + 1));
+      else                 goToAct(Math.max(1, act - 1));
+    }
+  });
+
+  // Parent → iframe messages:
+  //   'slide-activated' — slide just became active; reset to act 1.
+  //   'set-act'         — explicit act number from the deck's nav controller.
+  window.addEventListener('message', (e) => {
+    if (!e.data) return;
+    if (e.data.type === 'slide-activated') goToAct(1);
+    else if (e.data.type === 'set-act' && typeof e.data.act === 'number') goToAct(e.data.act);
+  });
+
+  // ── Boot ───────────────────────────────────────────────────────
+  resize();
+  goToAct(1);
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
