@@ -261,8 +261,8 @@
     #app.finale-mode #cap-eyebrow { display: none; }
     /* the chapter question re-types in white at a smaller scale, then wipes;
        'This is how.' answers at full chapter scale in blue */
-    #cap-title .fin-q { font-size: clamp(20px, 2.4vw, 32px); display: inline-block; color: #fff; }
-    #cap-title .fin-q.wipe { animation: piNarrWipe 0.6s ease forwards; }
+    #cap-title .fin-q { font-size: clamp(20px, 2.4vw, 32px); display: inline-block; color: #fff; transition: opacity 0.4s ease; }
+    #cap-title .fin-q.fin-out { opacity: 0; }
     @media (prefers-reduced-motion: reduce) {
       #app.finale-mode .pi-card, #app.finale-mode #pillar { animation: none !important; }
     }
@@ -2532,6 +2532,7 @@
     // reset any in-flight finale entry choreography
     clearFinaleTimers();
     caption.classList.remove('cap-hidden');
+    capSub.style.opacity = '';
     railWrap.style.transform = ''; railWrap.style.transition = '';
     pillarWrap.style.transform = ''; pillarWrap.style.transition = '';
 
@@ -2604,9 +2605,11 @@
     // 1) the previous frame's caption fades out (big card is closing meanwhile)
     caption.classList.add('cap-hidden');
     FT(() => {
-      // 2) empty the caption while it's invisible, switch layout, slide the stack down
-      capTitle.innerHTML = '';
-      capSub.innerHTML = '';
+      // 2) stage the question and the (hidden) sub while the caption is
+      //    invisible, so the layout the stack slides into never reflows
+      capTitle.innerHTML = '<span class="fin-q">How does Apromore Process Intelligence solve this?</span>';
+      capSub.innerHTML = 'See how you run. Size what\'s at stake. Fix it, test it, keep it fixed. And anyone can ask, anytime.';
+      capSub.style.opacity = '0';                   // space reserved, revealed at the end
       const r1 = railWrap.getBoundingClientRect();
       const p1 = pillarWrap.getBoundingClientRect();
       app.classList.add('finale-mode');
@@ -2614,41 +2617,27 @@
       const p2 = pillarWrap.getBoundingClientRect();
       slideFrom(railWrap, r1.top - r2.top);
       slideFrom(pillarWrap, p1.top - p2.top);
-      caption.classList.remove('cap-hidden');       // caption is empty, nothing shows yet
-      // 3) the chapter question re-types in white, holds, then wipes away
+      // 3) the chapter question rises in once the stack has settled
       FT(() => {
-        typeCaption(capTitle, 'How does Apromore Process Intelligence solve this?', 34, () => {
+        caption.classList.remove('cap-hidden');
+        capTitle.classList.remove('cap-bounce'); void capTitle.offsetWidth; capTitle.classList.add('cap-bounce');
+        // 4) hold, then the question fades away
+        FT(() => {
+          const q = capTitle.querySelector('.fin-q'); if (q) q.classList.add('fin-out');
+          // 5) the answer lands at full scale and the pulse travels the stack
           FT(() => {
-            const caret = capTitle.querySelector('.pi-caret'); if (caret) caret.remove();
-            const q = capTitle.querySelector('.fin-q'); if (q) q.classList.add('wipe');
-            // 4) the answer lands at full scale and the pulse travels the stack
+            capTitle.innerHTML = '<span class="hl">This is how.</span>';
+            capTitle.classList.remove('cap-bounce'); void capTitle.offsetWidth; capTitle.classList.add('cap-bounce');
+            app.classList.add('finale-go');
+            // 6) the recap line follows a beat later
             FT(() => {
-              capTitle.innerHTML = '<span class="hl">This is how.</span>';
-              capTitle.classList.remove('cap-bounce'); void capTitle.offsetWidth; capTitle.classList.add('cap-bounce');
-              app.classList.add('finale-go');
-              // 5) the recap line follows a beat later
-              FT(() => {
-                capSub.innerHTML = 'See how you run. Size what\'s at stake. Fix it, test it, keep it fixed. And anyone can ask, anytime.';
-                capSub.classList.remove('cap-bounce'); void capSub.offsetWidth; capSub.classList.add('cap-bounce');
-              }, 420);
-            }, 640);
-          }, 1100);
-        });
-      }, 820);
+              capSub.style.opacity = '';
+              capSub.classList.remove('cap-bounce'); void capSub.offsetWidth; capSub.classList.add('cap-bounce');
+            }, 420);
+          }, 460);
+        }, 2300);
+      }, 780);
     }, 430);
-  }
-
-  // Types text into the caption title with a blinking caret, on the finale
-  // timer rail so navigation away cancels it mid-word.
-  function typeCaption(host, text, cps, done) {
-    host.innerHTML = '<span class="fin-q"></span><span class="pi-caret"></span>';
-    const span = host.querySelector('.fin-q');
-    const stepMs = 1000 / cps;
-    let i = 0;
-    (function tick() {
-      if (i < text.length) { span.textContent = text.slice(0, ++i); FT(tick, stepMs); }
-      else if (done) FT(done, 0);
-    })();
   }
 
   btnPrev.addEventListener('click', () => goTo(step - 1));
