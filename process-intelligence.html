@@ -245,14 +245,18 @@
       40%  { box-shadow: 0 0 26px rgba(143,184,255,0.55); border-color: rgba(143,184,255,1); background: rgba(143,184,255,0.28); }
       100% { box-shadow: 0 0 0 rgba(143,184,255,0); }
     }
-    #app.finale-mode .pi-card, #app.finale-mode #pillar { animation: finPulse 1.05s ease both; }
-    #app.finale-mode .pi-card:nth-child(1) { animation-delay: 0.55s; }
-    #app.finale-mode .pi-card:nth-child(2) { animation-delay: 0.70s; }
-    #app.finale-mode .pi-card:nth-child(3) { animation-delay: 0.85s; }
-    #app.finale-mode .pi-card:nth-child(4) { animation-delay: 1.00s; }
-    #app.finale-mode .pi-card:nth-child(5) { animation-delay: 1.15s; }
-    #app.finale-mode .pi-card:nth-child(6) { animation-delay: 1.30s; }
-    #app.finale-mode #pillar { animation-delay: 1.50s; }
+    /* the pulse waits for .finale-go (added once the slide-down has landed) */
+    #app.finale-mode.finale-go .pi-card, #app.finale-mode.finale-go #pillar { animation: finPulse 1.05s ease both; }
+    #app.finale-mode .pi-card:nth-child(1) { animation-delay: 0.15s; }
+    #app.finale-mode .pi-card:nth-child(2) { animation-delay: 0.30s; }
+    #app.finale-mode .pi-card:nth-child(3) { animation-delay: 0.45s; }
+    #app.finale-mode .pi-card:nth-child(4) { animation-delay: 0.60s; }
+    #app.finale-mode .pi-card:nth-child(5) { animation-delay: 0.75s; }
+    #app.finale-mode .pi-card:nth-child(6) { animation-delay: 0.90s; }
+    #app.finale-mode #pillar { animation-delay: 1.10s; }
+    /* caption fade used by the finale entry choreography */
+    #caption { transition: opacity 0.4s ease; }
+    #caption.cap-hidden { opacity: 0; }
     @media (prefers-reduced-motion: reduce) {
       #app.finale-mode .pi-card, #app.finale-mode #pillar { animation: none !important; }
     }
@@ -1555,6 +1559,9 @@
   const capEyebrow = document.getElementById('cap-eyebrow');
   const capTitle = document.getElementById('cap-title');
   const capSub = document.getElementById('cap-sub');
+  const caption = document.getElementById('caption');
+  const railWrap = document.getElementById('rail-wrap');
+  const pillarWrap = document.getElementById('pillar-wrap');
   const progLabel = document.getElementById('prog-label');
   const navCount = document.getElementById('nav-count');
   const btnPrev = document.getElementById('prev');
@@ -2515,6 +2522,12 @@
     const app = document.getElementById('app');
     app.classList.toggle('intro-mode', step === 0);
     app.classList.toggle('finale-mode', step === FINALE);
+    app.classList.toggle('finale-go', step === FINALE);
+    // reset any in-flight finale entry choreography
+    clearFinaleTimers();
+    caption.classList.remove('cap-hidden');
+    railWrap.style.transform = ''; railWrap.style.transition = '';
+    pillarWrap.style.transform = ''; pillarWrap.style.transition = '';
 
     // caption: set the title + sub text, then bounce eyebrow + title + sub together.
     // Step 0 poses the bridging question; steps 1+ carry the layer's claim
@@ -2545,8 +2558,66 @@
   function goTo(n) {
     n = Math.max(0, Math.min(FINALE, n));
     if (n === step) return;
+    const from = step;
     step = n;
-    render();
+    clearFinaleTimers();
+    if (step === FINALE && from === STEPS && !REDUCED_MOTION) enterFinale();
+    else render();
+  }
+
+  // ── Finale entry choreography (forward 7 → 8 only) ───────────────
+  // The step-7 caption fades out, the stack slides down to its centred resting
+  // place (FLIP: measure, switch layout, transform back, release), then the
+  // closing caption fades in and the pulse travels the rail. Reverse entry
+  // and reduced motion land on the finished frame instantly via render().
+  const finaleTimers = [];
+  const FT = (fn, ms) => finaleTimers.push(setTimeout(fn, ms));
+  function clearFinaleTimers() { finaleTimers.forEach(clearTimeout); finaleTimers.length = 0; }
+  const REDUCED_MOTION = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function slideFrom(el, dy) {
+    el.style.transition = 'none';
+    el.style.transform = 'translateY(' + dy + 'px)';
+    void el.offsetWidth;
+    el.style.transition = 'transform 0.7s cubic-bezier(0.22,1,0.36,1)';
+    el.style.transform = '';
+    FT(() => { el.style.transition = ''; }, 760);
+  }
+
+  function enterFinale() {
+    const app = document.getElementById('app');
+    // chrome bookkeeping: same end state render() would set for the finale
+    railCards.forEach(c => { c.classList.remove('active'); c.classList.add('done'); });
+    pillar.classList.remove('active');
+    showBig(FINALE);                                  // closes the open card
+    dots.forEach((d, i) => { d.classList.toggle('on', i === FINALE - 1); d.classList.toggle('done', i < FINALE - 1); });
+    progLabel.textContent = 'Together';
+    navCount.textContent = FINALE + ' / ' + FINALE;
+    btnPrev.disabled = false;
+    btnNext.disabled = true;
+    // 1) the previous frame's caption fades out (big card is closing meanwhile)
+    caption.classList.add('cap-hidden');
+    FT(() => {
+      // 2) swap the caption text while it's invisible, then slide the stack down
+      capTitle.innerHTML = '<span class="hl">This is how.</span>';
+      capSub.innerHTML = 'See how you run. Size what\'s at stake. Fix it, test it, keep it fixed. And anyone can ask, anytime.';
+      const r1 = railWrap.getBoundingClientRect();
+      const p1 = pillarWrap.getBoundingClientRect();
+      app.classList.add('finale-mode');
+      const r2 = railWrap.getBoundingClientRect();
+      const p2 = pillarWrap.getBoundingClientRect();
+      slideFrom(railWrap, r1.top - r2.top);
+      slideFrom(pillarWrap, p1.top - p2.top);
+      // 3) the closing caption fades in and the pulse fires
+      FT(() => {
+        caption.classList.remove('cap-hidden');
+        const capEls = [capEyebrow, capTitle, capSub];
+        capEls.forEach(el => el.classList.remove('cap-bounce'));
+        void capTitle.offsetWidth;
+        capEls.forEach(el => el.classList.add('cap-bounce'));
+        app.classList.add('finale-go');
+      }, 760);
+    }, 430);
   }
 
   btnPrev.addEventListener('click', () => goTo(step - 1));
