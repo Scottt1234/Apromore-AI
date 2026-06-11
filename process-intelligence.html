@@ -2610,6 +2610,7 @@
       capTitle.innerHTML = '<span class="fin-q">How does Apromore Process Intelligence solve this?</span>';
       capSub.innerHTML = 'See how you run. Size what\'s at stake. Fix it, test it, keep it fixed. And anyone can ask, anytime.';
       capSub.style.opacity = '0';                   // space reserved, revealed at the end
+      capSub.classList.remove('cap-bounce');        // its filled animation would override the inline opacity
       const r1 = railWrap.getBoundingClientRect();
       const p1 = pillarWrap.getBoundingClientRect();
       app.classList.add('finale-mode');
