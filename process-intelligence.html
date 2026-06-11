@@ -1813,7 +1813,7 @@
     // Beat 2 figures — count up as the pills land, while the caption types.
     if (scene._t) scene._t.push(setTimeout(() => {
       nar.classList.remove('wipe'); nar.innerHTML = '';
-      cardType(scene, nar, [{ t: 'Giving you the ' }, { t: 'understanding', hl: true }, { t: ' you need.' }], 46, 0);
+      cardType(scene, nar, [{ t: 'Giving you the ' }, { t: 'understanding', hl: true }, { t: ' you need to make informed decisions.' }], 46, 0);
     }, 9230));
     cardCount(scene, scene.querySelector('.an-fig--cost'),     1.2,   1200, 5700,  v => '$' + v.toFixed(1) + 'M');
     cardCount(scene, scene.querySelector('.an-fig--resource'), 12400, 1100, 6300, v => Math.round(v).toLocaleString());
