@@ -255,8 +255,8 @@
        but overrides timings so the System and Engine are present from t=0 (carried
        over from the PM card visually). Three beats:
          Beat 1 (0–4.6s)    System + Engine appear; dots stream from System into
-                            Engine. Caption: "Process Mining only sees what is
-                            logged within your systems."
+                            Engine. Caption: "Process mining can only see what your
+                            systems log."
          Beat 2 (4.95–9.4s) Caption: "But the real work happens between them...";
                             extras (Browser/Email/Sheet/Doc) fade in 5.5s, their
                             activity pulses and dark connectors land during it.
@@ -1766,7 +1766,7 @@
     const nar = scene.querySelector('.pi-narr');
     // Beat 1 — caption types first (0.35–1.73s); scan starts at 2.0s and lasts 2.6s,
     //   revealing each dot AS the line passes its x-position; 2s breath afterwards.
-    cardType(scene, nar, [{ t: 'Your full process is ' }, { t: 'analysed', hl: true }, { t: '.' }], 46, 350);
+    cardType(scene, nar, [{ t: 'Your whole process is ' }, { t: 'analysed', hl: true }, { t: '.' }], 46, 350);
     // Beat 2 — wipes immediately as the scan finishes (4.6s); pills land while
     //   "Quantified across cost, time and resource." types.
     if (scene._t) scene._t.push(setTimeout(() => nar.classList.add('wipe'), 4600));
@@ -1778,7 +1778,7 @@
     // Beat 2 figures — count up as the pills land, while the caption types.
     if (scene._t) scene._t.push(setTimeout(() => {
       nar.classList.remove('wipe'); nar.innerHTML = '';
-      cardType(scene, nar, [{ t: 'Showing exactly where your ' }, { t: 'time, money and effort', hl: true }, { t: ' are going.' }], 46, 0);
+      cardType(scene, nar, [{ t: 'Giving you the ' }, { t: 'understanding', hl: true }, { t: ' you need.' }], 46, 0);
     }, 9230));
     cardCount(scene, scene.querySelector('.an-fig--cost'),     1.2,   1200, 5700,  v => '$' + v.toFixed(1) + 'M');
     cardCount(scene, scene.querySelector('.an-fig--resource'), 12400, 1100, 6300, v => Math.round(v).toLocaleString());
@@ -1963,11 +1963,11 @@
     //   proposal card materialises beneath it while the caption types.
     T(() => nar.classList.add('wipe'), 4900);
     T(() => { nar.classList.remove('wipe'); nar.innerHTML = '';
-      cardType(scene, nar, [{ t: 'AI finds your ' }, { t: 'most expensive problem', hl: true }, { t: ' — and proposes the fix.' }], 46, 0); }, 5250);
+      cardType(scene, nar, [{ t: 'AI proposes the best way to get ' }, { t: 'the outcome you want', hl: true }, { t: '.' }], 46, 0); }, 5250);
     // Beat 3 — the fix previews on the map; Review / Approve appear, cursor hovers. Held.
     T(() => nar.classList.add('wipe'), 10600);
     T(() => { nar.classList.remove('wipe'); nar.innerHTML = '';
-      cardType(scene, nar, [{ t: 'Previewed on your process. ' }, { t: 'Your decision', hl: true }, { t: ' to make.' }], 46, 0); }, 10950);
+      cardType(scene, nar, [{ t: 'And nothing changes until ' }, { t: 'you approve it', hl: true }, { t: '.' }], 46, 0); }, 10950);
   }
 
   // ── Shared carry-over map (the Analysis / Recommendation geometry) ──────
@@ -2099,15 +2099,15 @@
     const nar = scene.querySelector('.pi-narr');
     const T = (fn, ms) => { if (scene._t) scene._t.push(setTimeout(fn, ms)); };
     // Beat 1 — caption first (0.35–2.0s); boundary draws 2.2s, shimmer + tag follow.
-    cardType(scene, nar, [{ t: 'Your process, ' }, { t: 'cloned', hl: true }, { t: ' into a sandbox.' }], 46, 350);
+    cardType(scene, nar, [{ t: 'Your process is cloned to create a ' }, { t: 'Digital Twin', hl: true }, { t: '.' }], 46, 350);
     // Beat 2 — the fix applies in the twin while cases replay and the counter runs.
     T(() => nar.classList.add('wipe'), 4900);
     T(() => { nar.classList.remove('wipe'); nar.innerHTML = '';
-      cardType(scene, nar, [{ t: 'The fix is applied — ' }, { t: 'your data', hl: true }, { t: ' runs against the new process.' }], 46, 0); }, 5250);
+      cardType(scene, nar, [{ t: 'The fix is applied, and ' }, { t: 'your own data', hl: true }, { t: ' runs through the new process.' }], 46, 0); }, 5250);
     // Beat 3 — before → after results, still only a projection.
     T(() => nar.classList.add('wipe'), 10600);
     T(() => { nar.classList.remove('wipe'); nar.innerHTML = '';
-      cardType(scene, nar, [{ t: 'The result — ' }, { t: 'proven', hl: true }, { t: ' before you commit.' }], 46, 0); }, 10950);
+      cardType(scene, nar, [{ t: 'The result is ' }, { t: 'proven', hl: true }, { t: ' before you commit.' }], 46, 0); }, 10950);
     cardCount(scene, scene.querySelector('.si-count'), 100, 2600, 6700, v => Math.round(v) + '%');
     cardCount(scene, scene.querySelector('.si-after--cost'), 560, 900, 11900,
       v => v >= 1000 ? '$' + (v / 1000).toFixed(1) + 'M / yr' : '$' + Math.round(v) + 'K / yr', 1200);
@@ -2204,7 +2204,7 @@
     const nar = scene.querySelector('.pi-narr');
     const T = (fn, ms) => { if (scene._t) scene._t.push(setTimeout(fn, ms)); };
     // Beat 1 — caption first (0.35–1.7s); LIVE badge 2.0s, panel 2.4s, trace 3.0s.
-    cardType(scene, nar, [{ t: 'The fix is ' }, { t: 'live', hl: true }, { t: ' — and watched.' }], 46, 350);
+    cardType(scene, nar, [{ t: 'The fix is ' }, { t: 'live', hl: true }, { t: ', and it\'s being monitored.' }], 46, 350);
     // Beat 2 — the baselines report in while the caption types.
     T(() => nar.classList.add('wipe'), 4900);
     T(() => { nar.classList.remove('wipe'); nar.innerHTML = '';
@@ -2212,7 +2212,7 @@
     // Beat 3 — drift caught: map node warms 10.2s, flag 10.5s, TIME row flips 10.7s.
     T(() => nar.classList.add('wipe'), 9300);
     T(() => { nar.classList.remove('wipe'); nar.innerHTML = '';
-      cardType(scene, nar, [{ t: 'A ' }, { t: 'new variant', hl: true }, { t: ' appears — caught as it forms.' }], 46, 0); }, 9650);
+      cardType(scene, nar, [{ t: 'New variants are ' }, { t: 'caught immediately', hl: true }, { t: ', and you\'re notified.' }], 46, 0); }, 9650);
   }
 
   // ── Task Mining: same shared cardPlay/cardType pattern as Process Mining and
@@ -2231,11 +2231,11 @@
     const nar = scene.querySelector('.pi-narr');
     const T = (fn, ms) => { if (scene._t) scene._t.push(setTimeout(fn, ms)); };
     // Beat 1 — "Process Mining only sees what is logged within your systems."
-    cardType(scene, nar, [{ t: 'Process Mining only sees what is ' }, { t: 'logged', hl: true }, { t: ' within your systems.' }], 46, 350);
+    cardType(scene, nar, [{ t: 'Process mining can only see what your systems ' }, { t: 'log', hl: true }, { t: '.' }], 46, 350);
     T(() => nar.classList.add('wipe'), 4600);
     // Beat 2 — "But the real work happens between them, where nothing is logged."
     T(() => { nar.classList.remove('wipe'); nar.innerHTML = '';
-      cardType(scene, nar, [{ t: 'But the real work happens ' }, { t: 'between them', hl: true }, { t: ', where nothing is logged.' }], 46, 0); }, 4950);
+      cardType(scene, nar, [{ t: 'But so much of the real work happens ' }, { t: 'between them', hl: true }, { t: ', where nothing gets logged.' }], 46, 0); }, 4950);
     T(() => nar.classList.add('wipe'), 9400);
     // Beat 3 — "Task mining captures what process mining misses."
     T(() => { nar.classList.remove('wipe'); nar.innerHTML = '';
@@ -2418,16 +2418,16 @@
     typeLine(scene, narrate, [{ t: 'It used to take an ' }, { t: 'expert', hl: true }, { t: ' to get an answer.' }], CPS, () => scene.classList.add('experts'));
     // 2) hold, then wipe the line away.
     T(() => narrate.classList.add('wipe'), 4800);
-    // 3) experts shrink + crowd fades in while "Now everyone can get the answers they need" types
+    // 3) experts shrink + crowd fades in while "Now anyone can get the answers they need." types
     //    on the left (and then stays there).
     T(() => {
       narrate.classList.remove('wipe'); narrate.innerHTML = '';
       scene.classList.add('revealed');
-      typeLine(scene, narrate, [{ t: 'Now ' }, { t: 'everyone', hl: true }, { t: ' can get the answers they need' }], CPS);
+      typeLine(scene, narrate, [{ t: 'Now ' }, { t: 'anyone', hl: true }, { t: ' can get the answers they need.' }], CPS);
     }, 5650);
     // 4) after a small beat, the right-hand title types at the same height; the questions (and
     //    their pulses) wait until it has finished typing before they begin to stream in.
-    T(() => typeLine(scene, rtitle, [{ t: 'Simply by asking in their own words' }], CPS,
+    T(() => typeLine(scene, rtitle, [{ t: 'Simply by asking, in their own words.' }], CPS,
       () => { if (scene._cvTimers) scene._cvTimers.push(setTimeout(() => startConvoQuestions(scene), 650)); }), 9300);
   }
   function stopConvo(el) {
