@@ -371,7 +371,7 @@
     }
 
     /* ═══════════ Conversational Interface animation — the few → the many ═══════════
-       Narrated: "It used to take an expert" → two experts → they shrink into an organic
+       Narrated: "Everything you've just seen used to take experts." → two experts → they shrink into an organic
        whole-org crowd as "Now anyone can ask." types; then "In their own words." + questions. */
     .cv-scene { position: absolute; inset: 0; display: flex; }
     /* same soft radial atmosphere the other cards carry over the navy fill */
@@ -1801,13 +1801,13 @@
     const nar = scene.querySelector('.pi-narr');
     // Beat 1 — caption types first (0.35–1.73s); scan starts at 2.0s and lasts 2.6s,
     //   revealing each dot AS the line passes its x-position; 2s breath afterwards.
-    cardType(scene, nar, [{ t: 'Your whole process is ' }, { t: 'analysed', hl: true }, { t: '.' }], 46, 350);
+    cardType(scene, nar, [{ t: 'Your whole process is then ' }, { t: 'analysed', hl: true }, { t: '.' }], 46, 350);
     // Beat 2 — wipes immediately as the scan finishes (4.6s); pills land while
     //   "Quantified across cost, time and resource." types.
     if (scene._t) scene._t.push(setTimeout(() => nar.classList.add('wipe'), 4600));
     if (scene._t) scene._t.push(setTimeout(() => {
       nar.classList.remove('wipe'); nar.innerHTML = '';
-      cardType(scene, nar, [{ t: 'Quantified across ' }, { t: 'cost, time and resource', hl: true }, { t: '.' }], 46, 0);
+      cardType(scene, nar, [{ t: 'And quantified across ' }, { t: 'cost, time and resource', hl: true }, { t: '.' }], 46, 0);
     }, 4950));
     if (scene._t) scene._t.push(setTimeout(() => nar.classList.add('wipe'), 8880));
     // Beat 2 figures — count up as the pills land, while the caption types.
@@ -1993,16 +1993,16 @@
     const T = (fn, ms) => { if (scene._t) scene._t.push(setTimeout(fn, ms)); };
     // Beat 1 — caption types first (0.35–1.7s); the priority chips land 1.9s, the
     //   cursor picks Cost at 2.9s, the hotspot surges in answer at 3.3s. Breath after.
-    cardType(scene, nar, [{ t: 'First, ' }, { t: 'you set the priority', hl: true }, { t: '.' }], 46, 350);
+    cardType(scene, nar, [{ t: 'Then ' }, { t: 'you confirm', hl: true }, { t: ' your priority objectives.' }], 46, 350);
     // Beat 2 — engine returns 5.6s, the hotspot streams into it from 5.9s, and the
     //   proposal card materialises beneath it while the caption types.
     T(() => nar.classList.add('wipe'), 4900);
     T(() => { nar.classList.remove('wipe'); nar.innerHTML = '';
-      cardType(scene, nar, [{ t: 'AI proposes the best way to get ' }, { t: 'the outcome you want', hl: true }, { t: '.' }], 46, 0); }, 5250);
+      cardType(scene, nar, [{ t: 'AI analyses your data to find the ' }, { t: 'best way', hl: true }, { t: ' to achieve your objectives.' }], 46, 0); }, 5250);
     // Beat 3 — the fix previews on the map; Review / Approve appear, cursor hovers. Held.
     T(() => nar.classList.add('wipe'), 10600);
     T(() => { nar.classList.remove('wipe'); nar.innerHTML = '';
-      cardType(scene, nar, [{ t: 'And nothing changes until ' }, { t: 'you approve it', hl: true }, { t: '.' }], 46, 0); }, 10950);
+      cardType(scene, nar, [{ t: 'A recommendation is presented for ' }, { t: 'your review', hl: true }, { t: '.' }], 46, 0); }, 10950);
   }
 
   // ── Shared carry-over map (the Analysis / Recommendation geometry) ──────
@@ -2143,6 +2143,10 @@
     T(() => nar.classList.add('wipe'), 10600);
     T(() => { nar.classList.remove('wipe'); nar.innerHTML = '';
       cardType(scene, nar, [{ t: 'The result is ' }, { t: 'proven', hl: true }, { t: ' before you commit.' }], 46, 0); }, 10950);
+    // Beat 3 closer — appended once the after-figures have landed.
+    T(() => {
+      cardType(scene, nar, [{ t: ' Underpinning your ' }, { t: 'business case', hl: true }, { t: '.' }], 46, 0, true);
+    }, 13300);
     cardCount(scene, scene.querySelector('.si-count'), 100, 2600, 6700, v => Math.round(v) + '%');
     cardCount(scene, scene.querySelector('.si-after--cost'), 560, 900, 11900,
       v => v >= 1000 ? '$' + (v / 1000).toFixed(1) + 'M / yr' : '$' + Math.round(v) + 'K / yr', 1200);
@@ -2239,7 +2243,7 @@
     const nar = scene.querySelector('.pi-narr');
     const T = (fn, ms) => { if (scene._t) scene._t.push(setTimeout(fn, ms)); };
     // Beat 1 — caption first (0.35–1.7s); LIVE badge 2.0s, panel 2.4s, trace 3.0s.
-    cardType(scene, nar, [{ t: 'The fix is ' }, { t: 'live', hl: true }, { t: ', and it\'s being monitored.' }], 46, 350);
+    cardType(scene, nar, [{ t: 'The fix is ' }, { t: 'live', hl: true }, { t: ', and is then monitored in real time.' }], 46, 350);
     // Beat 2 — the baselines report in while the caption types.
     T(() => nar.classList.add('wipe'), 4900);
     T(() => { nar.classList.remove('wipe'); nar.innerHTML = '';
@@ -2449,8 +2453,8 @@
     const CPS = 67;                                       // ~40% slower typing
     const T = (fn, ms) => scene._cvTimers.push(setTimeout(fn, ms));
 
-    // 1) "It used to take an expert to get an answer." on the left; experts appear once it finishes.
-    typeLine(scene, narrate, [{ t: 'It used to take an ' }, { t: 'expert', hl: true }, { t: ' to get an answer.' }], CPS, () => scene.classList.add('experts'));
+    // 1) "Everything you've just seen used to take experts." on the left; experts appear once it finishes.
+    typeLine(scene, narrate, [{ t: "Everything you've just seen used to take " }, { t: 'experts', hl: true }, { t: '.' }], CPS, () => scene.classList.add('experts'));
     // 2) hold, then wipe the line away.
     T(() => narrate.classList.add('wipe'), 4800);
     // 3) experts shrink + crowd fades in while "Now anyone can get the answers they need." types
