@@ -1239,7 +1239,7 @@
     // Browsers block audio-with-sound until a user gesture, so playback is gated
     // behind audioUnlocked, flipped true when a mode is chosen on the setup overlay.
     const AUDIO_FILES = new Set([
-      'S01F00', 'S03F00', 'S04F00',
+      'S01B00', 'S03F00', 'S04F00',
       'S02B01', 'S02B02', 'S02B03', 'S02B04',   // slide 2 in-slide beats (intro + 3 cards)
       'S05F01', 'S05F02', 'S05F03',
       'S06F00', 'S06F01', 'S06F02', 'S06F03', 'S06F04', 'S06F05', 'S06F06', 'S06F07', 'S06F08',
@@ -1298,7 +1298,9 @@
     function currentClipName() {
       const nn = String(current + 1).padStart(2, '0');
       let name;
-      if (isPressures(current)) {
+      if (current === 0) {
+        name = 'S01B00';                                  // slide 1 (hero) uses a beat-named clip
+      } else if (isPressures(current)) {
         name = 'S02B' + String(pBeat).padStart(2, '0');   // S02B01–04, one per beat
       } else {
         const ff = isProcessReality(current) ? prAct

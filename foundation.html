@@ -1187,7 +1187,7 @@
     // Browsers block audio-with-sound until a user gesture, so playback is gated
     // behind audioUnlocked, flipped true when a mode is chosen on the setup overlay.
     const AUDIO_FILES = new Set([
-      'S01F00', 'S02F00', 'S03F00', 'S04F00',
+      'S01B00', 'S02F00', 'S03F00', 'S04F00',
       'S05F01', 'S05F02', 'S05F03',
       'S06F00', 'S06F01', 'S06F02', 'S06F03', 'S06F04', 'S06F05', 'S06F06', 'S06F07', 'S06F08',
       'S07F00', 'S08F00', 'S09F00', 'S10F00',
@@ -1230,10 +1230,15 @@
     // uploaded files); the layers embed uses its step; plain slides are F00.
     function currentClipName() {
       const nn = String(current + 1).padStart(2, '0');
-      const ff = isProcessReality(current) ? prAct
-               : isLayers(current)         ? piStep
-               : 0;
-      const name = 'S' + nn + 'F' + String(ff).padStart(2, '0');
+      let name;
+      if (current === 0) {
+        name = 'S01B00';                           // slide 1 (hero) uses a beat-named clip
+      } else {
+        const ff = isProcessReality(current) ? prAct
+                 : isLayers(current)         ? piStep
+                 : 0;
+        name = 'S' + nn + 'F' + String(ff).padStart(2, '0');
+      }
       return AUDIO_FILES.has(name) ? name : null;
     }
     function playBeatAudio() {
