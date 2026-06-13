@@ -893,11 +893,11 @@
       <div class="setup-eyebrow">Before we start</div>
       <h2 class="setup-title">How would you like to watch?</h2>
       <div class="setup-grid">
-        <button class="setup-card" data-auto="1" data-audio="1">
+        <button class="setup-card" data-auto="1" data-audio="1" data-loop="1">
           <span class="setup-rec">Recommended</span>
           <div class="setup-ico">&#9654; &#128266;</div>
           <div class="setup-card-h">Auto-play &middot; with narration</div>
-          <div class="setup-card-s">Sit back &mdash; it runs and narrates itself.</div>
+          <div class="setup-card-s">Sit back &mdash; it runs and narrates itself, then loops.</div>
         </button>
         <button class="setup-card" data-auto="1" data-audio="0">
           <div class="setup-ico">&#9654; &#128263;</div>
@@ -1115,6 +1115,7 @@
     };
     let autoplayOn = false;
     let autoTimer = null;
+    let loopOn = false;   // option 1 only: restart the deck after a pause at the end
     let piStep = 0;    // the layers embed's internal step, reported via 'embed-step'
     const autoBtn = document.getElementById('autoplay-btn');
 
@@ -1138,9 +1139,13 @@
       const step = () => {
         if (!autoplayOn || myToken !== autoToken) return;   // stale (paused or superseded)
         autoToken++;                                         // consume this beat's advance
-        // the deck's final beat: rest there instead of knocking on a locked door
+        // the deck's final beat: loop back to the start after a pause, or rest here
         if (current === slides.length - 1 && !isLayers(current) && !isProcessReality(current)) {
-          setAutoplay(false);
+          if (loopOn) {
+            autoTimer = setTimeout(() => { if (autoplayOn) go(0); }, 3000);  // 3s, then restart
+          } else {
+            setAutoplay(false);
+          }
           return;
         }
         advance();
@@ -1256,11 +1261,12 @@
       narration.pause();
       setupEl.style.display = 'flex';
     }
-    function startDeck(auto, withAudio) {
+    function startDeck(auto, withAudio, loop) {
       muted = !withAudio;
       localStorage.setItem('deckMuted', muted ? '1' : '0');
       applyMute();
       audioUnlocked = true;
+      loopOn = !!loop;
       setupOpen = false;
       setupEl.style.display = 'none';
       if (auto) {
@@ -1272,7 +1278,7 @@
     }
     setupEl.querySelectorAll('.setup-card').forEach(card =>
       card.addEventListener('click', () =>
-        startDeck(card.dataset.auto === '1', card.dataset.audio === '1')));
+        startDeck(card.dataset.auto === '1', card.dataset.audio === '1', card.dataset.loop === '1')));
     document.getElementById('setup-btn').addEventListener('click', showSetup);
 
     go(0);
