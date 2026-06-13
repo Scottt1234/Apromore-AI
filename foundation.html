@@ -475,6 +475,52 @@
     }
   </style>
 
+  <!-- ════════ PRE-PRESENTATION SETUP overlay ════════ -->
+  <style>
+    .setup-cover {
+      position: fixed; inset: 0; z-index: 1000;
+      display: flex; align-items: center; justify-content: center;
+      padding: 40px 24px; overflow-y: auto;
+      background:
+        radial-gradient(80% 120% at 80% 10%, rgba(56,128,255,0.55), transparent 60%),
+        radial-gradient(70% 90% at 10% 98%, rgba(6,106,254,0.42), transparent 55%),
+        linear-gradient(155deg, #020e30 0%, #06246b 46%, #0a59f0 100%);
+    }
+    .setup-inner { max-width: 760px; width: 100%; text-align: center; }
+    .setup-eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--sf-blue-l); margin-bottom: 14px; }
+    .setup-title { font-family: var(--font-display); font-size: clamp(26px, 4.4vw, 44px); font-weight: 700; color: #fff; letter-spacing: -0.02em; line-height: 1.1; margin: 0 0 30px; }
+    .setup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px; }
+    .setup-card {
+      position: relative; text-align: left; cursor: pointer; font: inherit; color: #fff;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14);
+      border-top: 2px solid rgba(143,184,255,0.6); border-radius: 14px;
+      padding: 22px 24px 24px;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+    }
+    .setup-card:hover, .setup-card:focus-visible {
+      transform: translateY(-4px); background: rgba(255,255,255,0.10);
+      border-color: rgba(143,184,255,0.6); box-shadow: 0 16px 40px rgba(0,0,0,0.35); outline: none;
+    }
+    .setup-ico { font-size: 22px; line-height: 1; margin-bottom: 13px; }
+    .setup-card-h { font-size: 17px; font-weight: 700; color: #eaf1ff; margin-bottom: 6px; }
+    .setup-card-s { font-size: 13.5px; color: rgba(255,255,255,0.7); line-height: 1.5; }
+    .setup-rec {
+      position: absolute; top: 18px; right: 18px; font-size: 9.5px; font-weight: 800;
+      letter-spacing: 0.12em; text-transform: uppercase; color: #7be8ad;
+      border: 1px solid rgba(95,227,160,0.45); background: rgba(95,227,160,0.08);
+      padding: 3px 9px; border-radius: 999px;
+    }
+    .setup-legend { display: flex; flex-wrap: wrap; gap: 8px 18px; justify-content: center; align-items: center; font-size: 12px; color: rgba(255,255,255,0.66); }
+    .setup-legend b { color: #fff; font-weight: 700; background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; padding: 1px 7px; margin-right: 5px; font-family: var(--font-display); }
+    .setup-legend-note { width: 100%; margin-top: 4px; font-size: 11.5px; color: rgba(255,255,255,0.5); }
+    .setup-legend .tap-only { display: none; }
+    @media (max-width: 640px) {
+      .setup-grid { grid-template-columns: 1fr; }
+      .setup-legend .k-only { display: none; }
+      .setup-legend .tap-only { display: inline; }
+    }
+  </style>
+
 </head>
 <body>
 
@@ -838,19 +884,53 @@
 
   </div><!-- /slide-deck -->
 
-  <!-- ─── CHROME ──────────────────────────────────────────────────── -->
-  <!-- One-time gesture prompt: browsers block audio-with-sound until the user
-       interacts. The first click/key/tap anywhere unlocks narration and hides this. -->
-  <div id="audio-hint" aria-hidden="true"
-       style="position:fixed; bottom:64px; left:50%; transform:translateX(-50%);
-              background:rgba(255,255,255,0.92); color:#06246b; font-size:12px; font-weight:700;
-              letter-spacing:0.02em; padding:8px 16px; border-radius:999px;
-              box-shadow:0 2px 12px rgba(0,0,0,0.18); z-index:300; cursor:pointer;">
-    &#128266; Click anywhere to start narration
+  <!-- ─── PRE-PRESENTATION SETUP ──────────────────────────────────────
+       Shown on load. Picking a card sets the mode AND is the gesture that
+       unlocks audio, so no separate "click to start" prompt is needed.
+       Reopen any time with the gear button or Esc. -->
+  <div id="setup" class="setup-cover">
+    <div class="setup-inner">
+      <div class="setup-eyebrow">Before we start</div>
+      <h2 class="setup-title">How would you like to watch?</h2>
+      <div class="setup-grid">
+        <button class="setup-card" data-auto="1" data-audio="1">
+          <span class="setup-rec">Recommended</span>
+          <div class="setup-ico">&#9654; &#128266;</div>
+          <div class="setup-card-h">Auto-play &middot; with narration</div>
+          <div class="setup-card-s">Sit back &mdash; it runs and narrates itself.</div>
+        </button>
+        <button class="setup-card" data-auto="1" data-audio="0">
+          <div class="setup-ico">&#9654; &#128263;</div>
+          <div class="setup-card-h">Auto-play &middot; silent</div>
+          <div class="setup-card-s">Runs itself. No sound.</div>
+        </button>
+        <button class="setup-card" data-auto="0" data-audio="1">
+          <div class="setup-ico">&#128070; &#128266;</div>
+          <div class="setup-card-h">Manual &middot; with narration</div>
+          <div class="setup-card-s">You click through. Each slide narrates.</div>
+        </button>
+        <button class="setup-card" data-auto="0" data-audio="0">
+          <div class="setup-ico">&#128070; &#128263;</div>
+          <div class="setup-card-h">Manual &middot; silent</div>
+          <div class="setup-card-s">You click through. No sound.</div>
+        </button>
+      </div>
+      <div class="setup-legend">
+        <span class="k-only"><b>&rarr;</b> Next</span>
+        <span class="k-only"><b>&larr;</b> Back</span>
+        <span class="k-only"><b>P</b> Play / Pause</span>
+        <span class="k-only"><b>M</b> Mute</span>
+        <span class="setup-legend-note k-only">Press any arrow to take over from auto-play</span>
+        <span class="tap-only">Tap the &lsaquo; &rsaquo; arrows to move &middot; &#9881; to change mode</span>
+      </div>
+    </div>
   </div>
+
+  <!-- ─── CHROME ──────────────────────────────────────────────────── -->
   <div class="section-label" id="section-label"></div>
   <div class="slide-dots" id="dots"></div>
   <div class="slide-controls">
+    <button class="slide-btn" id="setup-btn" title="How to watch (Esc)">&#9881;</button>
     <button class="slide-btn" id="mute-btn" title="Mute narration">&#128266;</button>
     <button class="slide-btn" id="autoplay-btn" title="Autoplay">&#9654;</button>
     <button class="slide-btn" id="replay-embed" title="Replay animation" style="display:none;">&#8635;</button>
@@ -980,8 +1060,16 @@
     prevBtn.addEventListener('click', () => { userPause(); reverse(); });
     nextBtn.addEventListener('click', () => { userPause(); advance(); });
     document.addEventListener('keydown', e => {
-      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { userPause(); advance(); }
-      if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   { userPause(); reverse(); }
+      if (setupOpen) return;                       // setup overlay up — ignore deck keys
+      switch (e.key) {
+        case 'ArrowRight': case 'ArrowDown': case ' ': case 'Spacebar':
+          e.preventDefault(); userPause(); advance(); break;
+        case 'ArrowLeft': case 'ArrowUp':
+          e.preventDefault(); userPause(); reverse(); break;
+        case 'p': case 'P': setAutoplay(!autoplayOn); break;   // Play / Pause auto
+        case 'm': case 'M': toggleMute(); break;
+        case 'Escape': showSetup(); break;                     // reopen the mode picker
+      }
     });
     // Iframe relays arrow keys up here when it has focus (e.g. after click-trace),
     // so the deck-wide flow keeps working even when the user has clicked inside it.
@@ -1092,7 +1180,7 @@
     // exists. Filenames follow SxxFyy — xx = slide number, yy = frame. Add files
     // to assets/audio/ and list them in AUDIO_FILES to bring more beats online.
     // Browsers block audio-with-sound until a user gesture, so playback is gated
-    // behind audioUnlocked, flipped true on the first click/key/tap (see below).
+    // behind audioUnlocked, flipped true when a mode is chosen on the setup overlay.
     const AUDIO_FILES = new Set([
       'S01F00', 'S02F00', 'S03F00', 'S04F00',
       'S05F01', 'S05F02', 'S05F03',
@@ -1124,11 +1212,12 @@
       muteBtn.innerHTML = muted ? '&#128263;' : '&#128266;';
       muteBtn.title = muted ? 'Unmute narration' : 'Mute narration';
     }
-    muteBtn.addEventListener('click', () => {
+    function toggleMute() {
       muted = !muted;
       localStorage.setItem('deckMuted', muted ? '1' : '0');
       applyMute();
-    });
+    }
+    muteBtn.addEventListener('click', toggleMute);
     applyMute();
 
     // The clip for the current beat, or null if none is on file.
@@ -1154,15 +1243,37 @@
       }
       narration.play().catch(() => {});            // ignore transient play() rejections
     }
-    function unlockAudio() {
-      if (audioUnlocked) return;
-      audioUnlocked = true;
-      const hint = document.getElementById('audio-hint');
-      if (hint) hint.style.display = 'none';
-      playBeatAudio();                             // start the clip for wherever we are
+    // ── Pre-presentation setup overlay ───────────────────────────────
+    // The card click is the user gesture that unlocks audio, so choosing a
+    // mode and unlocking sound happen together — no separate prompt needed.
+    // Reopening mid-show (gear / Esc) re-applies the chosen mode from the
+    // current slide rather than restarting the deck.
+    const setupEl = document.getElementById('setup');
+    let setupOpen = true;
+    function showSetup() {
+      setupOpen = true;
+      setAutoplay(false);
+      narration.pause();
+      setupEl.style.display = 'flex';
     }
-    ['click', 'keydown', 'touchstart'].forEach(ev =>
-      document.addEventListener(ev, unlockAudio, { once: true, capture: true }));
+    function startDeck(auto, withAudio) {
+      muted = !withAudio;
+      localStorage.setItem('deckMuted', muted ? '1' : '0');
+      applyMute();
+      audioUnlocked = true;
+      setupOpen = false;
+      setupEl.style.display = 'none';
+      if (auto) {
+        setAutoplay(true);     // restarts the current clip and drives the advance
+      } else {
+        setAutoplay(false);
+        playBeatAudio();       // narrate the current slide (silent if muted)
+      }
+    }
+    setupEl.querySelectorAll('.setup-card').forEach(card =>
+      card.addEventListener('click', () =>
+        startDeck(card.dataset.auto === '1', card.dataset.audio === '1')));
+    document.getElementById('setup-btn').addEventListener('click', showSetup);
 
     go(0);
   </script>
