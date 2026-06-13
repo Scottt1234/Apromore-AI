@@ -1,0 +1,2696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Layers of Process Intelligence · Apromore</title>
+  <link rel="stylesheet" href="tokens.css" />
+  <style>
+    /* ───────────────────────────────────────────────────────────────
+       The Layers of Process Intelligence — arrow-key walkthrough.
+       Single-file, no external JS libraries. Built on the Salesforce
+       2026 token palette (tokens.css), matching the deck's dark slides
+       and the process-reality.html interaction model.
+
+       Six slim layer cards (Process Mining → Monitor) sit above a
+       full-width Conversational Interface pillar that underpins them
+       all. Arrow keys step through 7 focus states plus a closing frame
+       that lights the whole stack; each focus state closes the previous
+       large card and raises the next, each hosting its own
+       self-contained animation scene.
+       ─────────────────────────────────────────────────────────────── */
+    html, body { margin: 0; }
+    html { height: 100%; }
+    body {
+      height: 100%; overflow: hidden;
+      /* Match the deck's .sd slide background — same gradient stack used on every dark slide. */
+      background:
+        radial-gradient(80% 60% at 82% -4%, rgba(20,86,220,0.42), transparent 60%),
+        radial-gradient(70% 60% at 4% 104%, rgba(10,60,200,0.32), transparent 60%),
+        linear-gradient(165deg, #04102f 0%, #061d52 60%, #0a3aa0 130%);
+      background-attachment: fixed;
+      font-family: var(--font-body); color: #fff;
+    }
+    .hl { color: var(--sf-blue-l); }
+
+    /* ── App shell: top (caption + rail) / bottom (big card stage) ── */
+    #app { position: fixed; inset: 0; display: flex; flex-direction: column; z-index: 1; }
+    #top { flex: 0 0 auto; }
+    #bottom { flex: 1 1 auto; position: relative; min-height: 0; padding: 4px 48px 84px; }
+
+    /* ── Brand pill (hidden in embed mode — deck shows its own) ── */
+    .brand {
+      position: fixed; top: 26px; left: 30px; z-index: 8;
+      display: inline-flex; align-items: center; gap: 10px;
+      background: rgba(255,255,255,0.94); border-radius: 40px; padding: 7px 15px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.35);
+    }
+    .brand .nm { font-size: 12px; font-weight: 700; color: #5B3BD0; }
+    .brand .x  { font-size: 13px; color: var(--gray-500); }
+    .brand img { display: block; }
+    body.embed .brand { display: none; }
+    /* In the deck, the parent supplies slide dots, counter and prev/next arrows, and the
+       active rail card signals the current layer — so hide our duplicate bottom chrome. */
+    body.embed #nav, body.embed #progress { display: none; }
+
+    /* ── Caption stack — mirrors process-reality.html / deck slide-body ── */
+    /* top padding matches process-reality.html's caption (56px) — the higher of the
+       deck's two patterns (foundation slide-body sits lower at 68px) — so an embedded
+       slide 6 lines up with the process-reality slide it follows. */
+    #caption { padding: 56px 48px 0; max-width: 1080px; margin: 0 auto; width: 100%; }
+    #cap-eyebrow {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--sf-blue-l); margin-bottom: 10px;
+    }
+    #cap-title {
+      font-family: var(--font-body);
+      font-size: clamp(26px, 3vw, 38px); font-weight: 700; line-height: 1.15;
+      letter-spacing: -0.025em; color: #fff; margin: 0 0 12px;
+    }
+    #cap-sub {
+      font-size: 16px; line-height: 1.7; color: rgba(255,255,255,0.66);
+      max-width: 920px; margin: 0; min-height: 24px;
+      transition: opacity 0.35s ease;
+    }
+    /* Caption bounce on every step transition — eyebrow, title and sub animate together,
+       matching process-reality.html (only the caption bounces; cards/content do not). */
+    @keyframes piTitleIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+    .cap-bounce { animation: piTitleIn 0.7s cubic-bezier(0,0,0.2,1) both; }
+
+    /* ── Layer rail ── */
+    #rail-wrap { max-width: 1080px; margin: 22px auto 0; padding: 0 48px; }
+    #rail { display: flex; gap: 14px; align-items: stretch; }
+    .pi-card {
+      --c: #8fb8ff;
+      flex: 1 1 0; min-width: 0; position: relative; cursor: pointer; text-align: center;
+      border: 1px solid rgba(143,184,255,0.55);
+      border-top: 2px solid rgba(143,184,255,0.55);
+      border-radius: 8px;
+      background: rgba(143,184,255,0.12);
+      padding: 10px 12px; opacity: 0.5;
+      transition: opacity 0.35s ease, transform 0.2s ease,
+                  border-color 0.2s ease, background 0.2s ease;
+    }
+    .pi-card .pi-num {
+      font-family: var(--font-display); font-size: 12px; font-weight: 700;
+      letter-spacing: 0.08em; color: var(--sf-blue-l); opacity: 0.55;
+    }
+    /* card title — white, centred; sized to keep "Recommendation" on a single line */
+    .pi-card .pi-name { font-size: 15px; font-weight: 700; color: #fff; margin-top: 4px; line-height: 1.2; text-align: center; }
+    .pi-card .pi-tag {
+      display: inline-block; margin-top: 6px; font-size: 9px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.6);
+      border: 1px solid rgba(255,255,255,0.2); border-radius: 999px; padding: 2px 8px;
+    }
+    /* flow connector between cards */
+    .pi-card:not(:last-child)::after {
+      content: '\203A'; position: absolute; right: -10px; top: 50%; transform: translateY(-50%);
+      font-size: 18px; line-height: 1; font-weight: 400; color: rgba(255,255,255,0.35); z-index: 3;
+    }
+    .pi-card.active {
+      opacity: 1; transform: translateY(-4px);
+      border-color: rgba(143,184,255,0.95);
+      border-top-color: rgba(143,184,255,1);
+      background: rgba(143,184,255,0.28);
+    }
+    .pi-card.done { opacity: 0.78; }
+
+    /* ── Conversational Interface pillar (the foundation) ── */
+    #pillar-wrap { max-width: 1080px; margin: 16px auto 0; padding: 0 48px; position: relative; }
+    /* little bracket showing it underpins the rail above */
+    #pillar-wrap::before {
+      content: ''; position: absolute; left: 48px; right: 48px; top: -9px; height: 8px;
+      border: 1px solid rgba(255,255,255,0.14); border-bottom: none; border-radius: 6px 6px 0 0;
+      opacity: 0.6;
+    }
+    #pillar {
+      --c: #8fb8ff; cursor: pointer; position: relative;
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      border: 1px solid rgba(143,184,255,0.55);
+      border-top: 2px solid rgba(143,184,255,0.55);
+      border-radius: 8px;
+      background: rgba(143,184,255,0.12);
+      padding: 9px 16px; opacity: 0.5;
+      transition: opacity 0.35s ease, transform 0.2s ease,
+                  border-color 0.2s ease, background 0.2s ease;
+    }
+    /* just the (centred, white) title — no number or tag */
+    #pillar .pi-name { font-size: 16px; font-weight: 700; color: #fff; line-height: 1.2; text-align: center; }
+    #pillar.active {
+      opacity: 1; transform: translateY(-3px);
+      border-color: rgba(143,184,255,0.95);
+      border-top-color: rgba(143,184,255,1);
+      background: rgba(143,184,255,0.28);
+    }
+
+    /* ── Big animation card ── styled like the deck's slide-8 cards (clean & simple):
+       flat fill, 1px border, 2px electric-blue top accent, no resting shadow. The
+       electric-blue accent contrasts with the cloud-blue process cards above. */
+    .pi-big {
+      --c: #8fb8ff; position: absolute; inset: 24px 48px 84px;
+      max-width: 944px; margin: 0 auto; left: 0; right: 0;
+      display: flex; flex-direction: column;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-top: 2px solid rgba(6,106,254,0.42);
+      border-radius: 8px; overflow: hidden;
+      /* Shared card fill — deep navy, sourced from the Conversational Interface card so
+         all six animation cards read as one family (the one hard rule of the brief).
+         The .pi-big-stage carries no background of its own, so the navy fills
+         edge-to-edge inside the card border. */
+      background: #04102f;
+      opacity: 0; transform: translateY(46px) scale(0.985); pointer-events: none;
+      transition: opacity 0.5s cubic-bezier(0.2,0.8,0.2,1),
+                  transform 0.6s cubic-bezier(0.2,0.8,0.2,1);
+    }
+    .pi-big.active { opacity: 1; transform: none; pointer-events: auto; }
+    .pi-big.closing { opacity: 0; transform: translateY(34px) scale(0.99); }
+
+    .pi-big-head { flex: 0 0 auto; display: flex; align-items: center; gap: 16px; padding: 18px 24px 14px; }
+    .pi-big-num {
+      font-family: var(--font-display); font-size: 22px; font-weight: 700;
+      color: var(--c); letter-spacing: 0.04em; line-height: 1;
+    }
+    .pi-big-headtext { flex: 1 1 auto; min-width: 0; }
+    .pi-big-name { font-size: 19px; font-weight: 700; color: #fff; line-height: 1.15; }
+    .pi-big-desc { font-size: 13px; color: rgba(255,255,255,0.66); line-height: 1.5; margin-top: 4px; max-width: 760px; }
+    .pi-big-tag {
+      flex: 0 0 auto; align-self: flex-start; font-size: 9.5px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase; color: var(--c);
+      border: 1px solid color-mix(in srgb, var(--c) 50%, transparent); border-radius: 999px; padding: 4px 11px;
+    }
+
+    /* animation slot fills the whole big card (no header/text) */
+    .pi-big-stage {
+      flex: 1 1 auto; min-height: 0; position: relative;
+      margin: 12px; border-radius: 12px; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ── Placeholder animation slot ── */
+    .pi-slot {
+      position: absolute; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 12px; text-align: center;
+      border: 1.5px dashed color-mix(in srgb, var(--c) 40%, rgba(255,255,255,0.18));
+      border-radius: 12px;
+      background:
+        radial-gradient(60% 80% at 50% 45%, color-mix(in srgb, var(--c) 12%, transparent), transparent 70%),
+        rgba(255,255,255,0.015);
+    }
+    .pi-slot-ic {
+      width: 52px; height: 52px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent);
+      border: 1px solid color-mix(in srgb, var(--c) 45%, transparent);
+      animation: slotPulse 2.6s ease-in-out infinite;
+    }
+    @keyframes slotPulse {
+      0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--c) 40%, transparent); }
+      50%      { box-shadow: 0 0 0 12px transparent; }
+    }
+
+    /* ── Step 0 · chapter-break mode: the question alone, centered like a
+       chapter page; rail and stage wait for the first advance ── */
+    #app.intro-mode { justify-content: center; }
+    #app.intro-mode #bottom { display: none; }
+    #app.intro-mode #caption { text-align: center; padding-bottom: 10vh; }
+    #app.intro-mode #cap-title { font-size: clamp(34px, 4.6vw, 58px); letter-spacing: -0.03em; line-height: 1.1; }
+    #cap-title .hl { color: var(--sf-blue-l); }
+    #app.intro-mode #cap-sub { margin-left: auto; margin-right: auto; }
+    /* the question stands alone — no eyebrow, no sub */
+    #app.intro-mode #cap-eyebrow, #app.intro-mode #cap-sub { display: none; }
+    /* a breath before the chapter question lands — entry was too abrupt */
+    #app.intro-mode .cap-bounce { animation-delay: 0.5s; }
+    #app.intro-mode #rail-wrap, #app.intro-mode #pillar-wrap { display: none; }
+
+    /* ── Final frame · the whole stack, lit ── answers the step-0 question.
+       The stage closes, caption + rail + pillar centre in the freed space,
+       and every card sits at full strength for the first time. One soft
+       pulse travels the rail left to right (see it run, then ask), once. ── */
+    #app.finale-mode { justify-content: center; }
+    #app.finale-mode #bottom { display: none; }
+    #app.finale-mode #caption { text-align: center; }
+    #app.finale-mode #cap-title { font-size: clamp(30px, 4vw, 52px); letter-spacing: -0.03em; }
+    #app.finale-mode #cap-sub { margin-left: auto; margin-right: auto; }
+    #app.finale-mode #rail-wrap { margin-top: 36px; }
+    #app.finale-mode #pillar-wrap { margin-bottom: 4vh; }
+    #app.finale-mode .pi-card, #app.finale-mode #pillar { opacity: 1; transform: none; }
+    @keyframes finPulse {
+      0%   { box-shadow: 0 0 0 rgba(143,184,255,0); }
+      40%  { box-shadow: 0 0 26px rgba(143,184,255,0.55); border-color: rgba(143,184,255,1); background: rgba(143,184,255,0.28); }
+      100% { box-shadow: 0 0 0 rgba(143,184,255,0); }
+    }
+    /* the pulse waits for .finale-go (added once the slide-down has landed) */
+    #app.finale-mode.finale-go .pi-card, #app.finale-mode.finale-go #pillar { animation: finPulse 1.05s ease both; }
+    #app.finale-mode .pi-card:nth-child(1) { animation-delay: 0.15s; }
+    #app.finale-mode .pi-card:nth-child(2) { animation-delay: 0.30s; }
+    #app.finale-mode .pi-card:nth-child(3) { animation-delay: 0.45s; }
+    #app.finale-mode .pi-card:nth-child(4) { animation-delay: 0.60s; }
+    #app.finale-mode .pi-card:nth-child(5) { animation-delay: 0.75s; }
+    #app.finale-mode .pi-card:nth-child(6) { animation-delay: 0.90s; }
+    #app.finale-mode #pillar { animation-delay: 1.10s; }
+    /* caption fade used by the finale entry choreography */
+    #caption { transition: opacity 0.4s ease; }
+    #caption.cap-hidden { opacity: 0; }
+    /* the finale drops the eyebrow: the typed question carries the context */
+    #app.finale-mode #cap-eyebrow { display: none; }
+    /* the chapter question re-types in white at a smaller scale, then wipes;
+       'Now you can.' answers at full chapter scale in blue */
+    #cap-title .fin-q { font-size: clamp(20px, 2.4vw, 32px); display: inline-block; color: #fff; transition: opacity 0.4s ease; }
+    #cap-title .fin-q.fin-out { opacity: 0; }
+    @media (prefers-reduced-motion: reduce) {
+      #app.finale-mode .pi-card, #app.finale-mode #pillar { animation: none !important; }
+    }
+
+    /* ── Bottom-left progress / bottom-right nav ── */
+    #progress { position: fixed; left: 30px; bottom: 28px; z-index: 6; display: flex; align-items: center; gap: 14px; }
+    #dots { display: flex; gap: 8px; }
+    #dots .dot {
+      width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.25);
+      transition: background 0.3s ease, transform 0.3s ease;
+    }
+    #dots .dot.on { background: #8fb8ff; transform: scale(1.25); }
+    #dots .dot.done { background: rgba(255,255,255,0.55); }
+    #prog-label { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.5); }
+
+    #nav { position: fixed; right: 30px; bottom: 24px; z-index: 6; display: flex; align-items: center; gap: 14px; }
+    #nav .nav-count { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.55); font-variant-numeric: tabular-nums; }
+    #nav button {
+      appearance: none; cursor: pointer; width: 44px; height: 44px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.28); color: #fff;
+      transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease, opacity 0.18s ease;
+    }
+    #nav button:hover { background: rgba(255,255,255,0.16); border-color: rgba(255,255,255,0.5); }
+    #nav button:active { transform: scale(0.94); }
+    #nav button:disabled { opacity: 0.3; cursor: default; }
+
+    /* ═══════════ Task Mining animation — the work between the systems ═══════════
+       Reuses the Process Mining visual language (same System + Engine + map style)
+       but overrides timings so the System and Engine are present from t=0 (carried
+       over from the PM card visually). Three beats:
+         Beat 1 (0–4.6s)    System + Engine appear; dots stream from System into
+                            Engine. Caption: "Process mining can only see what your
+                            systems log."
+         Beat 2 (4.95–9.4s) Caption: "But the real work happens between them...";
+                            extras (Browser/Email/Sheet/Doc) fade in 5.5s, their
+                            activity pulses and dark connectors land during it.
+         Beat 3 (9.75s+)    Connectors brighten + dots stream from extras (10.4s);
+                            after a breath the map grows its new variants (13.5s)
+                            — cause, then effect. */
+    .tm-scene { position: absolute; inset: 0; overflow: hidden; }
+    .tm-scene::before { content: ''; position: absolute; inset: 0; pointer-events: none;
+      background: radial-gradient(54% 62% at 57% 52%, rgba(20,86,220,0.20), transparent 70%); }
+
+    /* TM-specific timings — reuses pm-* classes from the Process Mining card.
+       System + Engine appear quickly at t=0 (carried over visually from PM). */
+    .tm-scene.playing .pm-sys-box   { animation: pmSysIn 0.6s 0.0s cubic-bezier(.22,1,.36,1) both; }
+    .tm-scene.playing .pm-sys-cyl,
+    .tm-scene.playing .pm-sys-cyl-top { animation: pmFade 0.5s 0.3s ease both; }
+    .tm-scene.playing .pm-sys-label { animation: pmFade 0.5s 0.5s ease both; }
+    .tm-scene.playing .pm-rec       { animation: pmRow 0.45s ease both; }
+    .tm-scene.playing .pm-rt        { animation: pmStream 1.4s ease-out infinite; }
+    .tm-scene.playing .pm-eng       { animation: pmFade 0.6s 0.3s ease both; }
+    .tm-scene.playing .pm-eng-halo  { animation: pmEngHalo 0.7s 0.7s ease forwards; }
+    .tm-scene.playing .pm-eng-core  { animation: pmEngPulse 1.6s 0.7s ease-in-out infinite; }
+    .tm-scene.playing .pm-eng-ring  { animation: pmEngRotate 14s 0.7s linear infinite; }
+    .tm-scene.playing .pm-edge      { animation: pmDraw 0.45s ease both; }
+    .tm-scene.playing .pm-node      { animation: pmNode 0.55s cubic-bezier(.22,1,.36,1) both; }
+    .tm-scene.playing .pm-core      { animation: pmFade 0.45s ease both; }
+    .tm-scene.playing .pm-label     { animation: pmFade 0.55s ease both; }
+
+    /* The carry-over process map (System + Engine + spine + alt path + rework1)
+       is visible from frame 1 — no animation. Elements that should appear
+       statically are tagged with .tm-static; that class overrides the default
+       animated state to make them visible immediately.
+       The new Beat-3 variants (3 forward arcs + 1 upper node + 2 connecting
+       edges) DON'T have .tm-static — they animate in at ~15.56s using the
+       same .tm-scene.playing animations defined above (streams 10.4s →
+       breath → variants 13.5s — cause, then effect, at human speed). */
+    .tm-scene .pm-edge.tm-static { opacity: 0.92; stroke-dashoffset: 0; animation: none; }
+    .tm-scene .pm-node.tm-static { opacity: 1; transform: none; animation: none; }
+    .tm-scene .pm-core.tm-static { opacity: 1; animation: none; }
+
+    /* ── TM extras (Beat 2): small panels around the System representing the
+       non-logged tools — Browser, Email, Spreadsheet, Document. Reuse the same
+       glass + cyan-stroke palette as the System/Engine so they read as members
+       of the same family. ── */
+    .tm-extra { opacity: 0; }
+    .tm-extra-box { fill: rgba(143,184,255,0.10); stroke: rgba(143,184,255,0.55); stroke-width: 1.2; }
+    .tm-win-dot { fill: rgba(143,184,255,0.45); }
+    .tm-win-name { fill: rgba(255,255,255,0.66); font: 600 8.5px var(--font-body); letter-spacing: 0.03em; }
+    .tm-ui-div { stroke: rgba(143,184,255,0.28); stroke-width: 1; }
+    .tm-ui { fill: none; stroke: rgba(143,184,255,0.45); stroke-width: 1.1; stroke-linecap: round; stroke-linejoin: round; }
+    .tm-ui-fill { fill: rgba(143,184,255,0.16); }
+    .tm-ui-dot { fill: rgba(143,184,255,0.4); }
+    .tm-scene.playing .tm-extra { animation: pmFade 0.55s ease forwards; }
+    /* Beat 2: the extras are visibly ACTIVE — content lines pulse like live work —
+       but nothing flows out of them. Their connections to the engine exist, dark
+       and empty (tmConnIn), until task mining switches on in Beat 3 (tmConnLive). */
+    .tm-act { fill: rgba(143,184,255,0.6); opacity: 0; }
+    .tm-scene.playing .tm-act { animation: tmActPulse 1.7s ease-in-out infinite; }
+    @keyframes tmActPulse { 0%, 100% { opacity: 0.18; } 50% { opacity: 0.85; } }
+    .tm-conn { stroke: #8fb8ff; stroke-width: 1.3; stroke-dasharray: 4 7; opacity: 0; }
+    .tm-scene.playing .tm-conn { animation: tmConnIn 0.6s ease both, tmConnLive 0.9s ease forwards; }
+    @keyframes tmConnIn  { from { opacity: 0; } to { opacity: 0.22; } }
+    @keyframes tmConnLive { to { opacity: 0.6; } }
+
+    @media (prefers-reduced-motion: reduce) {
+      .tm-scene .pm-sys-box, .tm-scene .pm-sys-cyl, .tm-scene .pm-sys-cyl-top, .tm-scene .pm-sys-label,
+      .tm-scene .pm-rec, .tm-scene .pm-core, .tm-scene .pm-label, .tm-scene .pm-bottle-glow, .tm-scene .pm-alt-glow,
+      .tm-scene .pm-eng, .tm-scene .pm-eng-halo, .tm-scene .tm-extra
+        { opacity: 1 !important; animation: none !important; }
+      .tm-scene .pm-rt    { opacity: 0 !important; animation: none !important; }
+      .tm-scene .tm-act   { opacity: 0.7 !important; animation: none !important; }
+      .tm-scene .tm-conn  { opacity: 0.55 !important; animation: none !important; }
+      .tm-scene .pm-rec   { transform: scaleX(1) !important; animation: none !important; }
+      .tm-scene .pm-edge  { opacity: 0.92 !important; stroke-dashoffset: 0 !important; animation: none !important; }
+      .tm-scene .pm-node  { opacity: 1 !important; transform: none !important; animation: none !important; }
+      .tm-scene .pm-node--bottle, .tm-scene .pm-node--alt { stroke: #ffb24d !important; }
+      .tm-scene .pm-bottle-ring, .tm-scene .pm-alt-ring   { opacity: 0.7 !important; animation: none !important; }
+      .tm-scene .pm-eng-core, .tm-scene .pm-eng-ring      { animation: none !important; transform: none !important; }
+    }
+
+    /* ═══════════ Conversational Interface animation — the few → the many ═══════════
+       Narrated: "Everything you've just seen used to take experts." → two experts → they shrink into an organic
+       whole-org crowd as "Now anyone can ask." types; then "In their own words." + questions. */
+    .cv-scene { position: absolute; inset: 0; display: flex; }
+    /* same soft radial atmosphere the other cards carry over the navy fill */
+    .cv-scene::before { content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+      background: radial-gradient(52% 60% at 50% 52%, rgba(20,86,220,0.18), transparent 70%); }
+    .cv-people { position: relative; flex: 1.7 1 0; overflow: hidden; }
+    /* soft cloud-blue glow behind the crowd (atmosphere / depth) */
+    .cv-people::before { content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+      background: radial-gradient(46% 52% at 50% 62%, rgba(0,179,255,0.14), transparent 72%);
+      opacity: 0; transition: opacity 1.4s ease; }
+    .cv-scene.revealed .cv-people::before { opacity: 1; }
+    .cv-questions { position: relative; flex: 1.2 1 0; min-width: 0; display: flex; flex-direction: column;
+      justify-content: flex-start; padding: 26px 16px 16px; }
+    /* softened divider — a gradient hairline that fades at top & bottom */
+    .cv-questions::before { content: ''; position: absolute; left: 0; top: 9%; bottom: 9%; width: 1px; pointer-events: none;
+      background: linear-gradient(180deg, transparent, rgba(255,255,255,0.16) 22%, rgba(255,255,255,0.16) 78%, transparent); }
+    .cv-qlist { display: flex; flex-direction: column; justify-content: flex-start; gap: 9px; }
+
+    /* typed narration lines — left (cv-narrate) and right (cv-rtitle), same font + size */
+    .cv-narrate, .cv-rtitle { font-family: var(--font-display); font-weight: 700;
+      font-size: clamp(15px, 2.2vw, 20px); letter-spacing: -0.01em; line-height: 1.25; color: #fff; }
+    .cv-narrate { position: absolute; top: 26px; left: 6%; right: 6%; white-space: nowrap; }   /* top matches the right title (cv-questions padding-top) */
+    .cv-narrate.wipe { clip-path: inset(0 0 0 0); animation: cvWipe 0.77s ease forwards; }
+    .cv-rtitle { color: var(--sf-blue-l); margin: 0 0 14px; white-space: nowrap; }   /* one line, top at 26px → same height as the left narration */
+    .cv-hl { color: var(--sf-blue-l); }
+    .cv-caret { display: inline-block; width: 2px; height: 1em; background: var(--sf-blue-l);
+      margin-left: 2px; vertical-align: -2px; animation: cvBlink 1s step-end infinite; }
+
+    /* expert "spotlight" — a soft pool of light under the two experts during act 1 */
+    .cv-spotlight { position: absolute; left: 50%; top: 86%; width: 52%; height: 15%; transform: translate(-50%,-50%);
+      background: radial-gradient(50% 50% at 50% 50%, rgba(0,179,255,0.32), transparent 70%);
+      filter: blur(7px); opacity: 0; transition: opacity 0.9s ease; pointer-events: none; z-index: 0; }
+    .cv-scene.experts .cv-spotlight { opacity: 1; }
+    .cv-scene.revealed .cv-spotlight { opacity: 0; transition: opacity 0.8s ease; }
+
+    /* crowd cloud (organic, absolute positions + per-person depth set inline) */
+    .cv-crowd { position: absolute; inset: 22% 3% 6% 3%; }
+    /* constellation — faint links between near neighbours, behind the people */
+    .cv-net { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; opacity: 0; transition: opacity 1.6s ease; }
+    .cv-scene.revealed .cv-net { opacity: 1; }
+    .cv-net line { stroke: rgba(143,184,255,0.13); stroke-width: 1; vector-effect: non-scaling-stroke; }
+    .cv-dot, .cv-hero-ic { position: absolute; width: 9.6%; aspect-ratio: 1; transform: translate(-50%,-50%); }
+    .cv-dot svg, .cv-hero-ic svg { width: 100%; height: 100%; display: block; fill: currentColor; }
+    .cv-dot { color: #cdd6e1; opacity: 0; z-index: 1; transition: color 0.5s ease, filter 0.5s ease; }   /* the wider org — slightly grey; size/brightness/depth set inline */
+    .cv-dot.asking { color: #ffffff !important; filter: drop-shadow(0 0 9px rgba(255,255,255,0.95)); z-index: 11; }   /* lights up white as it "asks" (kept distinct from the blue experts) */
+    .cv-dot svg { animation: cvFloat 3s ease-in-out infinite; animation-delay: calc(var(--d,0) * 1s); }
+    .cv-scene.revealed .cv-dot { animation: cvFade 1.1s calc(var(--i,0) * 0.05s) ease forwards; }   /* slow fade-in */
+
+    /* the two experts — appear large & centred (.experts), then slowly fly in & shrink (.revealed) */
+    .cv-hero-ic { --amp: 10px; color: var(--sf-blue-l); opacity: 0; z-index: 12;
+      filter: drop-shadow(0 0 12px rgba(0,179,255,0.6));
+      transform: translate(-50%,-50%) translate(var(--sx,0), var(--sy,0)) scale(var(--hs,4.2));
+      transition: transform 2.5s cubic-bezier(0.4,0,0.2,1), opacity 0.9s ease; }
+    .cv-scene.experts .cv-hero-ic { opacity: 1; }
+    .cv-scene.revealed .cv-hero-ic { transform: translate(-50%,-50%) scale(1); }
+    .cv-scene.revealed .cv-hero-ic svg { animation: cvFloat 3s ease-in-out infinite; }
+
+    /* crowd → question pulses (a token travels from a person to each new question) */
+    .cv-link-layer { position: absolute; inset: 0; pointer-events: none; z-index: 6; }
+    .cv-pulse-svg { position: absolute; inset: 0; width: 100%; height: 100%; transition: opacity 0.45s ease; }
+    .cv-pulse-line  { fill: none; stroke: rgba(143,184,255,0.45); stroke-width: 1.3; stroke-dasharray: 3 4; vector-effect: non-scaling-stroke; }
+    .cv-pulse-token { position: absolute; left: 0; top: 0; width: 10px; height: 10px; margin: -5px 0 0 -5px;
+      border-radius: 50%; background: #eaf6ff; box-shadow: 0 0 9px 2px rgba(0,179,255,0.95); }
+    .cv-pulse-halo  { position: absolute; left: 0; top: 0; width: 22px; height: 22px; margin: -11px 0 0 -11px;
+      border-radius: 50%; background: radial-gradient(circle, rgba(0,179,255,0.38), transparent 70%); }
+
+    /* question bubbles (one size larger) — each with a small "asker" avatar */
+    /* question bubbles wear the ask-bar pill style: navy fill, blue border, chat glyph */
+    .cv-q { position: relative; align-self: flex-start; max-width: 100%;
+      display: flex; align-items: flex-start; gap: 10px;
+      background: rgba(10,28,68,0.85); border: 1px solid rgba(143,184,255,0.55);
+      border-radius: 999px; padding: 10px 18px 10px 15px; font-size: 13.5px; line-height: 1.4;
+      color: #fff; box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      animation: cvQIn 0.4s cubic-bezier(0.22,1,0.36,1) both; }
+    .cv-q-av { flex: 0 0 auto; width: 18px; height: 18px; margin-top: 1px;
+      display: flex; align-items: center; justify-content: center; color: #8fb8ff; }
+    .cv-q-av svg { width: 16px; height: 16px; display: block; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round; }
+    .cv-q-av.expert { color: var(--sf-blue-l); }
+    .cv-q-body { flex: 1 1 auto; min-width: 0; }
+    .cv-q .cv-tick { display: inline-block; margin-left: 6px; color: #04E1CB; font-weight: 700; opacity: 0; transition: opacity 0.3s ease; }
+    .cv-q.answered .cv-tick { opacity: 1; }
+
+    @keyframes cvFloat {
+      0%, 100% { transform: translate(0, 0); }
+      25% { transform: translate(calc(var(--amp,8px) * 0.16), calc(var(--amp,8px) * -0.55)); }
+      50% { transform: translate(0, calc(var(--amp,8px) * -1)); }
+      75% { transform: translate(calc(var(--amp,8px) * -0.16), calc(var(--amp,8px) * -0.45)); }
+    }
+    @keyframes cvFade  { from { opacity: 0; transform: translate(-50%,-50%) scale(0.7); } to { opacity: 1; transform: translate(-50%,-50%) scale(1); } }
+    @keyframes cvWipe  { from { clip-path: inset(0 0 0 0); } to { clip-path: inset(0 0 0 100%); } }
+    @keyframes cvQIn   { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    @keyframes cvBlink { 50% { opacity: 0; } }
+
+    @media (prefers-reduced-motion: reduce) {
+      .cv-scene .cv-dot { opacity: 1 !important; transform: translate(-50%,-50%) !important; animation: none !important; }
+      .cv-scene .cv-dot svg { animation: none !important; }
+      .cv-scene .cv-hero-ic { opacity: 1 !important; transform: translate(-50%,-50%) scale(1) !important; transition: none !important; }
+      .cv-narrate.wipe { animation: none !important; }
+    }
+
+    /* ═══════════ Process Mining animation — data → the real process map ═══════════
+       Self-contained: a single source system streams its event log; the records
+       assemble into a clean process flow, which then reveals its real variation —
+       an alternative path, a rework loop and a bottleneck. Everything originates
+       from the one system, keeping the scene scoped to a single source. All drawn
+       in one SVG so panel, engine, graph and labels share a coordinate space. Scoped
+       under .pm-scene; uses the shared pi-cardscene shell + pi-narr narration so it
+       matches cards 3–6. Three beats:
+         Beat 1 (0–3s)   Extract: database appears, ~24 glowing dots stream toward the
+                         compiling-engine icon in the middle.
+         Beat 2 (3–6s)   Compile: engine activates (halo flares, ring rotates, core
+                         pulses); ordered tokens emerge from its right edge; the main
+                         spine builds progressively as those tokens land.
+         Beat 3 (6–9s)   Map:     all variants (alt path, rework, bottleneck flare,
+                         labels) appear in a tight ~0.5s window, not staggered. */
+
+    /* ── source system panel (the database that originates the data) ── */
+    .pm-sys-box   { fill: rgba(143,184,255,0.10); stroke: rgba(143,184,255,0.55); stroke-width: 1.3;
+      opacity: 0; transform-box: fill-box; transform-origin: center; transform: scale(0.96); }
+    .pm-sys-cyl   { fill: none; stroke: #8fb8ff; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round;
+      opacity: 0; }
+    .pm-sys-cyl-top { fill: rgba(143,184,255,0.22); stroke: #8fb8ff; stroke-width: 1.5; opacity: 0; }
+    .pm-sys-label { fill: rgba(255,255,255,0.92); font: 700 13px var(--font-body); letter-spacing: 0.04em; opacity: 0; }
+    .pm-rec       { fill: rgba(143,184,255,0.55); rx: 2; opacity: 0;
+      transform-box: fill-box; transform-origin: left center; transform: scaleX(0);
+      filter: drop-shadow(0 0 2px rgba(143,184,255,0.35)); }
+
+    /* ── compiling engine (Apromore-inspired): central core + 4 orbiting nodes
+       connected by curved arcs into an "orbit ring". The ring rotates slowly while
+       active; the core pulses; the halo brightens when the stream first arrives. ── */
+    .pm-eng       { opacity: 0; }
+    .pm-eng-halo  { fill: rgba(0,179,255,0.06); }
+    .pm-eng-arc   { fill: none; stroke: rgba(143,184,255,0.55); stroke-width: 2; opacity: 0.75; }
+    .pm-eng-orb   { filter: drop-shadow(0 0 6px rgba(143,184,255,0.7)); }
+    .pm-eng-orb-1 { fill: #00B3FF; }   /* top — bright cyan */
+    .pm-eng-orb-2 { fill: #04E1CB; }   /* right — teal accent */
+    .pm-eng-orb-3 { fill: #8fb8ff; }   /* bottom — cloud blue */
+    .pm-eng-orb-4 { fill: #6f9bff; }   /* left — deeper cloud */
+    .pm-eng-core  { fill: #e6f1ff; filter: drop-shadow(0 0 10px rgba(0,179,255,0.85));
+      transform-box: fill-box; transform-origin: center; }
+    .pm-eng-ring  { transform-box: fill-box; transform-origin: center; }
+
+    /* ── streaming dots (Beat 1 → Beat 2): glowing circles flowing from system to
+       engine. Volume is the point — many of them. ── */
+    .pm-rt { fill: #e6f1ff; opacity: 0; filter: drop-shadow(0 0 4px rgba(143,184,255,0.95)); }
+
+    /* ── ordered output tokens (Beat 2): emerge from engine right edge to node
+       positions; brighter and slightly larger than the chaotic input stream ── */
+    .pm-out { fill: #c5e9ff; opacity: 0; filter: drop-shadow(0 0 6px rgba(0,179,255,1)); }
+
+    /* ── process map nodes + cores ── */
+    .pm-node { fill: #0a1c44; stroke: #8fb8ff; stroke-width: 2.4; opacity: 0;
+      transform-box: fill-box; transform-origin: center; transform: scale(0.2);
+      filter: drop-shadow(0 0 6px rgba(143,184,255,0.40)); }
+    .pm-core { fill: #bcd4ff; opacity: 0; }
+
+    /* ── edges (forward / alternative / rework) ── */
+    .pm-edge { fill: none; stroke: #6f9bff; stroke-width: 2.6; stroke-linecap: round;
+      stroke-dasharray: 1 1; stroke-dashoffset: 1; opacity: 0;
+      filter: drop-shadow(0 0 3px rgba(111,155,255,0.45)); }
+    .pm-edge--alt    { stroke: #7aa0ff; stroke-width: 2.2; }
+    .pm-edge--rework { stroke: #7aa0ff; stroke-width: 2.2; }
+
+    /* ── live tokens riding the spine (Beat 2 onward) ── */
+    .pm-tok { fill: #e6f1ff; opacity: 0; filter: drop-shadow(0 0 5px rgba(143,184,255,0.95)); }
+
+    /* ── bottleneck flare + alt-node flare (Beat 3) — both flash amber together ── */
+    .pm-bottle-glow, .pm-alt-glow { fill: rgba(255,160,60,0.18); opacity: 0; }
+    .pm-bottle-ring, .pm-alt-ring { fill: none; stroke: #ffb24d; stroke-width: 2.2; opacity: 0;
+      transform-box: fill-box; transform-origin: center; }
+
+    /* ── feature labels ── */
+    .pm-label { fill: rgba(255,255,255,0.78); font: 700 12px var(--font-body); letter-spacing: 0.03em; opacity: 0; }
+    .pm-label--rework { fill: #ffce93; }
+    .pm-label--bottle { fill: #ffce93; }
+
+    /* ── timeline (fires when .playing is added; per-element delays live inline) ──
+       Visuals overlap the captions (same rule as cards 4–6).
+         Beat 1 (0–4.3s):    caption 0.35–2.65 · system 0.8–2.0 · dots flow from 2.4
+         Beat 2 (4.65–8.4s): caption 4.65–7.4 · engine 5.1, spinning from 5.7
+         Beat 3 (8.75s+):    caption 8.75–11.6 · map builds 9.2–11.8 · flares 12.2 · labels 12.7–13.3
+       Streaming dots loop infinitely (data is always coming in) but their
+       infinite cycle is offset so they only become visible from t=4.3s. */
+    .pm-scene.playing .pm-sys-box   { animation: pmSysIn 0.6s 0.8s cubic-bezier(.22,1,.36,1) both; }
+    .pm-scene.playing .pm-sys-cyl,
+    .pm-scene.playing .pm-sys-cyl-top { animation: pmFade 0.5s 1.1s ease both; }
+    .pm-scene.playing .pm-sys-label { animation: pmFade 0.5s 1.3s ease both; }
+    .pm-scene.playing .pm-rec       { animation: pmRow 0.45s ease both; }
+    .pm-scene.playing .pm-rt        { animation: pmStream 1.4s ease-out infinite; }
+    .pm-scene.playing .pm-out       { animation: pmStream 0.6s ease-out both; }
+    .pm-scene.playing .pm-eng       { animation: pmFade 0.6s 5.1s ease both; }
+    .pm-scene.playing .pm-eng-halo  { animation: pmEngHalo 0.7s 5.7s ease forwards; }
+    .pm-scene.playing .pm-eng-core  { animation: pmEngPulse 1.6s 5.7s ease-in-out infinite; }
+    .pm-scene.playing .pm-eng-ring  { animation: pmEngRotate 14s 5.7s linear infinite; }
+    .pm-scene.playing .pm-node      { animation: pmNode 0.55s cubic-bezier(.22,1,.36,1) both; }
+    .pm-scene.playing .pm-core      { animation: pmFade 0.45s ease both; }
+    .pm-scene.playing .pm-edge      { animation: pmDraw 0.45s ease both; }
+    .pm-scene.playing .pm-tok       { animation: pmFade 0.6s ease forwards, pmTokFlow 3.4s linear infinite; }
+    .pm-scene.playing .pm-label     { animation: pmFade 0.55s ease both; }
+    .pm-scene.playing .pm-bottle-glow,
+    .pm-scene.playing .pm-alt-glow    { animation: pmFade 0.7s 12.2s ease forwards; }
+    .pm-scene.playing .pm-bottle-ring,
+    .pm-scene.playing .pm-alt-ring    { animation: pmRingIn 0.5s 12.2s ease forwards, pmRingPulse 2.4s 12.7s ease-in-out infinite; }
+    /* Beat 3 spine build runs from 12.9s; bottleneck and alt nodes both pop at
+       14.2s (endpoints of the lines growing out of N2). Both warm to amber at
+       15.9s once the spine has fully drawn. */
+    .pm-scene.playing .pm-node--bottle { animation: pmNode 0.55s 10.5s cubic-bezier(.22,1,.36,1) both, pmWarm 0.8s 12.2s ease forwards; }
+    .pm-scene.playing .pm-node--alt    { animation: pmNode 0.55s 10.5s cubic-bezier(.22,1,.36,1) both, pmWarm 0.8s 12.2s ease forwards; }
+
+    @keyframes pmSysIn   { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+    @keyframes pmFade    { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes pmRow     { 0% { opacity: 0; transform: scaleX(0); } 50% { opacity: 1; } 100% { opacity: 1; transform: scaleX(1); } }
+    @keyframes pmStream  { 0% { opacity: 0; transform: translate(0, 0); } 14% { opacity: 1; } 80% { opacity: 0.85; } 100% { opacity: 0; transform: translate(var(--tx, 100px), var(--ty, 0px)); } }
+    @keyframes pmDraw    { 0% { opacity: 1; stroke-dashoffset: 1; } 100% { opacity: 0.92; stroke-dashoffset: 0; } }
+    @keyframes pmNode    { 0% { opacity: 0; transform: scale(0.2); } 60% { opacity: 1; transform: scale(1.12); } 100% { opacity: 1; transform: scale(1); } }
+    @keyframes pmTokFlow { 0% { transform: translate(0, 0); } 100% { transform: translate(var(--tflow, 480px), 0); } }
+    @keyframes pmEngHalo  { to { fill: rgba(0,179,255,0.22); } }
+    @keyframes pmEngPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.25); } }
+    @keyframes pmEngRotate { to { transform: rotate(360deg); } }
+    @keyframes pmWarm    { to { stroke: #ffb24d; } }
+    @keyframes pmRingIn  { from { opacity: 0; } to { opacity: 0.8; } }
+    @keyframes pmRingPulse { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.32); opacity: 0.18; } }
+
+    @media (prefers-reduced-motion: reduce) {
+      .pm-scene .pm-sys-box, .pm-scene .pm-sys-cyl, .pm-scene .pm-sys-cyl-top, .pm-scene .pm-sys-label,
+      .pm-scene .pm-rec, .pm-scene .pm-core, .pm-scene .pm-label, .pm-scene .pm-bottle-glow, .pm-scene .pm-alt-glow, .pm-scene .pm-tok,
+      .pm-scene .pm-eng, .pm-scene .pm-eng-halo
+        { opacity: 1 !important; animation: none !important; }
+      .pm-scene .pm-rt, .pm-scene .pm-out { opacity: 0 !important; animation: none !important; }
+      .pm-scene .pm-rec  { transform: scaleX(1) !important; animation: none !important; }
+      .pm-scene .pm-edge { opacity: 0.92 !important; stroke-dashoffset: 0 !important; animation: none !important; }
+      .pm-scene .pm-node { opacity: 1 !important; transform: none !important; animation: none !important; }
+      .pm-scene .pm-node--bottle, .pm-scene .pm-node--alt { stroke: #ffb24d !important; }
+      .pm-scene .pm-bottle-ring, .pm-scene .pm-alt-ring  { opacity: 0.7 !important; animation: none !important; }
+      .pm-scene .pm-eng-core, .pm-scene .pm-eng-ring { animation: none !important; transform: none !important; }
+    }
+
+    /* ═══════════ Shared scaffolding for cards 3–6 ═══════════
+       A common scene shell (navy glow + full-bleed SVG) and one typed-narration
+       treatment, so every remaining card matches cards 1–2 and the conversational
+       card without re-declaring the basics. Each card layers its own classes on top. */
+    .pi-cardscene { position: absolute; inset: 0; overflow: hidden; }
+    .pi-cardscene::before { content: ''; position: absolute; inset: 0; pointer-events: none;
+      background: radial-gradient(52% 60% at 50% 52%, rgba(20,86,220,0.18), transparent 70%); }
+    .pi-cardsvg { position: relative; width: 100%; height: 100%; display: block; }
+    .pi-narr { position: absolute; top: 20px; left: 28px; right: 28px; z-index: 4;
+      font-family: var(--font-display); font-weight: 700; font-size: clamp(15px, 2.1vw, 20px);
+      letter-spacing: -0.01em; line-height: 1.25; color: #fff; white-space: nowrap; pointer-events: none; }
+    .pi-narr.wipe { animation: piNarrWipe 0.6s ease forwards; }
+    .pi-hl { color: var(--sf-blue-l); }
+    .pi-caret { display: inline-block; width: 2px; height: 1em; background: var(--sf-blue-l);
+      margin-left: 2px; vertical-align: -2px; animation: piNarrBlink 1s step-end infinite; }
+    @keyframes piNarrBlink { 50% { opacity: 0; } }
+    @keyframes piNarrWipe { from { clip-path: inset(0 0 0 0); } to { clip-path: inset(0 0 0 100%); } }
+    @keyframes piFade { from { opacity: 0; } to { opacity: 1; } }
+
+    /* ═══════════ Analysis — scan the carried-over map, then quantify into pills ═══════════
+       Layout: process map (TM final state) is carried over UNCHANGED on the right; the
+       left third (where System+Engine+Extras lived in PM/TM) is now occupied by three
+       large pills — Cost / Time / Resource. Beat 1 sweeps a scan line across the map.
+       Beat 2 introduces the pills and runs their figures up as the caption types —
+       "quantified" means numbers on screen, not placeholders.
+       Beat 3 is purely spatial: the lead cost dot flares and the rest pulse — the
+       map answers "where". */
+
+    /* ── carry-over map (TM final state, visible from frame 1, no animation) ── */
+    .an-map-edge { fill: none; stroke: #6f9bff; stroke-width: 2.6; stroke-linecap: round; opacity: 0.92;
+      filter: drop-shadow(0 0 3px rgba(111,155,255,0.45)); }
+    .an-map-edge--alt    { stroke: #7aa0ff; stroke-width: 2.2; }
+    .an-map-edge--rework { stroke: #7aa0ff; stroke-width: 2.2; }
+    .an-map-node { fill: #0a1c44; stroke: #8fb8ff; stroke-width: 2.4;
+      filter: drop-shadow(0 0 6px rgba(143,184,255,0.40)); }
+    .an-map-core { fill: #bcd4ff; }
+
+    /* ── scan line + trail (Beat 1): sweeps L→R once. The trail is a horizontal gradient
+       behind the leading bright line; together they read as a radar pass. ── */
+    .an-scanwrap { transform: translateX(-280px); opacity: 0; }
+    .an-scanline { stroke: #e6f1ff; stroke-width: 2.5; filter: drop-shadow(0 0 9px rgba(180,220,255,0.95)); }
+    /* Linear sweep so the per-dot reveal delays (computed from x in buildAnalysis)
+       match the bright line's actual position over time. Starts after Beat 1 caption finishes. */
+    .an-scene.playing .an-scanwrap { animation: anScanSweep 2.6s 2.0s linear forwards; }
+    @keyframes anScanSweep {
+      0%   { transform: translateX(-280px); opacity: 0; }
+      8%   { opacity: 1; }
+      92%  { opacity: 1; }
+      100% { transform: translateX(1280px); opacity: 0; }
+    }
+
+    /* ── scattered metric dots (Beat 2). Per-dot delay set inline. ── */
+    .an-dot { opacity: 0; transform-box: fill-box; transform-origin: center; transform: scale(0.2); }
+    .an-scene.playing .an-dot { animation: anDotIn 0.55s cubic-bezier(.22,1,.36,1) both; }
+    @keyframes anDotIn { 0% { opacity: 0; transform: scale(0.2); } 60% { opacity: 1; transform: scale(1.25); } 100% { opacity: 0.85; transform: scale(1); } }
+    .an-dot--cost     { fill: #ff9a6a; filter: drop-shadow(0 0 5px rgba(255,154,106,0.85)); }
+    .an-dot--time     { fill: #8fb8ff; filter: drop-shadow(0 0 5px rgba(143,184,255,0.85)); }
+    .an-dot--resource { fill: #5fe3a0; filter: drop-shadow(0 0 5px rgba(95,227,160,0.75)); }
+
+    /* ── lead cost dot flare (Beat 3, dramatic): big amber glow + expanding ring ── */
+    .an-flare-glow { fill: rgba(255,154,106,0.20); opacity: 0; transform-box: fill-box; transform-origin: center; }
+    .an-flare-ring { fill: none; stroke: #ff9a6a; stroke-width: 2.4; opacity: 0; transform-box: fill-box; transform-origin: center;
+      filter: drop-shadow(0 0 8px rgba(255,154,106,0.85)); }
+    .an-scene.playing .an-flare-glow { animation: anFlareGlowIn 0.9s 9.5s ease forwards, anFlareGlowPulse 2.6s 10.4s ease-in-out infinite; }
+    .an-scene.playing .an-flare-ring { animation: anFlareRingIn 0.7s 9.5s ease forwards, anFlareRingPulse 2.4s 10.2s ease-in-out infinite; }
+    @keyframes anFlareGlowIn    { to { opacity: 1; } }
+    @keyframes anFlareGlowPulse { 0%,100% { opacity: 0.85; } 50% { opacity: 1; } }
+    @keyframes anFlareRingIn    { from { opacity: 0; transform: scale(0.5); } to { opacity: 0.95; transform: scale(1); } }
+    @keyframes anFlareRingPulse { 0%,100% { transform: scale(1); opacity: 0.95; } 50% { transform: scale(1.55); opacity: 0.18; } }
+
+    /* ── softer pulses on representative cost / time / resource dots (Beat 3) ──
+       Single combined animation so per-dot staggering is just one inline animation-delay. */
+    .an-pulse { fill: none; stroke-width: 1.7; opacity: 0; transform-box: fill-box; transform-origin: center; }
+    .an-pulse--cost     { stroke: #ff9a6a; filter: drop-shadow(0 0 6px rgba(255,154,106,0.65)); }
+    .an-pulse--time     { stroke: #8fb8ff; filter: drop-shadow(0 0 6px rgba(143,184,255,0.7)); }
+    .an-pulse--resource { stroke: #5fe3a0; filter: drop-shadow(0 0 6px rgba(95,227,160,0.65)); }
+    .an-scene.playing .an-pulse { animation: anPulseFull 3.0s ease-in-out infinite both; }
+    @keyframes anPulseFull {
+      0%   { opacity: 0;    transform: scale(0.55); }
+      10%  { opacity: 0.85; transform: scale(1);    }
+      50%  { opacity: 0.15; transform: scale(1.45); }
+      100% { opacity: 0.85; transform: scale(1);    }
+    }
+
+    /* ── pills (large, wide, on the LEFT) ── */
+    .an-pill { opacity: 0; }
+    .an-scene.playing .an-pill { animation: anPillIn 0.6s cubic-bezier(.22,1,.36,1) both; }
+    @keyframes anPillIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    .an-pill-bg            { fill: rgba(143,184,255,0.06); stroke: rgba(143,184,255,0.32); stroke-width: 1; }
+    .an-pill-bg--cost      { fill: rgba(255,154,106,0.05); stroke: rgba(255,154,106,0.42); }
+    .an-pill-dot--cost     { fill: #ff9a6a; filter: drop-shadow(0 0 6px rgba(255,154,106,0.9)); }
+    .an-pill-dot--time     { fill: #8fb8ff; filter: drop-shadow(0 0 6px rgba(143,184,255,0.9)); }
+    .an-pill-dot--resource { fill: #5fe3a0; filter: drop-shadow(0 0 6px rgba(95,227,160,0.85)); }
+    .an-pill-label         { fill: rgba(255,255,255,0.78); font: 700 13px var(--font-body); letter-spacing: 0.18em; }
+    .an-pill-fig           { fill: #ffffff; font: 700 40px var(--font-display); letter-spacing: -0.01em; }
+    .an-pill-fig--cost     { fill: #ff9a6a; }
+    .an-pill-sub           { fill: rgba(255,255,255,0.5); font: 600 10.5px var(--font-body); letter-spacing: 0.14em; text-transform: uppercase; }
+    .an-pill-bar-t         { fill: rgba(255,255,255,0.10); }
+    .an-pill-bar-f         { transform-box: fill-box; transform-origin: left center; transform: scaleX(0); }
+    .an-pill-bar-f--cost     { fill: #ff9a6a; }
+    .an-pill-bar-f--time     { fill: #8fb8ff; }
+    .an-pill-bar-f--resource { fill: #5fe3a0; }
+    .an-scene.playing .an-pill-bar-f--cost     { animation: anBarFill 1.0s 5.7s cubic-bezier(.4,0,.2,1) forwards; }
+    .an-scene.playing .an-pill-bar-f--resource { animation: anBarFill 1.0s 6.3s cubic-bezier(.4,0,.2,1) forwards; }
+    .an-scene.playing .an-pill-bar-f--time     { animation: anBarFill 1.0s 6.0s cubic-bezier(.4,0,.2,1) forwards; }
+    @keyframes anBarFill { from { transform: scaleX(0); } to { transform: scaleX(var(--bar, 0.7)); } }
+
+    /* ═══════════ Recommendation — the hotspot feeds AI, AI proposes, you decide ═══════════
+       Continuity: the Analysis map carries over UNCHANGED on the right, its amber cost
+       flare still pulsing on the bottleneck. Human–AI–human: you aim → AI proposes →
+       you decide. Three beats:
+         Beat 1 (0.35–4.9s)  Caption types; priority chips (Cost / Time / Resource) land
+                             in the left column over a NEUTRAL map; the cursor picks
+                             Cost and the map answers — every cost hotspot and the
+                             pulsing bottleneck flare bloom on at once (3.0s).
+         Beat 2 (4.9–10.6s)  Caption swaps; the engine (the PM/TM motif) returns and the
+                             flaring hotspot streams its data INTO it (card 1 reversed);
+                             ordered tokens drop out and a proposal card materialises
+                             beneath — specific fix, mechanism, projected impact in the
+                             Analysis colours.
+         Beat 3 (10.6s+)     Caption swaps; the proposal connects back to the map (dashed
+                             link, green target ring + bolt on the bottleneck, rework
+                             loop ghosts out, flare cools) and Review / Approve appear —
+                             held, unclicked. Nothing applies itself. */
+
+    /* ── cost hotspots + lead flare: hidden until the cursor picks Cost (3.0s),
+       then the whole cost view blooms onto the map at once — the map answering
+       the user's selection. Flare pulses from 3.7s, cools in Beat 3. ── */
+    .rc-spot { fill: #ff9a6a; opacity: 0; transform-box: fill-box; transform-origin: center; transform: scale(0.2);
+      filter: drop-shadow(0 0 5px rgba(255,154,106,0.85)); }
+    .rc-scene.playing .rc-spot { animation: anDotIn 0.55s 3.0s cubic-bezier(.22,1,.36,1) both; }
+    .rc-scene.playing .rc-spot.rc-ghost { animation: anDotIn 0.55s 3.0s cubic-bezier(.22,1,.36,1) both, rcGhost 0.9s 11.3s ease forwards; }
+    .rc-flare-glow { fill: rgba(255,154,106,0.20); opacity: 0; transform-box: fill-box; transform-origin: center; }
+    .rc-flare-ring { fill: none; stroke: #ff9a6a; stroke-width: 2.4; opacity: 0; transform-box: fill-box; transform-origin: center;
+      filter: drop-shadow(0 0 8px rgba(255,154,106,0.85)); }
+    .rc-scene.playing .rc-flare-glow { animation: rcGlowIn 0.7s 3.0s ease forwards, anFlareGlowPulse 2.6s 3.7s ease-in-out infinite, rcFadeOut 0.9s 11.3s ease forwards; }
+    .rc-scene.playing .rc-flare-ring { animation: rcRingBloom 0.7s 3.0s ease forwards, anFlareRingPulse 2.4s 3.7s ease-in-out infinite, rcFadeOut 0.9s 11.3s ease forwards; }
+    @keyframes rcGlowIn { from { opacity: 0; } to { opacity: 0.85; } }
+    @keyframes rcRingBloom { from { opacity: 0; transform: scale(0.5); } to { opacity: 0.95; transform: scale(1); } }
+
+    /* ── Beat 1: priority selector — YOU aim the AI before it moves ── */
+    .rc-prio { opacity: 0; }
+    .rc-scene.playing .rc-prio { animation: piFade 0.5s 1.9s ease both; }
+    .rc-pchip-box { fill: rgba(255,255,255,0.04); stroke: rgba(255,255,255,0.16); stroke-width: 1.2; }
+    .rc-pchip-label { fill: rgba(255,255,255,0.78); font: 700 13px var(--font-body); letter-spacing: 0.04em; }
+    .rc-pdot--cost { fill: #ff9a6a; } .rc-pdot--time { fill: #8fb8ff; } .rc-pdot--resource { fill: #5fe3a0; }
+    .rc-scene.playing .rc-pchip--sel .rc-pchip-box   { animation: rcPrioOn 0.5s 3.0s ease forwards; }
+    .rc-scene.playing .rc-pchip--sel .rc-pchip-label { animation: rcPrioLabelOn 0.5s 3.0s ease forwards; }
+    @keyframes rcPrioOn { to { fill: rgba(255,154,106,0.14); stroke: #ff9a6a; } }
+    @keyframes rcPrioLabelOn { to { fill: #ffffff; } }
+    /* the cursor that makes the choice (fades out once the choice is made) */
+    .rc-prio-cursor { opacity: 0; }
+    .rc-prio-cursor path { fill: #ffffff; stroke: #04102f; stroke-width: 1; }
+    .rc-scene.playing .rc-prio-cursor { animation: rcCursorIn 0.4s 2.5s ease forwards, rcClick 0.5s 2.9s ease, rcFadeOut 0.5s 3.8s ease forwards; }
+    @keyframes rcClick { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(-2px, -2px) scale(0.9); } }
+    /* the map answers: a single surge on the most expensive hotspot */
+    .rc-prio-surge { fill: none; stroke: #ff9a6a; stroke-width: 2.5; opacity: 0; transform-box: fill-box; transform-origin: center;
+      filter: drop-shadow(0 0 8px rgba(255,154,106,0.8)); }
+    .rc-scene.playing .rc-prio-surge { animation: rcSurge 1.1s 3.3s ease-out forwards; }
+    @keyframes rcSurge { 0% { opacity: 0; transform: scale(0.55); } 25% { opacity: 0.95; } 100% { opacity: 0; transform: scale(1.9); } }
+
+    /* ── engine (PM motif, Beat 2) + hotspot→engine stream + engine→card tokens ── */
+    .rc-scene.playing .pm-eng      { animation: pmFade 0.6s 5.6s ease both; }
+    .rc-scene.playing .pm-eng-halo { animation: pmEngHalo 0.7s 6.0s ease forwards; }
+    .rc-scene.playing .pm-eng-core { animation: pmEngPulse 1.6s 6.0s ease-in-out infinite; }
+    .rc-scene.playing .pm-eng-ring { animation: pmEngRotate 14s 6.0s linear infinite; }
+    .rc-scene.playing .rc-rt  { animation: pmStream 1.3s ease-out infinite; }
+    .rc-scene.playing .rc-out { animation: pmStream 0.55s ease-out both; }
+
+    /* ── proposal card (Beat 2) ── */
+    .rc-panel { fill: rgba(10,28,68,0.72); stroke: rgba(111,155,255,0.4); stroke-width: 1.4; opacity: 0;
+      transform-box: fill-box; transform-origin: center; transform: translateY(10px) scale(0.97); }
+    .rc-tag   { fill: #bcd4ff; font: 700 9.5px var(--font-body); letter-spacing: 0.12em; opacity: 0; }
+    .rc-title { fill: #ffffff; font: 700 19px var(--font-display); opacity: 0; }
+    .rc-mech  { fill: rgba(255,255,255,0.62); font: 600 12.5px var(--font-body); opacity: 0; }
+    .rc-div   { stroke: rgba(255,255,255,0.12); stroke-width: 1; opacity: 0; }
+    .rc-proj  { fill: rgba(255,255,255,0.45); font: 700 9.5px var(--font-body); letter-spacing: 0.16em; opacity: 0; }
+    .rc-row   { opacity: 0; }
+    .rc-row-label { fill: rgba(255,255,255,0.66); font: 600 12.5px var(--font-body); letter-spacing: 0.04em; }
+    .rc-row-val   { font: 700 15px var(--font-display); }
+    .rc-val--cost     { fill: #ff9a6a; }
+    .rc-val--time     { fill: #8fb8ff; }
+    .rc-val--resource { fill: #5fe3a0; }
+    .rc-row-dot--cost     { fill: #ff9a6a; filter: drop-shadow(0 0 5px rgba(255,154,106,0.85)); }
+    .rc-row-dot--time     { fill: #8fb8ff; filter: drop-shadow(0 0 5px rgba(143,184,255,0.85)); }
+    .rc-row-dot--resource { fill: #5fe3a0; filter: drop-shadow(0 0 5px rgba(95,227,160,0.75)); }
+    .rc-scene.playing .rc-panel { animation: rcCardIn 0.6s 7.7s cubic-bezier(.22,1,.36,1) both; }
+    .rc-scene.playing .rc-tag   { animation: piFade 0.5s 8.0s ease both; }
+    .rc-scene.playing .rc-title { animation: rcRise 0.5s 8.2s ease both; }
+    .rc-scene.playing .rc-mech  { animation: rcRise 0.5s 8.4s ease both; }
+    .rc-scene.playing .rc-div   { animation: piFade 0.4s 8.55s ease both; }
+    .rc-scene.playing .rc-proj  { animation: piFade 0.5s 8.65s ease both; }
+    .rc-scene.playing .rc-row   { animation: rcRise 0.5s ease both; }  /* per-row inline delays */
+
+    /* ── Beat 3: proposal → map preview (dashed link, target ring + bolt, rework ghosts) ── */
+    .rc-link { fill: none; stroke: #5fe3a0; stroke-width: 1.8; stroke-dasharray: 6 7; opacity: 0;
+      filter: drop-shadow(0 0 4px rgba(95,227,160,0.5)); }
+    .rc-target-ring { fill: none; stroke: #5fe3a0; stroke-width: 2.4; stroke-dasharray: 7 6; opacity: 0;
+      transform-box: fill-box; transform-origin: center; filter: drop-shadow(0 0 7px rgba(95,227,160,0.7)); }
+    .rc-bolt { opacity: 0; transform-box: fill-box; transform-origin: center; }
+    .rc-bolt-bg { fill: #0a1c44; stroke: #5fe3a0; stroke-width: 1.6; }
+    .rc-bolt-glyph { fill: #5fe3a0; }
+    .rc-fixlabel { fill: #9defc4; font: 700 12px var(--font-body); letter-spacing: 0.06em; opacity: 0; }
+    .rc-scene.playing .rc-ghost { animation: rcGhost 0.9s 11.3s ease forwards; }
+    .rc-scene.playing .rc-link { animation: rcDashIn 0.7s 11.4s ease forwards; }
+    .rc-scene.playing .rc-target-ring { animation: rcDashIn 0.6s 11.6s ease forwards, rcRingSpin 26s 11.6s linear infinite; }
+    .rc-scene.playing .rc-bolt { animation: rcPopIn 0.5s 11.9s cubic-bezier(.22,1,.36,1) both; }
+    .rc-scene.playing .rc-fixlabel { animation: piFade 0.5s 12.1s ease both; }
+
+    /* ── Beat 3: decision state — Review / Approve, cursor hovering, held ── */
+    .rc-btn { opacity: 0; }
+    .rc-btn-box { fill: none; stroke: rgba(255,255,255,0.4); stroke-width: 1.3; }
+    .rc-approve-box { fill: #1356d6; stroke: #6f9bff; stroke-width: 1.3; }
+    .rc-btn-label { fill: #fff; font: 700 12px var(--font-body); letter-spacing: 0.04em; }
+    .rc-cursor { opacity: 0; }
+    .rc-cursor path { fill: #ffffff; stroke: #04102f; stroke-width: 1; }
+    .rc-scene.playing .rc-btn { animation: piFade 0.5s 12.3s ease both; }
+    .rc-scene.playing .rc-approve-box { animation: rcApprove 1.8s 13.1s ease-in-out infinite; }
+    .rc-scene.playing .rc-cursor { animation: rcCursorIn 0.5s 12.7s ease forwards, rcCursorNudge 1.6s 13.3s ease-in-out infinite; }
+
+    @keyframes rcCardIn { from { opacity: 0; transform: translateY(10px) scale(0.97); } to { opacity: 1; transform: none; } }
+    @keyframes rcRise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    @keyframes rcFadeOut { to { opacity: 0; } }
+    @keyframes rcGhost { to { opacity: 0.15; } }
+    @keyframes rcDashIn { from { opacity: 0; } to { opacity: 0.95; } }
+    @keyframes rcRingSpin { to { transform: rotate(360deg); } }
+    @keyframes rcPopIn { 0% { opacity: 0; transform: scale(0.4); } 60% { opacity: 1; transform: scale(1.15); } 100% { opacity: 1; transform: scale(1); } }
+    @keyframes rcApprove { 0%, 100% { opacity: 1; } 50% { opacity: 0.72; } }
+    @keyframes rcCursorIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes rcCursorNudge { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(0, -3px); } }
+
+    /* ═══════════ Simulation — clone it, replay the fix, prove it ═══════════
+       Continuity: the map carries over (rework loop intact — the fix is approved but
+       not yet applied) and is wrapped in a dashed DIGITAL TWIN boundary: the change
+       is tested on a copy, never on the business. Three beats:
+         Beat 1 (0.35–4.9s)  Caption types; the sandbox boundary draws around the map,
+                             a shimmer marks the copy, the DIGITAL TWIN tag lands.
+         Beat 2 (4.9–10.6s)  Caption swaps; the fix applies inside the twin (green
+                             target ring on the bottleneck, rework loop dissolves) and
+                             simulated cases replay along the spine while the counter
+                             runs to 312,847 — the case volume from Process Reality.
+         Beat 3 (10.6s+)     Caption swaps; results panel — before → after across cost,
+                             time and resource, marked PROJECTED, figures matching the
+                             Recommendation card; verdict: bottleneck cleared. */
+    .si-box { fill: rgba(143,184,255,0.03); stroke: rgba(143,184,255,0.45); stroke-width: 1.6; stroke-dasharray: 8 7; opacity: 0; }
+    .si-scene.playing .si-box { animation: rcDashIn 0.8s 2.2s ease forwards; }
+    .si-shimmer { fill: rgba(180,220,255,0); pointer-events: none; }
+    .si-scene.playing .si-shimmer { animation: siShimmer 0.9s 2.7s ease; }
+    @keyframes siShimmer { 0%, 100% { fill: rgba(180,220,255,0); } 40% { fill: rgba(180,220,255,0.10); } }
+    .si-twin-tag-bg { fill: rgba(10,28,68,0.9); stroke: rgba(143,184,255,0.45); stroke-width: 1; opacity: 0; }
+    .si-twin-tag { fill: #bcd4ff; font: 700 10px var(--font-body); letter-spacing: 0.16em; opacity: 0; }
+    .si-scene.playing .si-twin-tag-bg, .si-scene.playing .si-twin-tag { animation: piFade 0.5s 3.1s ease both; }
+    /* Beat 2 — the fix lands in the twin */
+    .si-ring { fill: none; stroke: #5fe3a0; stroke-width: 2.4; stroke-dasharray: 7 6; opacity: 0; transform-box: fill-box; transform-origin: center;
+      filter: drop-shadow(0 0 7px rgba(95,227,160,0.7)); }
+    .si-scene.playing .si-ring { animation: rcDashIn 0.5s 5.8s ease forwards, rcRingSpin 26s 5.8s linear infinite; }
+    /* the fix removes variants: rework loop, upper detour, top-right arc all dissolve */
+    .si-scene.playing .si-gone { animation: rcFadeOut 0.9s 6.2s ease forwards; }
+    /* simulated cases ride the spine AND the remaining variants (animateMotion paths);
+       motion free-runs from load — visibility is gated to Beat 2 */
+    .si-simtok { fill: #c5e9ff; opacity: 0; filter: drop-shadow(0 0 5px rgba(0,179,255,0.9)); }
+    .si-scene.playing .si-simtok { animation: piFade 0.6s 6.6s ease forwards; }
+    .si-count-label { fill: rgba(255,255,255,0.55); font: 700 9.5px var(--font-body); letter-spacing: 0.14em; opacity: 0; }
+    .si-count { fill: #ffffff; font: 700 24px var(--font-display); opacity: 0; }
+    .si-scene.playing .si-count, .si-scene.playing .si-count-label { animation: piFade 0.5s 6.6s ease both; }
+    /* Beat 3 — results panel (left column, same geometry as cards 3–4) */
+    .si-panel { fill: rgba(10,28,68,0.72); stroke: rgba(111,155,255,0.4); stroke-width: 1.4; opacity: 0; transform-box: fill-box; transform-origin: center; transform: translateY(10px) scale(0.97); }
+    .si-scene.playing .si-panel { animation: rcCardIn 0.6s 11.3s cubic-bezier(.22,1,.36,1) both; }
+    .si-ptag { fill: #bcd4ff; font: 700 9.5px var(--font-body); letter-spacing: 0.12em; opacity: 0; }
+    .si-scene.playing .si-ptag { animation: piFade 0.5s 11.6s ease both; }
+    .si-row { opacity: 0; }
+    .si-scene.playing .si-row { animation: rcRise 0.5s ease both; }  /* per-row inline delays */
+    .si-row-label { fill: rgba(255,255,255,0.66); font: 600 12.5px var(--font-body); letter-spacing: 0.04em; }
+    .si-before { fill: rgba(255,255,255,0.38); font: 600 12px var(--font-body); }
+    .si-strike { stroke: rgba(255,255,255,0.35); stroke-width: 1.2; }
+    .si-after { font: 700 16px var(--font-display); }
+    .si-after--cost { fill: #ff9a6a; } .si-after--time { fill: #8fb8ff; } .si-after--resource { fill: #5fe3a0; }
+    .si-row-dot--cost     { fill: #ff9a6a; filter: drop-shadow(0 0 5px rgba(255,154,106,0.85)); }
+    .si-row-dot--time     { fill: #8fb8ff; filter: drop-shadow(0 0 5px rgba(143,184,255,0.85)); }
+    .si-row-dot--resource { fill: #5fe3a0; filter: drop-shadow(0 0 5px rgba(95,227,160,0.75)); }
+    .si-verdict { opacity: 0; }
+    .si-scene.playing .si-verdict { animation: rcRise 0.5s 12.9s ease both; }
+    .si-check-circ { fill: rgba(95,227,160,0.14); stroke: #5fe3a0; stroke-width: 1.6; }
+    .si-check-mark { fill: none; stroke: #5fe3a0; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+    .si-verdict-text { fill: #9defc4; font: 700 12px var(--font-body); }
+
+    /* ═══════════ Monitor — live, checked, drift caught ═══════════
+       Continuity: the map returns WITHOUT the rework loop — the fix from cards 4–5
+       is deployed. Calm green status language over the deck's blue map. Three beats:
+         Beat 1 (0.35–4.9s)  Caption types; LIVE badge lands, real cases flow along
+                             the spine, the monitor panel opens with a steady trace.
+         Beat 2 (4.9–9.3s)   Caption swaps; the three baselines report in — cost,
+                             time, resource at their new levels, all ON TRACK.
+         Beat 3 (9.3s+)      Caption swaps; one node drifts (warms amber, flagged on
+                             the map) and the TIME baseline flips to DRIFT with it. */
+    .mo-live { opacity: 0; }
+    .mo-live-dot { fill: #5fe3a0; transform-box: fill-box; transform-origin: center; filter: drop-shadow(0 0 6px rgba(95,227,160,0.9)); }
+    .mo-live-label { fill: rgba(255,255,255,0.78); font: 700 11px var(--font-body); letter-spacing: 0.16em; }
+    .mo-scene.playing .mo-live { animation: piFade 0.5s 2.0s ease both; }
+    .mo-scene.playing .mo-live-dot { animation: moBlink 2.2s 2.2s ease-in-out infinite; }
+    @keyframes moBlink { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.82); } }
+    /* live cases riding the cleaned-up map — spine and remaining variants */
+    .mo-tok { fill: #c5e9ff; opacity: 0; filter: drop-shadow(0 0 5px rgba(0,179,255,0.85)); }
+    .mo-scene.playing .mo-tok { animation: piFade 0.6s 2.4s ease forwards; }
+    /* monitor panel (left column, same geometry as cards 3–5) */
+    .mo-panel { fill: rgba(10,28,68,0.72); stroke: rgba(111,155,255,0.4); stroke-width: 1.4; opacity: 0; transform-box: fill-box; transform-origin: center; transform: translateY(10px) scale(0.97); }
+    .mo-scene.playing .mo-panel { animation: rcCardIn 0.6s 2.4s cubic-bezier(.22,1,.36,1) both; }
+    .mo-phead { opacity: 0; }
+    .mo-scene.playing .mo-phead { animation: piFade 0.5s 2.8s ease both; }
+    .mo-phead-dot { fill: #5fe3a0; transform-box: fill-box; transform-origin: center; filter: drop-shadow(0 0 5px rgba(95,227,160,0.9)); }
+    .mo-scene.playing .mo-phead-dot { animation: moBlink 2.2s 3.0s ease-in-out infinite; }
+    .mo-phead-label { fill: rgba(255,255,255,0.78); font: 700 10.5px var(--font-body); letter-spacing: 0.14em; }
+    /* steady trace: a bright segment loops along the baseline */
+    .mo-ekg-base { fill: none; stroke: rgba(143,184,255,0.18); stroke-width: 1.6; }
+    .mo-ekg { fill: none; stroke: #5fe3a0; stroke-width: 2; stroke-linecap: round; opacity: 0;
+      filter: drop-shadow(0 0 5px rgba(95,227,160,0.6)); stroke-dasharray: 150 850; }
+    .mo-scene.playing .mo-ekg { animation: piFade 0.5s 3.0s ease forwards, moTrace 3.6s 3.0s linear infinite; }
+    @keyframes moTrace { from { stroke-dashoffset: 1000; } to { stroke-dashoffset: 0; } }
+    /* baselines (Beat 2) */
+    .mo-row { opacity: 0; }
+    .mo-scene.playing .mo-row { animation: rcRise 0.5s ease both; }  /* per-row inline delays */
+    .mo-row-label { fill: rgba(255,255,255,0.66); font: 600 12px var(--font-body); letter-spacing: 0.04em; }
+    .mo-row-val { fill: #ffffff; font: 700 13.5px var(--font-display); }
+    .mo-chip-ok { fill: rgba(95,227,160,0.10); stroke: rgba(95,227,160,0.55); stroke-width: 1; }
+    .mo-chip-ok-t { fill: #7be8ad; font: 700 9px var(--font-body); letter-spacing: 0.1em; }
+    .mo-row-dot--cost { fill: #ff9a6a; } .mo-row-dot--time { fill: #8fb8ff; } .mo-row-dot--resource { fill: #5fe3a0; }
+    /* Beat 3 — drift: the TIME baseline flips while the map node warms + flag pops */
+    .mo-scene.playing .mo-ok-swap { animation: rcFadeOut 0.5s 10.7s ease forwards; }
+    .mo-drift-in { opacity: 0; }
+    .mo-scene.playing .mo-drift-in { animation: piFade 0.5s 10.7s ease both; }
+    .mo-val-drift { fill: #ffc24d; font: 700 13.5px var(--font-display); }
+    .mo-chip-drift { fill: rgba(255,194,77,0.12); stroke: rgba(255,194,77,0.65); stroke-width: 1; }
+    .mo-chip-drift-t { fill: #ffd98a; font: 700 9px var(--font-body); letter-spacing: 0.1em; }
+    /* drift IS a new variant: an amber edge nobody designed draws itself onto the
+       map (the old rework loop creeping back), and cases start using it */
+    .mo-newvar { fill: none; stroke: #ffc24d; stroke-width: 2.2; stroke-linecap: round;
+      stroke-dasharray: 1 1; stroke-dashoffset: 1; opacity: 0;
+      filter: drop-shadow(0 0 5px rgba(255,194,77,0.55)); }
+    .mo-scene.playing .mo-newvar { animation: pmDraw 0.8s 10.2s ease forwards; }
+    .mo-newvar-tok { fill: #ffd98a; opacity: 0; filter: drop-shadow(0 0 5px rgba(255,194,77,0.9)); }
+    .mo-scene.playing .mo-newvar-tok { animation: piFade 0.5s 11.0s ease forwards; }
+    .mo-flag { opacity: 0; }
+    .mo-scene.playing .mo-flag { animation: moFlagIn 0.6s 10.6s cubic-bezier(.22,1,.36,1) forwards; }
+    @keyframes moFlagIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    .mo-flag-pole { stroke: #ffce85; stroke-width: 1.6; }
+    .mo-flag-flag { fill: #ffc24d; }
+    .mo-flag-label { fill: #ffd98a; font: 700 10.5px var(--font-body); letter-spacing: 0.08em; }
+
+    /* reduced motion — settle every card on its final, readable frame */
+    @media (prefers-reduced-motion: reduce) {
+      .pi-narr.wipe { animation: none !important; }
+      .an-scanwrap { opacity: 0 !important; animation: none !important; }
+      .an-dot, .an-pill { opacity: 1 !important; transform: none !important; animation: none !important; }
+      .an-flare-glow { opacity: 1 !important; animation: none !important; }
+      .an-flare-ring { opacity: 0.95 !important; animation: none !important; transform: none !important; }
+      .an-pulse { opacity: 0.85 !important; transform: none !important; animation: none !important; }
+      .an-pill-bar-f { transform: scaleX(var(--bar, 0.7)) !important; animation: none !important; }
+      /* Recommendation — settle on the Beat-3 end state: proposal up, fix previewed, held for approval */
+      .rc-scene .pm-eng, .rc-scene .pm-eng-halo { opacity: 1 !important; animation: none !important; }
+      .rc-scene .pm-eng-core, .rc-scene .pm-eng-ring { animation: none !important; transform: none !important; }
+      .rc-rt, .rc-out { opacity: 0 !important; animation: none !important; }
+      .rc-prio { opacity: 1 !important; animation: none !important; }
+      .rc-prio-cursor, .rc-prio-surge { opacity: 0 !important; animation: none !important; }
+      .rc-pchip--sel .rc-pchip-box { fill: rgba(255,154,106,0.14) !important; stroke: #ff9a6a !important; animation: none !important; }
+      .rc-pchip--sel .rc-pchip-label { fill: #ffffff !important; animation: none !important; }
+      .rc-flare-glow, .rc-flare-ring { opacity: 0 !important; animation: none !important; }
+      .rc-spot { opacity: 0.85 !important; transform: none !important; animation: none !important; }
+      .rc-spot.rc-ghost { opacity: 0.15 !important; }
+      .rc-panel, .rc-tag, .rc-title, .rc-mech, .rc-div, .rc-proj, .rc-row, .rc-btn, .rc-cursor, .rc-bolt, .rc-fixlabel
+        { opacity: 1 !important; transform: none !important; animation: none !important; }
+      .rc-link, .rc-target-ring { opacity: 0.95 !important; transform: none !important; animation: none !important; }
+      .rc-ghost { opacity: 0.15 !important; animation: none !important; }
+      /* Simulation — settle on the Beat-3 end state: twin framed, fix applied, results in */
+      .si-box, .si-twin-tag, .si-twin-tag-bg, .si-count, .si-count-label,
+      .si-panel, .si-ptag, .si-row, .si-verdict { opacity: 1 !important; transform: none !important; animation: none !important; }
+      .si-ring { opacity: 0.95 !important; transform: none !important; animation: none !important; }
+      .si-gone, .si-simtok { opacity: 0 !important; animation: none !important; }
+      .si-shimmer { animation: none !important; }
+      /* Monitor — settle on the drift-caught end state */
+      .mo-live, .mo-panel, .mo-phead, .mo-ekg, .mo-row, .mo-flag, .mo-drift-in
+        { opacity: 1 !important; transform: none !important; animation: none !important; }
+      .mo-newvar { opacity: 0.92 !important; stroke-dashoffset: 0 !important; animation: none !important; }
+      .mo-tok, .mo-newvar-tok, .mo-ok-swap { opacity: 0 !important; animation: none !important; }
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 1000px) {
+      #rail { flex-wrap: wrap; }
+      .pi-card { flex: 1 1 28%; }
+      .pi-card:not(:last-child)::after { display: none; }
+    }
+    @media (max-width: 720px) {
+      #bottom, .pi-big { padding-left: 18px; padding-right: 18px; }
+      .pi-big { inset: 24px 18px 84px; }
+      #caption, #rail-wrap, #pillar-wrap { padding-left: 18px; padding-right: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <script>
+    const _q = new URLSearchParams(location.search);
+    if (_q.get('embed') === '1') document.body.classList.add('embed');
+    // A/B mock: ?nosubs=1 hides the per-frame subs (the finale recap stays).
+    if (_q.get('nosubs') === '1') document.body.classList.add('nosubs');
+  </script>
+  <style>
+    body.nosubs #app:not(.finale-mode) #cap-sub { display: none; }
+    /* without the sub, give the title a touch more air above the rail */
+    body.nosubs #app:not(.finale-mode):not(.intro-mode) #rail-wrap { margin-top: 38px; }
+  </style>
+
+  <div class="brand">
+    <span class="nm">Apromore</span><span class="x">×</span>
+    <img src="assets/logos/Salesforce-Corporate-Logo-Cloud-RBG.svg" width="22" height="22" alt="Salesforce" onerror="this.style.display='none'"/>
+  </div>
+
+  <div id="app">
+    <div id="top">
+      <div id="caption">
+        <div id="cap-eyebrow">Apromore Process Intelligence layers</div>
+        <h1 id="cap-title">The layers of Process Intelligence.</h1>
+        <p id="cap-sub"></p>
+      </div>
+
+      <div id="rail-wrap"><div id="rail"></div></div>
+      <div id="pillar-wrap"><div id="pillar"></div></div>
+    </div>
+
+    <div id="bottom">
+      <!-- big cards injected here -->
+    </div>
+  </div>
+
+  <div id="progress">
+    <div id="dots"></div>
+    <div id="prog-label">Overview</div>
+  </div>
+
+  <div id="nav">
+    <button id="replay" aria-label="Replay animation" title="Replay animation">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v5h-5"/></svg>
+    </button>
+    <button id="prev" aria-label="Previous">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <span class="nav-count" id="nav-count">0 / 7</span>
+    <button id="next" aria-label="Next">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+  </div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ── Layer data ─────────────────────────────────────────────────
+  // Each layer becomes a rail card + a big card. `anim` selects its animation
+  // ('mining', 'tasks', 'convo'); anything else gets a swappable placeholder.
+  const LAYERS = [
+    { num:'01', name:'Process Mining',  tag:'System',  color:'#8fb8ff', anim:'mining',
+      claim:'See how you actually run.',
+      sub:'No workshops, no whiteboards. Your own event logs draw the process exactly as it happened.',
+      desc:'Reconstructs how a process actually runs inside a system from event logs: every variant, bottleneck and rework loop.' },
+    { num:'02', name:'Task Mining',     tag:'Desktop', color:'#8fb8ff', anim:'tasks',
+      claim:'See the work your systems can&rsquo;t.',
+      sub:'Process mining stops at the system boundary. Task mining sees the spreadsheets, emails and workarounds in between.',
+      desc:'Captures the work between systems at the desktop: the look-ups, emails and manual hand-offs that process mining alone cannot see.' },
+    { num:'03', name:'Analysis',        tag:'Insight', color:'#8fb8ff', anim:'analysis',
+      claim:'Size what&rsquo;s at stake.',
+      sub:'Every delay, loop and workaround gets quantified. You know the impact, and what fixing it is worth.',
+      desc:'Quantifies the impact of inefficiency and the value of recoverable waste, turning observation into a business case.' },
+    { num:'04', name:'Recommendation',  tag:'AI',      color:'#8fb8ff', anim:'recommend',
+      claim:'Know exactly how to fix it.',
+      sub:'AI studies your process and proposes the specific fix. You stay in charge of the decision.',
+      desc:'AI proposes the specific change to make: not just the problem, but the mechanism that fixes it.' },
+    { num:'05', name:'Simulation',      tag:'Proof',   color:'#8fb8ff', anim:'simulate',
+      claim:'Test the fix before you commit.',
+      sub:'Run the change in a digital copy of your process first. See the impact before anything touches the real thing.',
+      desc:'Validates the recommendation before you commit, modelling the impact across cost, time and risk.' },
+    { num:'06', name:'Monitor',         tag:'Live',    color:'#8fb8ff', anim:'monitor',
+      claim:'Keep it fixed.',
+      sub:'Processes drift back to old habits. Monitoring watches live and flags it the moment it starts.',
+      desc:'Watches the process in production, confirming the change held and catching drift the moment it appears.' },
+  ];
+  const FOUNDATION = { num:'07', name:'Conversational Interface', tag:'Underpins all', color:'#8fb8ff', anim:'convo',
+    claim:'Anyone can ask, anytime.',
+    sub:'No dashboards to learn, no analyst to wait for. Ask in plain English and get an answer backed by evidence.',
+    desc:'The layer that underpins every other: ask any question in plain English and get an evidence-backed answer drawn from all six layers above.' };
+
+  const STEPS = LAYERS.length + 1;            // 6 layers + conversational interface
+  const FINALE = STEPS + 1;                   // closing frame: the whole stack, lit
+  const ALL = LAYERS.concat([FOUNDATION]);    // index aligned with focus steps 1..7
+
+  // ── Task Mining animation (the work between the systems) ────────
+  // One SVG (viewBox 1000×560). A single source system opens centre-top (echoing
+  // Process Mining), generic app windows fade in around it, faint between-tool
+  // activity (a dashed rim with ghost tokens) surfaces, then a central intelligence
+  // element ignites and captures it — every source spoked inward with bright inflow.
+  // Generic app glyphs (drawn in a ~14px local box) used for the TM extras.
+  // The four "non-logged" sources that fade in around the System in Beat 2 —
+  // each drawn as a miniature app window (chrome dots + name + app-specific
+  // content) so they read as the real tools the work happens in. The pulsing
+  // .tm-act elements are each app's live activity: a loading page, an unread
+  // mail, an active cell, a line being written.
+  const TM_APPS = [
+    { cx: 130, cy: 120, name: 'Browser', body: `
+        <rect class="tm-ui" x="-42" y="-19" width="84" height="9" rx="4.5"/>
+        <circle class="tm-ui-dot" cx="-37" cy="-14.5" r="1.6"/>
+        <rect class="tm-ui-fill" x="-42" y="-4" width="36" height="22" rx="2"/>
+        <rect class="tm-ui-fill" x="-1" y="-4" width="43" height="8" rx="2"/>
+        <rect class="tm-ui-fill" x="-1" y="8" width="43" height="8" rx="2"/>
+        <rect class="tm-act" x="-1" y="22" width="30" height="4" rx="2" style="animation-delay:6.2s"/>` },
+    { cx: 260, cy: 130, name: 'Email', body: `
+        <circle class="tm-ui-dot" cx="-40" cy="-15" r="2.6"/><rect class="tm-ui-fill" x="-32" y="-18" width="64" height="6" rx="2"/>
+        <circle class="tm-ui-dot" cx="-40" cy="-2" r="2.6"/><rect class="tm-ui-fill" x="-32" y="-5" width="52" height="6" rx="2"/>
+        <circle class="tm-ui-dot" cx="-40" cy="11" r="2.6"/><rect class="tm-ui-fill" x="-32" y="8" width="58" height="6" rx="2"/>
+        <circle class="tm-act" cx="-40" cy="24" r="2.6" style="animation-delay:6.35s"/>
+        <rect class="tm-act" x="-32" y="21" width="44" height="6" rx="2" style="animation-delay:6.35s"/>` },
+    { cx: 260, cy: 470, name: 'Spreadsheet', body: `
+        <rect class="tm-ui-fill" x="-42" y="-19" width="86" height="11.5"/>
+        <path class="tm-ui" d="M-42,-19 H44 M-42,-7.5 H44 M-42,4 H44 M-42,15.5 H44 M-42,27 H44 M-42,-19 V27 M-20.5,-19 V27 M1,-19 V27 M22.5,-19 V27 M44,-19 V27"/>
+        <rect class="tm-act" x="1" y="4" width="21.5" height="11.5" style="animation-delay:6.5s"/>` },
+    { cx: 130, cy: 480, name: 'Notes', body: `
+        <rect class="tm-ui" x="-42" y="-19" width="8" height="8" rx="1.5"/><path class="tm-ui" d="M-40.5,-15.5 l2,2.2 l3.6,-4.4"/>
+        <rect class="tm-ui-fill" x="-29" y="-17" width="60" height="5" rx="2"/>
+        <rect class="tm-ui" x="-42" y="-4" width="8" height="8" rx="1.5"/><path class="tm-ui" d="M-40.5,-0.5 l2,2.2 l3.6,-4.4"/>
+        <rect class="tm-ui-fill" x="-29" y="-2" width="48" height="5" rx="2"/>
+        <rect class="tm-ui" x="-42" y="11" width="8" height="8" rx="1.5"/>
+        <rect class="tm-act" x="-29" y="13" width="52" height="5" rx="2" style="animation-delay:6.65s"/>
+        <rect class="tm-act" x="-29" y="22" width="34" height="5" rx="2" style="animation-delay:6.8s"/>` },
+  ];
+
+  function buildTaskMining() {
+    // Beat-1 stream from System into Engine (infinite loop, 30 dots, base delay 1.5s
+    // so they only become visible after the System's records have appeared).
+    const sysStream = (() => {
+      let s = 0xC0FFEE;
+      const rnd = () => { s = (s * 1103515245 + 12345) & 0x7FFFFFFF; return s / 0x7FFFFFFF; };
+      const N = 30, BASE_DELAY = 1.5;
+      let html = '';
+      for (let i = 0; i < N; i++) {
+        const sy = 268 + Math.floor(rnd() * 100);
+        const endX = 365 + Math.floor(rnd() * 10);
+        const endY = 295 + Math.floor(rnd() * 10);
+        const tx = endX - 190;
+        const ty = endY - sy;
+        const dur = (1.0 + rnd() * 0.6).toFixed(2);
+        const delay = (BASE_DELAY + rnd() * 1.4).toFixed(2);
+        html += `<circle class="pm-rt" cx="190" cy="${sy}" r="2.5" style="--tx:${tx}px;--ty:${ty}px;animation-duration:${dur}s;animation-delay:${delay}s"/>`;
+      }
+      return html;
+    })();
+
+    // Beat-3 stream from extras into Engine (infinite loop, ~6 dots per extra,
+    // base delay 11.31s — the moment Beat 3 begins).
+    const extraStream = (() => {
+      let s = 0xCAFEBABE;
+      const rnd = () => { s = (s * 1103515245 + 12345) & 0x7FFFFFFF; return s / 0x7FFFFFFF; };
+      const PER_EXTRA = 6, BASE_DELAY = 10.4;
+      let html = '';
+      TM_APPS.forEach(ex => {
+        for (let i = 0; i < PER_EXTRA; i++) {
+          const sx = ex.cx + (rnd() - 0.5) * 26;
+          const sy = ex.cy + (rnd() - 0.5) * 18;
+          const endX = 365 + Math.floor(rnd() * 10);
+          const endY = 295 + Math.floor(rnd() * 10);
+          const tx = endX - sx;
+          const ty = endY - sy;
+          const dur = (1.0 + rnd() * 0.6).toFixed(2);
+          const delay = (BASE_DELAY + rnd() * 1.4).toFixed(2);
+          html += `<circle class="pm-rt" cx="${sx.toFixed(0)}" cy="${sy.toFixed(0)}" r="2.5" style="--tx:${tx.toFixed(0)}px;--ty:${ty.toFixed(0)}px;animation-duration:${dur}s;animation-delay:${delay}s"/>`;
+        }
+      });
+      return html;
+    })();
+
+    // Extras: enlarged again to 100×75 (33% wider, 36% taller than previous 75×55).
+    // Glyph scaled 2.4× from its 14×14 base. Faded in during Beat 2.
+    const extrasHTML = TM_APPS.map((ex, i) => {
+      const delay = (5.5 + i * 0.12).toFixed(2);
+      return `<g class="tm-extra" transform="translate(${ex.cx},${ex.cy})" style="animation-delay:${delay}s">
+        <rect class="tm-extra-box" x="-50" y="-37.5" width="100" height="75" rx="12"/>
+        <circle class="tm-win-dot" cx="-42" cy="-30" r="2"/>
+        <circle class="tm-win-dot" cx="-35.5" cy="-30" r="2"/>
+        <circle class="tm-win-dot" cx="-29" cy="-30" r="2"/>
+        <text class="tm-win-name" x="-21" y="-27.2">${ex.name}</text>
+        <line class="tm-ui-div" x1="-50" y1="-24" x2="50" y2="-24"/>
+        ${ex.body}
+      </g>`;
+    }).join('');
+
+    const scene = document.createElement('div');
+    scene.className = 'tm-scene pi-cardscene';
+    scene.innerHTML = `
+      <div class="pi-narr"></div>
+      <svg class="pi-cardsvg" viewBox="0 0 1000 540" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+
+        <!-- ── System (carried over from Process Mining; appears at t=0) ── -->
+        <g class="pm-sys">
+          <rect class="pm-sys-box" x="50" y="190" width="140" height="200" rx="14"/>
+          <ellipse class="pm-sys-cyl-top" cx="82" cy="226" rx="18" ry="5.5"/>
+          <path class="pm-sys-cyl" d="M64,226 V250 a18,5.5 0 0 0 36,0 V226"/>
+          <path class="pm-sys-cyl" d="M64,238 a18,5.5 0 0 0 36,0" opacity="0.7"/>
+          <text class="pm-sys-label" x="112" y="232">System</text>
+          <rect class="pm-rec" x="66" y="280" width="106" height="6" rx="2" style="animation-delay:0.5s"/>
+          <rect class="pm-rec" x="66" y="296" width="86"  height="6" rx="2" style="animation-delay:0.55s"/>
+          <rect class="pm-rec" x="66" y="312" width="106" height="6" rx="2" style="animation-delay:0.6s"/>
+          <rect class="pm-rec" x="66" y="328" width="68"  height="6" rx="2" style="animation-delay:0.65s"/>
+          <rect class="pm-rec" x="66" y="344" width="96"  height="6" rx="2" style="animation-delay:0.7s"/>
+          <rect class="pm-rec" x="66" y="358" width="78"  height="6" rx="2" style="animation-delay:0.75s"/>
+        </g>
+
+        <!-- ── System → Engine streaming dots (Beat 1+, infinite from t=1.5s) ── -->
+        ${sysStream}
+
+        <!-- ── Engine (carried over from PM; appears at t=0.3s, spinning from t=0.7s) ── -->
+        <g class="pm-eng" transform="translate(370,300)">
+          <circle class="pm-eng-halo" cx="0" cy="0" r="55"/>
+          <g class="pm-eng-ring">
+            <path class="pm-eng-arc" d="M0,-30 A30,30 0 0 1 30,0"/>
+            <path class="pm-eng-arc" d="M30,0 A30,30 0 0 1 0,30"/>
+            <path class="pm-eng-arc" d="M0,30 A30,30 0 0 1 -30,0"/>
+            <path class="pm-eng-arc" d="M-30,0 A30,30 0 0 1 0,-30"/>
+            <circle class="pm-eng-orb pm-eng-orb-1" cx="0"   cy="-30" r="7"/>
+            <circle class="pm-eng-orb pm-eng-orb-2" cx="30"  cy="0"   r="7"/>
+            <circle class="pm-eng-orb pm-eng-orb-3" cx="0"   cy="30"  r="7"/>
+            <circle class="pm-eng-orb pm-eng-orb-4" cx="-30" cy="0"   r="7"/>
+          </g>
+          <circle class="pm-eng-core" cx="0" cy="0" r="11"/>
+        </g>
+
+        <!-- ── Extras (Beat 2): non-logged tools fade in around the System ── -->
+        ${extrasHTML}
+
+
+        <!-- ── Dark connections (Beat 2): the routes exist but carry nothing;
+             they brighten when task mining switches on in Beat 3 ── -->
+        <line class="tm-conn" x1="172" y1="152" x2="316" y2="260" style="animation-delay:6.10s, 10.20s"/>
+        <line class="tm-conn" x1="288" y1="166" x2="334" y2="244" style="animation-delay:6.22s, 10.20s"/>
+        <line class="tm-conn" x1="288" y1="434" x2="334" y2="356" style="animation-delay:6.34s, 10.20s"/>
+        <line class="tm-conn" x1="172" y1="448" x2="316" y2="340" style="animation-delay:6.46s, 10.20s"/>
+
+        <!-- ── Extras → Engine streaming dots (Beat 3+, infinite from t=10.4s) ── -->
+        ${extraStream}
+
+        <!-- ── Process map carried over from PM's end state (visible immediately,
+             no animation). Plain cyan nodes — the bottleneck and alt-path nodes
+             are no longer specially highlighted. The .tm-static class overrides
+             the default invisible-state and skips the .tm-scene.playing animations. ── -->
+        <!-- forward + alt + rework1 edges (all static — visible from frame 1) -->
+        <path class="pm-edge tm-static" pathLength="1" d="M506,300 L564,300"/>
+        <path class="pm-edge tm-static" pathLength="1" d="M616,300 L674,300"/>
+        <path class="pm-edge pm-edge--alt tm-static" pathLength="1" d="M608,318 C640,400 670,440 700,440"/>
+        <path class="pm-edge tm-static" pathLength="1" d="M726,300 L784,300"/>
+        <path class="pm-edge pm-edge--alt tm-static" pathLength="1" d="M700,440 C730,440 760,400 792,318"/>
+        <path class="pm-edge tm-static" pathLength="1" d="M836,300 L894,300"/>
+        <path class="pm-edge pm-edge--rework tm-static" pathLength="1" d="M804,276 C796,210 716,210 708,276"/>
+
+        <!-- ── Beat 3 NEW variants and node — the streams ignite first (10.4s),
+             then after a breath the new variants animate in from 13.5s, ordered
+             strictly left → right by their starting x: cause, then effect. ── -->
+        <!-- 1. N1 → N3 above the spine (skip past N2) — leftmost (starts x=484) -->
+        <path class="pm-edge pm-edge--alt" pathLength="1" style="animation-delay:13.5s" d="M484,278 C540,200 660,200 696,278"/>
+        <!-- 2. N1 → upper alt-path node (NEW diagonal lift) (starts x=498) -->
+        <path class="pm-edge pm-edge--alt" pathLength="1" style="animation-delay:13.65s" d="M498,282 C530,260 555,180 574,154"/>
+        <!-- 3. N2 → upper (vertical lift) (starts x=590) -->
+        <path class="pm-edge pm-edge--alt" pathLength="1" style="animation-delay:13.8s" d="M590,278 C586,240 586,200 590,162"/>
+        <!-- 4. Upper alt-path node + core pop in once both incoming edges have arrived -->
+        <circle class="pm-node" cx="590" cy="140" r="22" style="animation-delay:13.95s"/>
+        <circle class="pm-core" cx="590" cy="140" r="6"  style="animation-delay:14.1s"/>
+        <!-- 5. upper → N4 edge (long diagonal across) (starts x=610) -->
+        <path class="pm-edge pm-edge--alt" pathLength="1" style="animation-delay:14.1s" d="M610,148 C720,140 760,210 794,290"/>
+        <!-- 6. Lower → N5 (skips re-joining at N4) (starts x=715) -->
+        <path class="pm-edge pm-edge--alt" pathLength="1" style="animation-delay:14.25s" d="M715,452 C800,475 880,420 906,322"/>
+        <!-- 7. N4 → N5 above the spine (rightmost, starts x=826) -->
+        <path class="pm-edge pm-edge--alt" pathLength="1" style="animation-delay:14.4s" d="M826,278 C840,238 900,238 914,278"/>
+
+        <!-- main spine nodes + cores (all plain cyan, all static) -->
+        <circle class="pm-node tm-static" cx="480" cy="300" r="26"/>
+        <circle class="pm-node tm-static" cx="590" cy="300" r="26"/>
+        <circle class="pm-node tm-static" cx="700" cy="300" r="26"/>
+        <circle class="pm-node tm-static" cx="700" cy="440" r="22"/>
+        <circle class="pm-node tm-static" cx="810" cy="300" r="26"/>
+        <circle class="pm-node tm-static" cx="920" cy="300" r="26"/>
+        <circle class="pm-core tm-static" cx="480" cy="300" r="7"/>
+        <circle class="pm-core tm-static" cx="590" cy="300" r="7"/>
+        <circle class="pm-core tm-static" cx="700" cy="300" r="7"/>
+        <circle class="pm-core tm-static" cx="700" cy="440" r="6"/>
+        <circle class="pm-core tm-static" cx="810" cy="300" r="7"/>
+        <circle class="pm-core tm-static" cx="920" cy="300" r="7"/>
+      </svg>`;
+    return scene;
+  }
+
+  // ── Process Mining animation (data → the real process map) ──────
+  // Three-beat layered SVG. ViewBox 1000×540.
+  //   Beat 1: database panel on the left emits a continuous (infinite) stream of
+  //           glowing dots toward the engine; data is always coming in.
+  //   Beat 2: engine activates (halo, ring rotation, core pulse); 5 ordered tokens
+  //           emerge from its right edge in sequence, each arriving just as the next
+  //           node pops in. The main spine then draws strictly node → edge → node …
+  //           from N1 through N5, left to right.
+  //   Beat 3: after the spine settles, the variants — alt-path lower node + edges,
+  //           rework loop, bottleneck/alt-node warm + glow + ring, plus three
+  //           labels — appear together in a tight ~0.5s window.
+  // Layout (cy=300 for main spine; bigger gap between system and engine):
+  //   System: x=50–190    Engine: cx=370, halo r=55
+  //   Main nodes: 480, 590, 700 (BN), 810, 920    Lower (alt) node: cx=700, cy=440
+
+  // Beat-1 stream: 30 dots with seeded-random Y, duration and delay so the stream
+  // looks like an organic field rather than a uniform conveyor. Animation is set
+  // to `infinite` in CSS so the stream never stops — data is always coming in.
+  // Base delay 2.4s so dots only become visible after the system has fully appeared.
+  const PM_STREAM_DOTS = (() => {
+    let s = 0xC0FFEE;
+    const rnd = () => { s = (s * 1103515245 + 12345) & 0x7FFFFFFF; return s / 0x7FFFFFFF; };
+    let html = '';
+    const N = 30;
+    const BASE_DELAY = 2.4;
+    for (let i = 0; i < N; i++) {
+      const sy   = 268 + Math.floor(rnd() * 100);    // 268–368, scattered across the system's record area
+      const endX = 365 + Math.floor(rnd() * 10);     // converge into the engine area, slightly scattered
+      const endY = 295 + Math.floor(rnd() * 10);
+      const tx = endX - 190;
+      const ty = endY - sy;
+      const dur   = (1.0 + rnd() * 0.6).toFixed(2);  // 1.0–1.6s — varied speed per dot
+      const delay = (BASE_DELAY + rnd() * 1.4).toFixed(2);  // 2.4–3.8s — initial offset within one cycle
+      html += `<circle class="pm-rt" cx="190" cy="${sy}" r="2.5" style="--tx:${tx}px;--ty:${ty}px;animation-duration:${dur}s;animation-delay:${delay}s"/>`;
+    }
+    return html;
+  })();
+  const PROCESS_MINING = `
+    <div class="pm-scene pi-cardscene">
+      <div class="pi-narr"></div>
+      <svg class="pi-cardsvg" viewBox="0 0 1000 540" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+
+        <!-- ── source system: database cylinder + record rows (Beat 1) ── -->
+        <g class="pm-sys">
+          <rect class="pm-sys-box" x="50" y="190" width="140" height="200" rx="14"/>
+          <ellipse class="pm-sys-cyl-top" cx="82" cy="226" rx="18" ry="5.5"/>
+          <path class="pm-sys-cyl" d="M64,226 V250 a18,5.5 0 0 0 36,0 V226"/>
+          <path class="pm-sys-cyl" d="M64,238 a18,5.5 0 0 0 36,0" opacity="0.7"/>
+          <text class="pm-sys-label" x="112" y="232">System</text>
+          <rect class="pm-rec" x="66" y="280" width="106" height="6" rx="2" style="animation-delay:1.3s"/>
+          <rect class="pm-rec" x="66" y="296" width="86"  height="6" rx="2" style="animation-delay:1.45s"/>
+          <rect class="pm-rec" x="66" y="312" width="106" height="6" rx="2" style="animation-delay:1.6s"/>
+          <rect class="pm-rec" x="66" y="328" width="68"  height="6" rx="2" style="animation-delay:1.75s"/>
+          <rect class="pm-rec" x="66" y="344" width="96"  height="6" rx="2" style="animation-delay:1.9s"/>
+          <rect class="pm-rec" x="66" y="358" width="78"  height="6" rx="2" style="animation-delay:2.05s"/>
+        </g>
+
+        <!-- ── streaming dots (Beat 1 → Beat 2): 24 glowing dots flow to the engine ── -->
+        ${PM_STREAM_DOTS}
+
+        <!-- ── compiling engine (Apromore-inspired) (Beat 2) ── -->
+        <g class="pm-eng" transform="translate(370,300)">
+          <circle class="pm-eng-halo" cx="0" cy="0" r="55"/>
+          <g class="pm-eng-ring">
+            <path class="pm-eng-arc" d="M0,-30 A30,30 0 0 1 30,0"/>
+            <path class="pm-eng-arc" d="M30,0 A30,30 0 0 1 0,30"/>
+            <path class="pm-eng-arc" d="M0,30 A30,30 0 0 1 -30,0"/>
+            <path class="pm-eng-arc" d="M-30,0 A30,30 0 0 1 0,-30"/>
+            <circle class="pm-eng-orb pm-eng-orb-1" cx="0"   cy="-30" r="7"/>
+            <circle class="pm-eng-orb pm-eng-orb-2" cx="30"  cy="0"   r="7"/>
+            <circle class="pm-eng-orb pm-eng-orb-3" cx="0"   cy="30"  r="7"/>
+            <circle class="pm-eng-orb pm-eng-orb-4" cx="-30" cy="0"   r="7"/>
+          </g>
+          <circle class="pm-eng-core" cx="0" cy="0" r="11"/>
+        </g>
+
+        <!-- ── flare layers (Beat 3): drawn before nodes so the nodes sit on top ── -->
+        <circle class="pm-bottle-glow" cx="700" cy="300" r="40"/>
+        <circle class="pm-bottle-ring" cx="700" cy="300" r="36"/>
+        <circle class="pm-alt-glow"    cx="700" cy="440" r="34"/>
+        <circle class="pm-alt-ring"    cx="700" cy="440" r="30"/>
+
+        <!-- ── EDGES (drawn before nodes so each line is "covered" by the node it
+             ends at, giving the impression that the line "grew" the node).
+             Build chain — Beat 3 starts at 12.9s; each line starts ~0.2s into its
+             upstream node's pop and finishes as its downstream node pops in:
+                13.1s  N1 → N2
+                13.75s N2 → N3   AND   N2 → lower (branch)
+                14.4s  N3 → N4   AND   lower → N4 (rejoin)
+                15.05s N4 → N5   AND   N4 → N3 (rework loop) ── -->
+        <path class="pm-edge" pathLength="1" style="animation-delay:9.4s"  d="M506,300 L564,300"/>
+        <path class="pm-edge" pathLength="1" style="animation-delay:10.05s" d="M616,300 L674,300"/>
+        <path class="pm-edge pm-edge--alt" pathLength="1" style="animation-delay:10.05s" d="M608,318 C640,400 670,440 700,440"/>
+        <path class="pm-edge" pathLength="1" style="animation-delay:10.7s"  d="M726,300 L784,300"/>
+        <path class="pm-edge pm-edge--alt" pathLength="1" style="animation-delay:10.7s"  d="M700,440 C730,440 760,400 792,318"/>
+        <path class="pm-edge" pathLength="1" style="animation-delay:11.35s" d="M836,300 L894,300"/>
+        <path class="pm-edge pm-edge--rework" pathLength="1" style="animation-delay:11.35s" d="M804,276 C796,210 716,210 708,276"/>
+
+        <!-- ── nodes + cores. Each node pops just as the line growing toward it
+             completes. Lower (alt) and bottleneck both pop at 14.2s — they are
+             the two ends of the branch out of N2. ── -->
+        <circle class="pm-node" cx="480" cy="300" r="26" style="animation-delay:9.2s"/>
+        <circle class="pm-node" cx="590" cy="300" r="26" style="animation-delay:9.85s"/>
+        <circle class="pm-node pm-node--bottle" cx="700" cy="300" r="26"/>
+        <circle class="pm-node pm-node--alt"    cx="700" cy="440" r="22"/>
+        <circle class="pm-node" cx="810" cy="300" r="26" style="animation-delay:11.15s"/>
+        <circle class="pm-node" cx="920" cy="300" r="26" style="animation-delay:11.8s"/>
+        <circle class="pm-core" cx="480" cy="300" r="7" style="animation-delay:9.5s"/>
+        <circle class="pm-core" cx="590" cy="300" r="7" style="animation-delay:10.15s"/>
+        <circle class="pm-core" cx="700" cy="300" r="7" style="animation-delay:10.8s"/>
+        <circle class="pm-core" cx="700" cy="440" r="6" style="animation-delay:10.8s"/>
+        <circle class="pm-core" cx="810" cy="300" r="7" style="animation-delay:11.45s"/>
+        <circle class="pm-core" cx="920" cy="300" r="7" style="animation-delay:12.1s"/>
+
+        <!-- ── feature call-outs (Beat 3) ── -->
+        <text class="pm-label pm-label--alt"    x="700" y="488" text-anchor="middle" style="animation-delay:12.7s">Alternative path</text>
+        <text class="pm-label pm-label--rework" x="756" y="188" text-anchor="middle" style="animation-delay:13.0s">Rework loop</text>
+        <text class="pm-label pm-label--bottle" x="700" y="362" text-anchor="middle" style="animation-delay:13.3s">Bottleneck</text>
+      </svg>
+    </div>`;
+
+  // Placeholder slot — no title or copy, just a centred marker (swap in the real animation later).
+  const placeholderSlot = () => `
+    <div class="pi-slot">
+      <div class="pi-slot-ic">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+      </div>
+    </div>`;
+
+  // ── Conversational Interface animation (the few → the many) ─────
+  // Left 2/3: two "Data scientists" shrink away as a whole-organisation crowd pops in
+  // ("Every team"). Right 1/3: broad, plain-English questions stream in and get answered.
+  const CONVO_QUESTIONS = [
+    'How can I reduce call handling time?',
+    "Where's the bottleneck in onboarding?",
+    "What's driving claims rework this quarter?",
+    'Which process costs us the most?',
+    'How do I speed up new-policy approvals?',
+    'Where are customers dropping off?',
+    "What's slowing down our invoicing?",
+  ];
+  const personSVG = () => '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7.2" r="4"/><path d="M3.6 20.5c0-4.64 3.76-8 8.4-8s8.4 3.36 8.4 8z"/></svg>';
+
+  function buildConvo() {
+    const scene = document.createElement('div');
+    scene.className = 'cv-scene';
+    scene.innerHTML = `
+      <div class="cv-people">
+        <div class="cv-narrate"></div>
+        <div class="cv-spotlight"></div>
+        <div class="cv-crowd"></div>
+      </div>
+      <div class="cv-questions">
+        <div class="cv-rtitle"></div>
+        <div class="cv-qlist"></div>
+      </div>
+      <div class="cv-link-layer"></div>`;
+    const crowd = scene.querySelector('.cv-crowd');
+    // Seeded RNG → a stable, organic cloud (not a grid).
+    let s = 20260607;
+    const rnd = () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+    // Place points in an ellipse. AR corrects for the crowd box being wider than tall, so the
+    // spacing test is roughly uniform in pixels (prevents vertical stacking / clipping).
+    const N = 30, RX = 48, RY = 47, AR = 2.2, MIND = 10, pts = [];
+    let guard = 0;
+    while (pts.length < N && guard++ < 9000) {
+      const x = 50 + (rnd() * 2 - 1) * RX;
+      const y = 50 + (rnd() * 2 - 1) * RY;
+      if (((x - 50) / RX) ** 2 + ((y - 50) / RY) ** 2 > 1) continue;     // inside an ellipse
+      if (pts.some(p => Math.hypot(p.x - x, (p.y - y) / AR) < MIND)) continue;   // aspect-aware spacing
+      pts.push({ x, y });
+    }
+    // Two experts = the points nearest the centre (so they sit in the heart of the crowd).
+    pts.sort((a, b) => Math.hypot(a.x - 50, a.y - 50) - Math.hypot(b.x - 50, b.y - 50));
+
+    // Constellation: faint links from each person to its 1–2 nearest neighbours (behind the crowd).
+    const NS = 'http://www.w3.org/2000/svg';
+    const net = document.createElementNS(NS, 'svg');
+    net.setAttribute('class', 'cv-net'); net.setAttribute('viewBox', '0 0 100 100'); net.setAttribute('preserveAspectRatio', 'none');
+    const seen = new Set();
+    pts.forEach((p, i) => {
+      pts.map((q, j) => ({ j, d: Math.hypot(p.x - q.x, (p.y - q.y) / AR) }))
+        .filter(o => o.j !== i).sort((a, b) => a.d - b.d).slice(0, 2)
+        .forEach(o => {
+          if (o.d > 24) return;
+          const key = i < o.j ? i + '-' + o.j : o.j + '-' + i; if (seen.has(key)) return; seen.add(key);
+          const ln = document.createElementNS(NS, 'line');
+          ln.setAttribute('x1', p.x); ln.setAttribute('y1', p.y);
+          ln.setAttribute('x2', pts[o.j].x); ln.setAttribute('y2', pts[o.j].y);
+          net.appendChild(ln);
+        });
+    });
+    crowd.appendChild(net);
+
+    // People — with per-person depth (size, brightness, float amplitude/speed) so it reads as a
+    // real crowd rather than a flat grid.
+    pts.forEach((p, i) => {
+      const isExpert = i < 2;
+      const el = document.createElement('span');
+      el.className = isExpert ? 'cv-hero-ic' : 'cv-dot';
+      el.style.left = p.x + '%';
+      el.style.top = p.y + '%';
+      el.innerHTML = personSVG();
+      if (!isExpert) {
+        const dz = rnd();                                                  // 0 = back, 1 = front
+        el.style.width = (8 + dz * 4.5).toFixed(1) + '%';                  // 8%..12.5% (slightly larger)
+        el.style.color = 'rgba(205,214,225,' + (0.4 + dz * 0.5).toFixed(2) + ')';   // dimmer at the back
+        el.style.zIndex = String(1 + Math.round(dz * 8));
+        el.style.setProperty('--i', i);
+        el.style.setProperty('--amp', (4 + dz * 8).toFixed(1) + 'px');     // bob amplitude grows toward the front
+        el.style.setProperty('--d', (rnd() * 1.4).toFixed(2));
+        el.querySelector('svg').style.animationDuration = (3.6 - dz * 0.9).toFixed(2) + 's';
+      }
+      crowd.appendChild(el);
+    });
+    return scene;
+  }
+
+  // ── Build rail + pillar ────────────────────────────────────────
+  const rail = document.getElementById('rail');
+  LAYERS.forEach((l, i) => {
+    const el = document.createElement('div');
+    el.className = 'pi-card'; el.style.setProperty('--c', l.color); el.dataset.step = i + 1;
+    el.innerHTML = `<div class="pi-num">${l.num}</div><div class="pi-name">${l.name}</div>`;
+    el.addEventListener('click', () => goTo(i + 1));
+    rail.appendChild(el);
+  });
+  const railCards = Array.from(rail.children);
+
+  const pillar = document.getElementById('pillar');
+  pillar.dataset.step = STEPS;
+  // Just the title — no number, no tag.
+  pillar.innerHTML = `<div class="pi-name">${FOUNDATION.name}</div>`;
+  pillar.addEventListener('click', () => goTo(STEPS));
+
+  // ── Build big cards ────────────────────────────────────────────
+  const bottom = document.getElementById('bottom');
+  const bigs = [];
+  ALL.forEach((l) => {
+    const el = document.createElement('div');
+    el.className = 'pi-big'; el.style.setProperty('--c', l.color);
+    // No header/text — the whole card is the animation slot.
+    const stage = document.createElement('div'); stage.className = 'pi-big-stage';
+    if (l.anim === 'mining')         stage.innerHTML = PROCESS_MINING;
+    else if (l.anim === 'tasks')     stage.appendChild(buildTaskMining());
+    else if (l.anim === 'analysis')  stage.appendChild(buildAnalysis());
+    else if (l.anim === 'recommend') stage.appendChild(buildRecommend());
+    else if (l.anim === 'simulate')  stage.appendChild(buildSimulate());
+    else if (l.anim === 'monitor')   stage.appendChild(buildMonitor());
+    else if (l.anim === 'convo')     stage.appendChild(buildConvo());
+    else                             stage.innerHTML = placeholderSlot();
+    el.appendChild(stage);
+    bottom.appendChild(el);
+    bigs.push(el);
+  });
+
+  // ── Progress dots ──────────────────────────────────────────────
+  const dotsWrap = document.getElementById('dots');
+  for (let i = 0; i < FINALE; i++) { const d = document.createElement('div'); d.className = 'dot'; dotsWrap.appendChild(d); }
+  const dots = Array.from(dotsWrap.children);
+  const capEyebrow = document.getElementById('cap-eyebrow');
+  const capTitle = document.getElementById('cap-title');
+  const capSub = document.getElementById('cap-sub');
+  const caption = document.getElementById('caption');
+  const railWrap = document.getElementById('rail-wrap');
+  const pillarWrap = document.getElementById('pillar-wrap');
+  const progLabel = document.getElementById('prog-label');
+  const navCount = document.getElementById('nav-count');
+  const btnPrev = document.getElementById('prev');
+  const btnNext = document.getElementById('next');
+  const btnReplay = document.getElementById('replay');
+
+  // ── Navigation state ───────────────────────────────────────────
+  let step = 0;            // 0 = overview; 1..STEPS = focus a layer / pillar; FINALE = full stack
+  let currentBig = null;
+  let swapTimer = null;
+
+  const reduceMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ════════════ Shared helpers for cards 3–6 ════════════
+  // Each scene keeps its pending timers on scene._t; cardPlay resets + re-fires the
+  // CSS timeline, cardStop tears it down. cardType is the common narration typer,
+  // cardCount animates a number into an element. All three guard against a torn-down
+  // scene so a stale timeout can never write to a stopped card.
+  function cardPlay(scene) {
+    if (scene._t) scene._t.forEach(clearTimeout);
+    scene._t = [];
+    const nar = scene.querySelector('.pi-narr'); if (nar) { nar.classList.remove('wipe'); nar.innerHTML = ''; }
+    scene.classList.remove('playing'); void scene.offsetWidth; scene.classList.add('playing');
+  }
+  function cardStop(scene) {
+    if (scene._t) { scene._t.forEach(clearTimeout); scene._t = null; }
+    const nar = scene.querySelector('.pi-narr'); if (nar) { nar.classList.remove('wipe'); nar.innerHTML = ''; }
+    scene.classList.remove('playing');
+  }
+  function cardType(scene, host, segments, cps, delay, append) {
+    const run = () => {
+      // append=true keeps existing content (just strips any trailing caret) so a
+      // second cardType call can extend the caption with more text on the same line.
+      if (append) { const oldCaret = host.querySelector('.pi-caret'); if (oldCaret) oldCaret.remove(); }
+      else { host.innerHTML = ''; }
+      const spans = segments.map(s => { const e = document.createElement('span'); if (s.hl) e.className = 'pi-hl'; host.appendChild(e); return e; });
+      if (reduceMotion()) { spans.forEach((e, i) => e.textContent = segments[i].t); return; }
+      const caret = document.createElement('span'); caret.className = 'pi-caret'; host.appendChild(caret);
+      let si = 0, ci = 0;
+      const stepFn = () => {
+        if (si >= segments.length) { caret.remove(); return; }
+        const seg = segments[si];
+        if (ci < seg.t.length) spans[si].textContent += seg.t[ci++]; else { si++; ci = 0; }
+        if (scene._t) scene._t.push(setTimeout(stepFn, cps));
+      };
+      stepFn();
+    };
+    if (scene._t) scene._t.push(setTimeout(run, delay));
+  }
+  function cardCount(scene, el, to, dur, delay, fmt, from) {
+    if (!el) return;
+    from = from || 0;
+    const start = () => {
+      if (reduceMotion()) { el.textContent = fmt(to); return; }
+      const N = Math.max(12, Math.round(dur / 40)); let i = 0;
+      const tick = () => {
+        i++; const p = i / N, e = 1 - Math.pow(1 - p, 3);
+        el.textContent = fmt(from + (to - from) * e);
+        if (i < N) { if (scene._t) scene._t.push(setTimeout(tick, dur / N)); } else el.textContent = fmt(to);
+      };
+      tick();
+    };
+    if (scene._t) scene._t.push(setTimeout(start, delay));
+  }
+  // Dispatch: each big card is recognised by its scene class.
+  function playScene(el) {
+    if (!el) return;
+    if (el.querySelector('.pm-scene')) playPM(el);
+    else if (el.querySelector('.tm-scene')) playTM(el);
+    else if (el.querySelector('.an-scene')) playAN(el);
+    else if (el.querySelector('.rc-scene')) playRC(el);
+    else if (el.querySelector('.si-scene')) playSI(el);
+    else if (el.querySelector('.mo-scene')) playMO(el);
+    else if (el.querySelector('.cv-scene')) playConvo(el);
+  }
+  function stopScene(el) {
+    if (!el) return;
+    if (el.querySelector('.cv-scene')) stopConvo(el);
+    else if (el.querySelector('.tm-scene')) stopTM(el);
+    else { const s = el.querySelector('.pm-scene, .an-scene, .rc-scene, .si-scene, .mo-scene'); if (s) cardStop(s); }
+  }
+
+  // ════════════ Card 3 · Analysis ════════════
+  // The Task Mining process map is carried over UNCHANGED on the right-hand side; the
+  // left third (where the System and Engine lived in PM/TM) becomes a column of three
+  // large pills. Three beats:
+  //   Beat 1 (0.35–5.1s)    Caption types ("Your full process is analysed."), then a
+  //                         scan line sweeps L→R across the map with a soft cyan trail.
+  //                         2-second narration breath after.
+  //   Beat 2 (5.1–9.5s)     Caption replaces with "Quantified across cost, time and
+  //                         resource."; pills fade in on the left and their figures
+  //                         count up while the caption types ($1.2M / 9 days /
+  //                         12,400 hrs). 2-second breath after.
+  //   Beat 3 (9.5s+)        Caption replaces with the closer ("showing exactly WHERE
+  //                         it's going"); purely spatial — the LEAD cost dot flares
+  //                         at the bottleneck and the remaining dots pulse.
+  function buildAnalysis() {
+    // ── carry-over map from Task Mining (final state). All visible from frame 1. ──
+    const carryMap = `
+      <!-- forward + alt + rework1 edges (TM static) -->
+      <path class="an-map-edge" d="M506,300 L564,300"/>
+      <path class="an-map-edge" d="M616,300 L674,300"/>
+      <path class="an-map-edge an-map-edge--alt" d="M608,318 C640,400 670,440 700,440"/>
+      <path class="an-map-edge" d="M726,300 L784,300"/>
+      <path class="an-map-edge an-map-edge--alt" d="M700,440 C730,440 760,400 792,318"/>
+      <path class="an-map-edge" d="M836,300 L894,300"/>
+      <path class="an-map-edge an-map-edge--rework" d="M804,276 C796,210 716,210 708,276"/>
+      <!-- TM Beat 3 NEW variants + upper alt node -->
+      <path class="an-map-edge an-map-edge--alt" d="M484,278 C540,200 660,200 696,278"/>
+      <path class="an-map-edge an-map-edge--alt" d="M498,282 C530,260 555,180 574,154"/>
+      <path class="an-map-edge an-map-edge--alt" d="M590,278 C586,240 586,200 590,162"/>
+      <circle class="an-map-node" cx="590" cy="140" r="22"/>
+      <circle class="an-map-core" cx="590" cy="140" r="6"/>
+      <path class="an-map-edge an-map-edge--alt" d="M610,148 C720,140 760,210 794,290"/>
+      <path class="an-map-edge an-map-edge--alt" d="M715,452 C800,475 880,420 906,322"/>
+      <path class="an-map-edge an-map-edge--alt" d="M826,278 C840,238 900,238 914,278"/>
+      <!-- main spine nodes + cores -->
+      <circle class="an-map-node" cx="480" cy="300" r="26"/>
+      <circle class="an-map-node" cx="590" cy="300" r="26"/>
+      <circle class="an-map-node" cx="700" cy="300" r="26"/>
+      <circle class="an-map-node" cx="700" cy="440" r="22"/>
+      <circle class="an-map-node" cx="810" cy="300" r="26"/>
+      <circle class="an-map-node" cx="920" cy="300" r="26"/>
+      <circle class="an-map-core" cx="480" cy="300" r="7"/>
+      <circle class="an-map-core" cx="590" cy="300" r="7"/>
+      <circle class="an-map-core" cx="700" cy="300" r="7"/>
+      <circle class="an-map-core" cx="700" cy="440" r="6"/>
+      <circle class="an-map-core" cx="810" cy="300" r="7"/>
+      <circle class="an-map-core" cx="920" cy="300" r="7"/>`;
+
+    // ── scan line (Beat 1): vertical bright line + horizontal cyan trail behind it ──
+    const scanDefs = `<defs>
+      <linearGradient id="anScanGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%"   stop-color="rgba(143,184,255,0)"/>
+        <stop offset="55%"  stop-color="rgba(143,184,255,0.18)"/>
+        <stop offset="92%"  stop-color="rgba(180,220,255,0.55)"/>
+        <stop offset="100%" stop-color="rgba(230,241,255,0.95)"/>
+      </linearGradient>
+    </defs>`;
+    const scan = `<g class="an-scanwrap">
+      <rect x="0" y="0" width="220" height="540" fill="url(#anScanGrad)"/>
+      <line class="an-scanline" x1="220" y1="0" x2="220" y2="540"/>
+    </g>`;
+
+    // ── scattered metric dots, revealed AS the scan line passes over them (Beat 1).
+    //   Lead cost dot sits on the bottleneck (700,300) and is what flares dramatically
+    //   in Beat 3. The scan is linear, sweeping the wrap from translateX(-280) to
+    //   translateX(1280) over 2.6s starting at t=2.0s. The bright leading line sits at
+    //   the right edge of the wrap (x=220 within wrap-local coords), so the line's
+    //   viewBox x at elapsed scan-time t (0..2.6) is: -280 + t*(1560/2.6) + 220.
+    //   Solving for the elapsed t at which the line reaches dot.x:
+    //     t = (dot.x + 60) / 600   and   delay = 2.0 + t. ──
+    const DOTS = [
+      // cost (4) — concentrated on the problem zones
+      { c: 'cost',     x: 700, y: 300, lead: true },                                       // lead — bottleneck
+      { c: 'cost',     x: 756, y: 232 },                                                   // rework loop
+      { c: 'cost',     x: 700, y: 440 },                                                   // lower alt path
+      { c: 'cost',     x: 590, y: 140 },                                                   // upper alt path
+      // time (4) — along the spine where time accumulates
+      { c: 'time',     x: 545, y: 300 },
+      { c: 'time',     x: 655, y: 300 },
+      { c: 'time',     x: 765, y: 300 },
+      { c: 'time',     x: 875, y: 300 },
+      // resource (4) — scattered around the variants
+      { c: 'resource', x: 480, y: 268 },
+      { c: 'resource', x: 920, y: 268 },
+      { c: 'resource', x: 656, y: 380 },
+      { c: 'resource', x: 820, y: 268 },
+    ];
+    const dots = DOTS.map(d => {
+      const delay = (2.0 + (d.x + 60) / 600).toFixed(2);
+      const r = d.lead ? 6 : 4.5;
+      return `<circle class="an-dot an-dot--${d.c}${d.lead ? ' an-dot--lead' : ''}" cx="${d.x}" cy="${d.y}" r="${r}" style="animation-delay:${delay}s"/>`;
+    }).join('');
+
+    // ── lead cost dot flare (Beat 3): big amber glow + expanding ring on (700,300) ──
+    const flare = `<circle class="an-flare-glow" cx="700" cy="300" r="44"/>
+                   <circle class="an-flare-ring" cx="700" cy="300" r="34"/>`;
+
+    // ── soft pulses on a curated subset of remaining dots (Beat 3). Six pulses,
+    //   staggered ~0.12s apart so they read as a wave settling in after the cost flare. ──
+    const PULSES = [
+      { c: 'cost',     x: 756, y: 232, r: 14 },   // rework loop (non-lead cost)
+      { c: 'cost',     x: 700, y: 440, r: 14 },   // lower alt path
+      { c: 'time',     x: 545, y: 300, r: 14 },
+      { c: 'time',     x: 875, y: 300, r: 14 },
+      { c: 'resource', x: 480, y: 268, r: 14 },
+      { c: 'resource', x: 820, y: 268, r: 14 },
+    ];
+    const pulses = PULSES.map((p, i) => {
+      const delay = (11.5 + i * 0.12).toFixed(2);
+      return `<circle class="an-pulse an-pulse--${p.c}" cx="${p.x}" cy="${p.y}" r="${p.r}" style="animation-delay:${delay}s"/>`;
+    }).join('');
+
+    // ── pills (left column). Each pill: rounded background, dot legend + label,
+    //   big figure (left) + sub (right), magnitude bar at the bottom. The figure
+    //   text starts at "0"/"$0" and is animated by cardCount in Beat 3. ──
+    const PILL_X = 30, PILL_W = 380, PILL_H = 110;
+    const PILLS = [
+      { c: 'cost',     y: 82,  label: 'COST',     init: '$0', sub: 'PER YEAR',     bar: 0.92, dly: 5.10 },
+      { c: 'time',     y: 212, label: 'TIME',     init: '0',  sub: 'DAYS / CASE',  bar: 0.55, dly: 5.25 },
+      { c: 'resource', y: 342, label: 'RESOURCE', init: '0',  sub: 'HOURS / YEAR', bar: 0.70, dly: 5.40 },
+    ];
+    const pills = PILLS.map(p => {
+      const dotCx = PILL_X + 22, dotCy = p.y + 28;
+      const labelX = PILL_X + 38, labelY = p.y + 33;
+      const figX = PILL_X + 24, figY = p.y + 78;
+      const subX = PILL_X + PILL_W - 22, subY = p.y + 78;
+      const barX = PILL_X + 22, barY = p.y + 92, barW = PILL_W - 44;
+      const figCls = 'an-pill-fig' + (p.c === 'cost' ? ' an-pill-fig--cost' : '');
+      const bgCls  = 'an-pill-bg'  + (p.c === 'cost' ? ' an-pill-bg--cost'  : '');
+      return `<g class="an-pill" style="animation-delay:${p.dly}s">
+        <rect class="${bgCls}" x="${PILL_X}" y="${p.y}" width="${PILL_W}" height="${PILL_H}" rx="14"/>
+        <circle class="an-pill-dot--${p.c}" cx="${dotCx}" cy="${dotCy}" r="6"/>
+        <text class="an-pill-label" x="${labelX}" y="${labelY}">${p.label}</text>
+        <text class="${figCls} an-fig--${p.c}" x="${figX}" y="${figY}">${p.init}</text>
+        <text class="an-pill-sub" x="${subX}" y="${subY}" text-anchor="end">${p.sub}</text>
+        <rect class="an-pill-bar-t" x="${barX}" y="${barY}" width="${barW}" height="6" rx="3"/>
+        <rect class="an-pill-bar-f an-pill-bar-f--${p.c}" x="${barX}" y="${barY}" width="${barW}" height="6" rx="3" style="--bar:${p.bar}"/>
+      </g>`;
+    }).join('');
+
+    const scene = document.createElement('div');
+    scene.className = 'an-scene pi-cardscene';
+    scene.innerHTML = `<div class="pi-narr"></div>
+      <svg class="pi-cardsvg" viewBox="0 0 1000 540" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+        ${scanDefs}
+        ${carryMap}
+        ${scan}
+        ${dots}
+        ${flare}
+        ${pulses}
+        ${pills}
+      </svg>`;
+    return scene;
+  }
+  function playAN(el) {
+    const scene = el.querySelector('.an-scene'); if (!scene) return;
+    cardPlay(scene);
+    const nar = scene.querySelector('.pi-narr');
+    // Beat 1 — caption types first (0.35–1.73s); scan starts at 2.0s and lasts 2.6s,
+    //   revealing each dot AS the line passes its x-position; 2s breath afterwards.
+    cardType(scene, nar, [{ t: 'Your whole process is then ' }, { t: 'analysed', hl: true }, { t: '.' }], 46, 350);
+    // Beat 2 — wipes immediately as the scan finishes (4.6s); pills land while
+    //   "Quantified across cost, time and resource." types.
+    if (scene._t) scene._t.push(setTimeout(() => nar.classList.add('wipe'), 4600));
+    if (scene._t) scene._t.push(setTimeout(() => {
+      nar.classList.remove('wipe'); nar.innerHTML = '';
+      cardType(scene, nar, [{ t: 'And quantified across ' }, { t: 'cost, time and resource', hl: true }, { t: '.' }], 46, 0);
+    }, 4950));
+    if (scene._t) scene._t.push(setTimeout(() => nar.classList.add('wipe'), 8880));
+    // Beat 2 figures — count up as the pills land, while the caption types.
+    if (scene._t) scene._t.push(setTimeout(() => {
+      nar.classList.remove('wipe'); nar.innerHTML = '';
+      cardType(scene, nar, [{ t: 'Giving you the ' }, { t: 'understanding', hl: true }, { t: ' you need to make informed decisions.' }], 46, 0);
+    }, 9230));
+    cardCount(scene, scene.querySelector('.an-fig--cost'),     1.2,   1200, 5700,  v => '$' + v.toFixed(1) + 'M');
+    cardCount(scene, scene.querySelector('.an-fig--resource'), 12400, 1100, 6300, v => Math.round(v).toLocaleString());
+    cardCount(scene, scene.querySelector('.an-fig--time'),     9,     1000, 6000, v => String(Math.round(v)));
+  }
+
+  // ════════════ Card 4 · Recommendation ════════════
+  // Continuity scene: the Analysis map carries over UNCHANGED on the right (same
+  // geometry as buildAnalysis), amber cost flare still pulsing on the bottleneck.
+  // Human–AI–human arc: you aim → AI proposes → you decide.
+  // Beat 1: priority chips land in the left column over a NEUTRAL map; the cursor
+  //         picks Cost, the chip ignites, and the map answers — all cost hotspots
+  //         and the bottleneck flare bloom on at the moment of selection.
+  // Beat 2: the engine (PM/TM motif) returns; the hotspot streams its data INTO it,
+  //         ordered tokens drop out, and a proposal card materialises beneath —
+  //         specific fix, mechanism, projected impact carrying the Analysis
+  //         figures forward ($1.2M → −$640K, 9 days → −3.5, 12,400 → −5,100).
+  // Beat 3: the proposal connects back to the map — dashed link, green target ring +
+  //         bolt on the bottleneck, rework loop ghosts out, flare cools — then
+  //         Review / Approve appear with the cursor hovering. Held. Your call.
+  function buildRecommend() {
+    // ── carry-over map from Analysis (identical static geometry; rework loop
+    //    tagged .rc-ghost so Beat 3 can fade it — it's what the fix removes) ──
+    const carryMap = `
+      <path class="an-map-edge" d="M506,300 L564,300"/>
+      <path class="an-map-edge" d="M616,300 L674,300"/>
+      <path class="an-map-edge an-map-edge--alt" d="M608,318 C640,400 670,440 700,440"/>
+      <path class="an-map-edge" d="M726,300 L784,300"/>
+      <path class="an-map-edge an-map-edge--alt" d="M700,440 C730,440 760,400 792,318"/>
+      <path class="an-map-edge" d="M836,300 L894,300"/>
+      <path class="an-map-edge an-map-edge--rework rc-ghost" d="M804,276 C796,210 716,210 708,276"/>
+      <path class="an-map-edge an-map-edge--alt" d="M484,278 C540,200 660,200 696,278"/>
+      <path class="an-map-edge an-map-edge--alt" d="M498,282 C530,260 555,180 574,154"/>
+      <path class="an-map-edge an-map-edge--alt" d="M590,278 C586,240 586,200 590,162"/>
+      <circle class="an-map-node" cx="590" cy="140" r="22"/>
+      <circle class="an-map-core" cx="590" cy="140" r="6"/>
+      <path class="an-map-edge an-map-edge--alt" d="M610,148 C720,140 760,210 794,290"/>
+      <path class="an-map-edge an-map-edge--alt" d="M715,452 C800,475 880,420 906,322"/>
+      <path class="an-map-edge an-map-edge--alt" d="M826,278 C840,238 900,238 914,278"/>
+      <circle class="an-map-node" cx="480" cy="300" r="26"/>
+      <circle class="an-map-node" cx="590" cy="300" r="26"/>
+      <circle class="an-map-node" cx="700" cy="300" r="26"/>
+      <circle class="an-map-node" cx="700" cy="440" r="22"/>
+      <circle class="an-map-node" cx="810" cy="300" r="26"/>
+      <circle class="an-map-node" cx="920" cy="300" r="26"/>
+      <circle class="an-map-core" cx="480" cy="300" r="7"/>
+      <circle class="an-map-core" cx="590" cy="300" r="7"/>
+      <circle class="an-map-core" cx="700" cy="300" r="7"/>
+      <circle class="an-map-core" cx="700" cy="440" r="6"/>
+      <circle class="an-map-core" cx="810" cy="300" r="7"/>
+      <circle class="an-map-core" cx="920" cy="300" r="7"/>`;
+
+    // ── cost hotspots + the lead flare: bloom in when the user picks Cost ──
+    const spots = `
+      <circle class="rc-spot" cx="700" cy="300" r="6"/>
+      <circle class="rc-spot rc-ghost" cx="756" cy="232" r="4.5"/>
+      <circle class="rc-spot" cx="700" cy="440" r="4.5"/>
+      <circle class="rc-spot" cx="590" cy="140" r="4.5"/>
+      <circle class="rc-flare-glow" cx="700" cy="300" r="44"/>
+      <circle class="rc-flare-ring" cx="700" cy="300" r="34"/>`;
+
+    // ── Beat-1 priority selector: three metric chips in the left column; the
+    //    cursor picks Cost, the chip ignites, and the most expensive hotspot on
+    //    the map surges in answer — you aim the AI before it moves. ──
+    const PRIO = [
+      { c: 'cost',     l: 'Cost',     x: 30, sel: true },
+      { c: 'time',     l: 'Time',     x: 158 },
+      { c: 'resource', l: 'Resource', x: 286 },
+    ];
+    const prio = `<g class="rc-prio">
+        ${PRIO.map(p => `<g class="rc-pchip${p.sel ? ' rc-pchip--sel' : ''}">
+          <rect class="rc-pchip-box" x="${p.x}" y="78" width="116" height="34" rx="9"/>
+          <circle class="rc-pdot--${p.c}" cx="${p.x + 20}" cy="95" r="4.5"/>
+          <text class="rc-pchip-label" x="${p.x + 34}" y="100">${p.l}</text>
+        </g>`).join('')}
+      </g>
+      <g class="rc-prio-cursor"><path d="M96,98 l0,21 l5.5,-5 l4,8.5 l3.2,-1.5 l-4,-8.5 l7.3,0 z"/></g>
+      <circle class="rc-prio-surge" cx="700" cy="300" r="34"/>`;
+
+    // ── engine (same markup as PM/TM, parked on the left at the column the
+    //    proposal card will share) ──
+    const engine = `<g class="pm-eng" transform="translate(220,178)">
+        <circle class="pm-eng-halo" cx="0" cy="0" r="55"/>
+        <g class="pm-eng-ring">
+          <path class="pm-eng-arc" d="M0,-30 A30,30 0 0 1 30,0"/>
+          <path class="pm-eng-arc" d="M30,0 A30,30 0 0 1 0,30"/>
+          <path class="pm-eng-arc" d="M0,30 A30,30 0 0 1 -30,0"/>
+          <path class="pm-eng-arc" d="M-30,0 A30,30 0 0 1 0,-30"/>
+          <circle class="pm-eng-orb pm-eng-orb-1" cx="0"   cy="-30" r="7"/>
+          <circle class="pm-eng-orb pm-eng-orb-2" cx="30"  cy="0"   r="7"/>
+          <circle class="pm-eng-orb pm-eng-orb-3" cx="0"   cy="30"  r="7"/>
+          <circle class="pm-eng-orb pm-eng-orb-4" cx="-30" cy="0"   r="7"/>
+        </g>
+        <circle class="pm-eng-core" cx="0" cy="0" r="11"/>
+      </g>`;
+
+    // ── Beat-1 stream: the flaring hotspot feeds the engine (infinite, base 2.7s —
+    //    visible once the engine has landed). Right-to-left: card 1 reversed. ──
+    const stream = (() => {
+      let s = 0xBEEF1E;
+      const rnd = () => { s = (s * 1103515245 + 12345) & 0x7FFFFFFF; return s / 0x7FFFFFFF; };
+      const N = 22, BASE_DELAY = 5.9;
+      let html = '';
+      for (let i = 0; i < N; i++) {
+        const sx = 700 + (rnd() - 0.5) * 48;
+        const sy = 300 + (rnd() - 0.5) * 36;
+        const ex = 240 + Math.floor(rnd() * 14);
+        const ey = 172 + Math.floor(rnd() * 14);
+        const dur = (1.0 + rnd() * 0.5).toFixed(2);
+        const delay = (BASE_DELAY + rnd() * 1.4).toFixed(2);
+        html += `<circle class="pm-rt rc-rt" cx="${sx.toFixed(0)}" cy="${sy.toFixed(0)}" r="2.5" style="--tx:${(ex - sx).toFixed(0)}px;--ty:${(ey - sy).toFixed(0)}px;animation-duration:${dur}s;animation-delay:${delay}s"/>`;
+      }
+      return html;
+    })();
+
+    // ── Beat-2 ordered tokens: engine bottom → proposal card ──
+    const tokens = [7.3, 7.47, 7.64].map(d =>
+      `<circle class="pm-out rc-out" cx="220" cy="222" r="3.5" style="--tx:0px;--ty:36px;animation-delay:${d}s"/>`).join('');
+
+    // ── proposal card (left column — same x as the Analysis pills) ──
+    const ROWS = [
+      { c: 'cost',     l: 'COST',     v: '−$640K / yr',      y: 398, d: 8.80 },
+      { c: 'time',     l: 'TIME',     v: '−3.5 days / case', y: 426, d: 9.05 },
+      { c: 'resource', l: 'RESOURCE', v: '−5,100 hrs / yr',  y: 454, d: 9.30 },
+    ];
+    const rows = ROWS.map(r => `<g class="rc-row" style="animation-delay:${r.d}s">
+        <circle class="rc-row-dot--${r.c}" cx="62" cy="${r.y - 4}" r="5"/>
+        <text class="rc-row-label" x="78" y="${r.y}">${r.l}</text>
+        <text class="rc-row-val rc-val--${r.c}" x="386" y="${r.y}" text-anchor="end">${r.v}</text>
+      </g>`).join('');
+    const panel = `
+      <rect class="rc-panel" x="30" y="250" width="380" height="258" rx="14"/>
+      <text class="rc-tag" x="54" y="282">PROPOSAL · PRIORITY: COST</text>
+      <text class="rc-title" x="54" y="312">Automate the manual check</text>
+      <text class="rc-mech" x="54" y="334">Removes the rework loop behind your bottleneck</text>
+      <line class="rc-div" x1="54" y1="350" x2="386" y2="350"/>
+      <text class="rc-proj" x="54" y="372">PROJECTED IMPACT</text>
+      ${rows}
+      <g class="rc-btn">
+        <rect class="rc-btn-box" x="54" y="470" width="104" height="30" rx="8"/>
+        <text class="rc-btn-label" x="106" y="490" text-anchor="middle">Review</text>
+        <rect class="rc-approve-box" x="174" y="470" width="124" height="30" rx="8"/>
+        <text class="rc-btn-label" x="236" y="490" text-anchor="middle">Approve</text>
+      </g>
+      <g class="rc-cursor"><path d="M258,486 l0,21 l5.5,-5 l4,8.5 l3.2,-1.5 l-4,-8.5 l7.3,0 z"/></g>`;
+
+    // ── Beat-3 preview on the map: dashed link from the proposal to the bottleneck,
+    //    green target ring + bolt badge, "Proposed fix" label ──
+    const preview = `
+      <path class="rc-link" d="M412,310 C490,312 570,304 666,300"/>
+      <circle class="rc-target-ring" cx="700" cy="300" r="36"/>
+      <g transform="translate(727,270)"><g class="rc-bolt">
+        <circle class="rc-bolt-bg" r="13"/>
+        <path class="rc-bolt-glyph" d="M2.5,-8 L-4.5,1.5 L-0.5,1.5 L-2.5,8 L4.5,-1.5 L0.5,-1.5 Z"/>
+      </g></g>
+      <text class="rc-fixlabel" x="700" y="362" text-anchor="middle">Proposed fix</text>`;
+
+    const scene = document.createElement('div');
+    scene.className = 'rc-scene pi-cardscene';
+    scene.innerHTML = `<div class="pi-narr"></div>
+      <svg class="pi-cardsvg" viewBox="0 0 1000 540" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+        ${carryMap}
+        ${spots}
+        ${preview}
+        ${prio}
+        ${engine}
+        ${stream}
+        ${tokens}
+        ${panel}
+      </svg>`;
+    return scene;
+  }
+  function playRC(el) {
+    const scene = el.querySelector('.rc-scene'); if (!scene) return;
+    cardPlay(scene);
+    const nar = scene.querySelector('.pi-narr');
+    const T = (fn, ms) => { if (scene._t) scene._t.push(setTimeout(fn, ms)); };
+    // Beat 1 — caption types first (0.35–1.7s); the priority chips land 1.9s, the
+    //   cursor picks Cost at 2.9s, the hotspot surges in answer at 3.3s. Breath after.
+    cardType(scene, nar, [{ t: 'Then ' }, { t: 'you confirm', hl: true }, { t: ' your priority objectives.' }], 46, 350);
+    // Beat 2 — engine returns 5.6s, the hotspot streams into it from 5.9s, and the
+    //   proposal card materialises beneath it while the caption types.
+    T(() => nar.classList.add('wipe'), 4900);
+    T(() => { nar.classList.remove('wipe'); nar.innerHTML = '';
+      cardType(scene, nar, [{ t: 'AI uses that understanding to find the ' }, { t: 'best way', hl: true }, { t: ' to achieve them.' }], 46, 0); }, 5250);
+    // Beat 3 — the fix previews on the map; Review / Approve appear, cursor hovers. Held.
+    T(() => nar.classList.add('wipe'), 10600);
+    T(() => { nar.classList.remove('wipe'); nar.innerHTML = '';
+      cardType(scene, nar, [{ t: 'A recommendation is presented for ' }, { t: 'your review', hl: true }, { t: '.' }], 46, 0); }, 10950);
+  }
+
+  // ── Shared carry-over map (the Analysis / Recommendation geometry) ──────
+  // rework=false omits the rework loop (Monitor — the fix is deployed);
+  // reworkCls tags it for per-scene animation (Simulation dissolves it).
+  function carryMapSVG({ variant = 'full', goneCls = '' } = {}) {
+    const gc = goneCls ? ' ' + goneCls : '';
+    // The pieces the fix removes: rework loop, the whole upper detour, and the
+    // top-right arc. 'full' renders them (tagged goneCls so a scene can dissolve
+    // them); 'fixed' omits them — the cleaned-up process.
+    const removable = `
+      <path class="an-map-edge an-map-edge--rework${gc}" d="M804,276 C796,210 716,210 708,276"/>
+      <path class="an-map-edge an-map-edge--alt${gc}" d="M498,282 C530,260 555,180 574,154"/>
+      <path class="an-map-edge an-map-edge--alt${gc}" d="M590,278 C586,240 586,200 590,162"/>
+      <circle class="an-map-node${gc}" cx="590" cy="140" r="22"/>
+      <circle class="an-map-core${gc}" cx="590" cy="140" r="6"/>
+      <path class="an-map-edge an-map-edge--alt${gc}" d="M610,148 C720,140 760,210 794,290"/>
+      <path class="an-map-edge an-map-edge--alt${gc}" d="M826,278 C840,238 900,238 914,278"/>`;
+    return `
+      <path class="an-map-edge" d="M506,300 L564,300"/>
+      <path class="an-map-edge" d="M616,300 L674,300"/>
+      <path class="an-map-edge an-map-edge--alt" d="M608,318 C640,400 670,440 700,440"/>
+      <path class="an-map-edge" d="M726,300 L784,300"/>
+      <path class="an-map-edge an-map-edge--alt" d="M700,440 C730,440 760,400 792,318"/>
+      <path class="an-map-edge" d="M836,300 L894,300"/>
+      <path class="an-map-edge an-map-edge--alt" d="M484,278 C540,200 660,200 696,278"/>
+      <path class="an-map-edge an-map-edge--alt" d="M715,452 C800,475 880,420 906,322"/>
+      ${variant === 'full' ? removable : ''}
+      <circle class="an-map-node" cx="480" cy="300" r="26"/>
+      <circle class="an-map-node" cx="590" cy="300" r="26"/>
+      <circle class="an-map-node" cx="700" cy="300" r="26"/>
+      <circle class="an-map-node" cx="700" cy="440" r="22"/>
+      <circle class="an-map-node" cx="810" cy="300" r="26"/>
+      <circle class="an-map-node" cx="920" cy="300" r="26"/>
+      <circle class="an-map-core" cx="480" cy="300" r="7"/>
+      <circle class="an-map-core" cx="590" cy="300" r="7"/>
+      <circle class="an-map-core" cx="700" cy="300" r="7"/>
+      <circle class="an-map-core" cx="700" cy="440" r="6"/>
+      <circle class="an-map-core" cx="810" cy="300" r="7"/>
+      <circle class="an-map-core" cx="920" cy="300" r="7"/>`;
+  }
+
+  // ── One looping path-follower through the map (animateMotion). Cases visibly
+  // USE the variants — spine, lower detour, long top arc, lower long path. Motion
+  // free-runs from page load (SMIL clock); each scene fades its tokens in at the
+  // right beat via CSS. Function declaration so it hoists above the card build. ──
+  function motTok(cls, route, dur, begin, r) {
+    const ROUTES = {
+      spine:     'M480,300 L920,300',
+      lowerAlt:  'M480,300 L602,312 C640,400 670,440 700,440 C730,440 760,400 796,312 L810,300 L920,300',
+      topAlt:    'M480,300 L486,280 C540,200 660,200 694,280 L700,300 L920,300',
+      lowerLong: 'M480,300 L602,312 C640,400 670,440 700,440 L713,449 C800,475 880,420 906,325 L920,302',
+    };
+    return `<circle class="${cls}" r="${r || 2.5}"><animateMotion dur="${dur}s" begin="${begin}s" repeatCount="indefinite" path="${ROUTES[route]}"/></circle>`;
+  }
+
+  // ════════════ Card 5 · Simulation ════════════
+  // Continuity scene: the map carries over with the rework loop intact — the fix is
+  // approved but nothing real has changed yet.
+  // Beat 1: a dashed DIGITAL TWIN boundary draws around the map — the test runs on
+  //         a copy, never on the business.
+  // Beat 2: the fix applies inside the twin — the green target ring lands and the
+  //         map visibly heals (rework loop, upper detour and top-right arc all
+  //         dissolve) while your data replays along the spine AND the remaining
+  //         variants, with a progress counter running to 100%.
+  // Beat 3: results panel — before → after across cost, time and resource, marked
+  //         PROJECTED, figures matching the Recommendation card; verdict line.
+  function buildSimulate() {
+    // simulated cases replaying through the NEW process (Beat 2+) — they ride the
+    // spine and every remaining variant, so the cleaned-up map is visibly in use
+    const simtoks = [
+      motTok('si-simtok', 'spine',     2.6, 0.0), motTok('si-simtok', 'spine',     3.1, 0.9),
+      motTok('si-simtok', 'spine',     2.8, 1.7), motTok('si-simtok', 'spine',     3.4, 2.3),
+      motTok('si-simtok', 'lowerAlt',  4.6, 0.4), motTok('si-simtok', 'lowerAlt',  5.1, 2.8),
+      motTok('si-simtok', 'topAlt',    4.2, 1.4),
+      motTok('si-simtok', 'lowerLong', 5.4, 2.0),
+    ].join('');
+
+    // sandbox boundary + copy shimmer + tag + replay counter (top corners)
+    const sandbox = `
+      <rect class="si-box" x="442" y="88" width="518" height="420" rx="16"/>
+      <rect class="si-shimmer" x="442" y="88" width="518" height="420" rx="16"/>
+      <rect class="si-twin-tag-bg" x="456" y="100" width="122" height="22" rx="11"/>
+      <text class="si-twin-tag" x="517" y="115" text-anchor="middle">DIGITAL TWIN</text>
+      <text class="si-count-label" x="946" y="110" text-anchor="end">SIMULATION RUN &middot; YOUR DATA</text>
+      <text class="si-count" x="946" y="136" text-anchor="end">0%</text>`;
+
+    // the fix applied in the twin (Beat 2)
+    const fix = `<circle class="si-ring" cx="700" cy="300" r="36"/>`;
+
+    // results panel (Beat 3) — before → after, carrying the Recommendation figures
+    const ROWS = [
+      { c: 'cost',     l: 'COST',     was: 'was $1.2M / yr',     aft: '$560K / yr',      y: 176, d: 11.70, sw: 92 },
+      { c: 'time',     l: 'TIME',     was: 'was 9 days / case',  aft: '5.5 days / case', y: 248, d: 11.95, sw: 108 },
+      { c: 'resource', l: 'RESOURCE', was: 'was 12,400 hrs / yr', aft: '7,300 hrs / yr', y: 320, d: 12.20, sw: 122 },
+    ];
+    const rows = ROWS.map(r => `<g class="si-row" style="animation-delay:${r.d}s">
+        <circle class="si-row-dot--${r.c}" cx="62" cy="${r.y - 5}" r="5"/>
+        <text class="si-row-label" x="78" y="${r.y}">${r.l}</text>
+        <text class="si-before" x="78" y="${r.y + 26}">${r.was}</text>
+        <line class="si-strike" x1="76" y1="${r.y + 22}" x2="${76 + r.sw}" y2="${r.y + 22}"/>
+        <text class="si-after si-after--${r.c}" x="386" y="${r.y + 28}" text-anchor="end">${r.aft}</text>
+      </g>`).join('');
+    const panel = `
+      <rect class="si-panel" x="30" y="110" width="380" height="320" rx="14"/>
+      <text class="si-ptag" x="54" y="140">SIMULATION RESULT · PROJECTED</text>
+      ${rows}
+      <g class="si-verdict">
+        <circle class="si-check-circ" cx="66" cy="398" r="12"/>
+        <path class="si-check-mark" d="M60.5,398.5 L65,403 L72,394"/>
+        <text class="si-verdict-text" x="86" y="402">Bottleneck cleared &middot; variants reduced</text>
+      </g>`;
+
+    const scene = document.createElement('div');
+    scene.className = 'si-scene pi-cardscene';
+    scene.innerHTML = `<div class="pi-narr"></div>
+      <svg class="pi-cardsvg" viewBox="0 0 1000 540" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+        ${sandbox}
+        ${carryMapSVG({ variant: 'full', goneCls: 'si-gone' })}
+        ${fix}
+        ${simtoks}
+        ${panel}
+      </svg>`;
+    return scene;
+  }
+  function playSI(el) {
+    const scene = el.querySelector('.si-scene'); if (!scene) return;
+    cardPlay(scene);
+    const nar = scene.querySelector('.pi-narr');
+    const T = (fn, ms) => { if (scene._t) scene._t.push(setTimeout(fn, ms)); };
+    // Beat 1 — caption first (0.35–2.0s); boundary draws 2.2s, shimmer + tag follow.
+    cardType(scene, nar, [{ t: 'Your process is cloned to create a ' }, { t: 'Digital Twin', hl: true }, { t: '.' }], 46, 350);
+    // Beat 2 — the fix applies in the twin while cases replay and the counter runs.
+    T(() => nar.classList.add('wipe'), 4900);
+    T(() => { nar.classList.remove('wipe'); nar.innerHTML = '';
+      cardType(scene, nar, [{ t: 'The recommended fix is applied, and ' }, { t: 'your own data', hl: true }, { t: ' runs through the new process.' }], 46, 0); }, 5250);
+    // Beat 3 — before → after results, still only a projection.
+    T(() => nar.classList.add('wipe'), 10600);
+    T(() => { nar.classList.remove('wipe'); nar.innerHTML = '';
+      cardType(scene, nar, [{ t: 'The result is ' }, { t: 'mathematically proven', hl: true }, { t: ' before you commit.' }], 46, 0); }, 10950);
+    // Beat 3 closer — appended once the after-figures have landed.
+    T(() => {
+      cardType(scene, nar, [{ t: ' Underpinning your ' }, { t: 'business case', hl: true }, { t: '.' }], 46, 0, true);
+    }, 13300);
+    cardCount(scene, scene.querySelector('.si-count'), 100, 2600, 6700, v => Math.round(v) + '%');
+    cardCount(scene, scene.querySelector('.si-after--cost'), 560, 900, 11900,
+      v => v >= 1000 ? '$' + (v / 1000).toFixed(1) + 'M / yr' : '$' + Math.round(v) + 'K / yr', 1200);
+    cardCount(scene, scene.querySelector('.si-after--time'), 5.5, 900, 12150, v => v.toFixed(1) + ' days / case', 9);
+    cardCount(scene, scene.querySelector('.si-after--resource'), 7300, 900, 12400, v => Math.round(v).toLocaleString() + ' hrs / yr', 12400);
+  }
+
+  // ════════════ Card 6 · Monitor ════════════
+  // Continuity scene: the map returns WITHOUT the rework loop — the fix from cards
+  // 4–5 is deployed. The frame is deliberately the calmest of the six.
+  // Beat 1: LIVE badge lands, real cases flow along the spine, the monitor panel
+  //         opens with a steady green trace.
+  // Beat 2: the three baselines report in — cost, time and resource at their new
+  //         levels (the simulated figures, now real), all ON TRACK.
+  // Beat 3: drift appears as a NEW amber variant drawing itself onto the map (the
+  //         rework loop creeping back), cases start using it, and the TIME baseline
+  //         flips to DRIFT in the same moment. Caught as it forms, not found later.
+  function buildMonitor() {
+    // live cases riding the cleaned-up map — slower and steadier than the
+    // simulation's replay, on the spine and every remaining variant
+    const livetoks = [
+      motTok('mo-tok', 'spine',     3.8, 0.0, 2.4), motTok('mo-tok', 'spine',     4.6, 1.6, 2.4),
+      motTok('mo-tok', 'spine',     4.2, 3.0, 2.4),
+      motTok('mo-tok', 'lowerAlt',  6.2, 0.8, 2.4),
+      motTok('mo-tok', 'topAlt',    5.6, 2.2, 2.4),
+      motTok('mo-tok', 'lowerLong', 6.8, 3.6, 2.4),
+    ].join('');
+
+    const live = `<g class="mo-live">
+        <circle class="mo-live-dot" cx="886" cy="106" r="5"/>
+        <text class="mo-live-label" x="900" y="110">LIVE</text>
+      </g>`;
+
+    // monitor panel: LIVE header, steady trace, three baselines
+    const ekgPath = 'M54,190 C70,184 86,196 102,190 S134,184 150,190 S182,196 198,190 S230,184 246,190 S278,196 294,190 S326,184 342,190 S374,196 386,190';
+    const ROWS = [
+      { c: 'cost',     l: 'COST',     v: '$560K / yr',      y: 262, d: 5.90 },
+      { c: 'time',     l: 'TIME',     v: '5.5 days / case', y: 312, d: 6.15, drift: true },
+      { c: 'resource', l: 'RESOURCE', v: '7,300 hrs / yr',  y: 362, d: 6.40 },
+    ];
+    const rows = ROWS.map(r => {
+      const okCls = r.drift ? ' mo-ok-swap' : '';
+      const driftBits = r.drift ? `
+        <text class="mo-val-drift mo-drift-in" x="296" y="${r.y}" text-anchor="end">6.1 days / case</text>
+        <rect class="mo-chip-drift mo-drift-in" x="308" y="${r.y - 14}" width="78" height="20" rx="10"/>
+        <text class="mo-chip-drift-t mo-drift-in" x="347" y="${r.y - 1}" text-anchor="middle">DRIFT</text>` : '';
+      return `<g class="mo-row" style="animation-delay:${r.d}s">
+        <circle class="mo-row-dot--${r.c}" cx="62" cy="${r.y - 4}" r="5"/>
+        <text class="mo-row-label" x="78" y="${r.y}">${r.l}</text>
+        <text class="mo-row-val${okCls}" x="296" y="${r.y}" text-anchor="end">${r.v}</text>
+        <rect class="mo-chip-ok${okCls}" x="308" y="${r.y - 14}" width="78" height="20" rx="10"/>
+        <text class="mo-chip-ok-t${okCls}" x="347" y="${r.y - 1}" text-anchor="middle">ON TRACK</text>
+        ${driftBits}
+      </g>`;
+    }).join('');
+    const panel = `
+      <rect class="mo-panel" x="30" y="110" width="380" height="300" rx="14"/>
+      <g class="mo-phead">
+        <circle class="mo-phead-dot" cx="66" cy="140" r="5"/>
+        <text class="mo-phead-label" x="80" y="144">LIVE &middot; IN PRODUCTION</text>
+      </g>
+      <path class="mo-ekg-base" d="${ekgPath}"/>
+      <path class="mo-ekg" d="${ekgPath}" pathLength="1000"/>
+      ${rows}`;
+
+    // drift caught on the map (Beat 3): a NEW amber variant draws itself in —
+    // the old rework loop creeping back — and cases start using it
+    const drift = `
+      <path class="mo-newvar" pathLength="1" d="M804,276 C796,210 716,210 708,276"/>
+      <circle class="mo-newvar-tok" r="2.6">
+        <animateMotion dur="2.2s" begin="0s" repeatCount="indefinite" path="M804,276 C796,210 716,210 708,276"/>
+      </circle>
+      <g class="mo-flag">
+        <line class="mo-flag-pole" x1="756" y1="222" x2="756" y2="196"/>
+        <path class="mo-flag-flag" d="M756,196 L780,203 L756,210 Z"/>
+        <text class="mo-flag-label" x="756" y="184" text-anchor="middle">New variant detected</text>
+      </g>`;
+
+    const scene = document.createElement('div');
+    scene.className = 'mo-scene pi-cardscene';
+    scene.innerHTML = `<div class="pi-narr"></div>
+      <svg class="pi-cardsvg" viewBox="0 0 1000 540" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+        ${carryMapSVG({ variant: 'fixed' })}
+        ${livetoks}
+        ${live}
+        ${panel}
+        ${drift}
+      </svg>`;
+    return scene;
+  }
+  function playMO(el) {
+    const scene = el.querySelector('.mo-scene'); if (!scene) return;
+    cardPlay(scene);
+    const nar = scene.querySelector('.pi-narr');
+    const T = (fn, ms) => { if (scene._t) scene._t.push(setTimeout(fn, ms)); };
+    // Beat 1 — caption first (0.35–1.7s); LIVE badge 2.0s, panel 2.4s, trace 3.0s.
+    cardType(scene, nar, [{ t: 'The fix is ' }, { t: 'live', hl: true }, { t: ', and is then monitored in real time.' }], 46, 350);
+    // Beat 2 — the baselines report in while the caption types.
+    T(() => nar.classList.add('wipe'), 4900);
+    T(() => { nar.classList.remove('wipe'); nar.innerHTML = '';
+      cardType(scene, nar, [{ t: 'Every case, checked against the ' }, { t: 'new baseline', hl: true }, { t: '.' }], 46, 0); }, 5250);
+    // Beat 3 — drift caught: map node warms 10.2s, flag 10.5s, TIME row flips 10.7s.
+    T(() => nar.classList.add('wipe'), 9300);
+    T(() => { nar.classList.remove('wipe'); nar.innerHTML = '';
+      cardType(scene, nar, [{ t: 'New variants are ' }, { t: 'caught immediately', hl: true }, { t: ', and you\'re notified.' }], 46, 0); }, 9650);
+  }
+
+  // ── Task Mining: same shared cardPlay/cardType pattern as Process Mining and
+  // cards 3–6. Three beats matching the strict-sequence visual schedule below:
+  //   Beat 1 (0.35–5.1s):   type "Process Mining only sees what is logged…" while
+  //                         System+Engine appear and dots stream between them
+  //                         (caption types in 0.35–3.11s; then a 2s wait).
+  //   Beat 2 (5.46–11.0s):  type "But the real work happens between them…" then
+  //                         the four extras (Browser/Email/Sheet/Doc) fade in
+  //                         around the System (8.36s+); 2s wait afterwards.
+  //   Beat 3 (11.31s+):     type "Task mining captures what process mining misses."
+  //                         while the map builds with an extra (longer) rework loop.
+  function playTM(el) {
+    const scene = el.querySelector('.tm-scene'); if (!scene) return;
+    cardPlay(scene);
+    const nar = scene.querySelector('.pi-narr');
+    const T = (fn, ms) => { if (scene._t) scene._t.push(setTimeout(fn, ms)); };
+    // Beat 1 — "Process Mining only sees what is logged within your systems."
+    cardType(scene, nar, [{ t: 'Process mining can only see what your systems ' }, { t: 'log', hl: true }, { t: '.' }], 46, 350);
+    T(() => nar.classList.add('wipe'), 4600);
+    // Beat 2 — "But the real work happens between them, where nothing is logged."
+    T(() => { nar.classList.remove('wipe'); nar.innerHTML = '';
+      cardType(scene, nar, [{ t: 'But so much of the real work happens ' }, { t: 'between them', hl: true }, { t: ', where nothing gets logged.' }], 46, 0); }, 4950);
+    T(() => nar.classList.add('wipe'), 9400);
+    // Beat 3 — "Task mining captures what process mining misses."
+    T(() => { nar.classList.remove('wipe'); nar.innerHTML = '';
+      cardType(scene, nar, [{ t: 'Task mining captures what process mining ' }, { t: 'misses', hl: true }, { t: '.' }], 46, 0); }, 9750);
+    // Beat 3 closer — a 1.3s breath after the streams settle, then typed AS the
+    // new variants draw onto the map (13.5–14.4s): one beat, at human speed.
+    T(() => {
+      cardType(scene, nar, [{ t: ' Showing you what\'s ' }, { t: 'really', hl: true }, { t: ' going on.' }], 46, 0, true);
+    }, 13500);
+  }
+  function stopTM(el) {
+    const scene = el.querySelector('.tm-scene'); if (!scene) return;
+    cardStop(scene);
+  }
+
+  // ── Process Mining: fire the CSS timeline, then type the three narration beats.
+  // Uses the shared cardPlay/cardType/cardStop helpers and the shared .pi-narr
+  // narration container (same pattern as cards 3–6). Captions wipe-and-replace on
+  // beat boundaries; the visual timeline is driven entirely by CSS off .playing.
+  // Visuals overlap the captions (same pacing rule as cards 4–6):
+  //   Beat 1 (0.35–4.3s):   type extract · system + dots land during the line
+  //   Beat 2 (4.65–8.4s):   type connect · engine lands + spins during the line
+  //   Beat 3 (8.75s+):      type real-process AS the map animates beneath
+  // Highlighted words ('extract', 'connect', 'real process') render in
+  // light blue via the .pi-hl class set when {hl:true} is on a segment.
+  function playPM(el) {
+    const scene = el.querySelector('.pm-scene'); if (!scene) return;
+    cardPlay(scene);
+    const nar = scene.querySelector('.pi-narr');
+    const T = (fn, ms) => { if (scene._t) scene._t.push(setTimeout(fn, ms)); };
+    // Beat 1 — extract: "We extract the data your systems already capture."
+    cardType(scene, nar, [{ t: 'Process mining ' }, { t: 'extracts', hl: true }, { t: ' the data your systems already capture.' }], 46, 350);
+    T(() => nar.classList.add('wipe'), 4300);
+    // Beat 2 — connect: "We connect those records to understand exactly what's happening."
+    T(() => { nar.classList.remove('wipe'); nar.innerHTML = '';
+      cardType(scene, nar, [{ t: 'It ' }, { t: 'connects', hl: true }, { t: " those records to map exactly what's happening." }], 46, 0); }, 4650);
+    T(() => nar.classList.add('wipe'), 8400);
+    // Beat 3 — real process: "Your real process appears, with every detour, bottleneck and loop exposed."
+    T(() => { nar.classList.remove('wipe'); nar.innerHTML = '';
+      cardType(scene, nar, [{ t: 'Your ' }, { t: 'real process', hl: true }, { t: ' appears, with every detour, bottleneck and loop exposed.' }], 46, 0); }, 8750);
+  }
+
+  // Crowd → question pulse: a small token travels from a random person to a new question bubble.
+  const NS_SVG = 'http://www.w3.org/2000/svg';
+  function firePulse(scene, bubbleEl) {
+    if (reduceMotion()) return;
+    const layer = scene.querySelector('.cv-link-layer'); if (!layer) return;
+    const dots = scene.querySelectorAll('.cv-dot'); if (!dots.length) return;
+    const lr = layer.getBoundingClientRect(); if (!lr.width) return;
+    const dotEl = dots[Math.floor(Math.random() * dots.length)];
+    const src = dotEl.getBoundingClientRect();
+    const br = bubbleEl.getBoundingClientRect();
+    const x1 = src.left + src.width / 2 - lr.left, y1 = src.top + src.height / 2 - lr.top;
+    const x2 = br.left - lr.left + 6, y2 = br.top + br.height / 2 - lr.top;
+    // Static guide line (plain SVG, no animation).
+    const d = `M ${x1} ${y1} C ${(x1 + x2) / 2} ${y1}, ${(x1 + x2) / 2} ${y2}, ${x2} ${y2}`;
+    const svg = document.createElementNS(NS_SVG, 'svg');
+    svg.setAttribute('class', 'cv-pulse-svg'); svg.setAttribute('viewBox', `0 0 ${lr.width} ${lr.height}`); svg.setAttribute('preserveAspectRatio', 'none');
+    const path = document.createElementNS(NS_SVG, 'path'); path.setAttribute('d', d); path.setAttribute('class', 'cv-pulse-line');
+    svg.appendChild(path); layer.appendChild(svg);
+
+    // Moving token + halo — driven by the Web Animations API. Sample the SAME cubic bezier
+    // as the guide line above so the token rides exactly on the dashed line (no SMIL).
+    const P = [[x1, y1], [(x1 + x2) / 2, y1], [(x1 + x2) / 2, y2], [x2, y2]];
+    const frames = [];
+    const STEPS_N = 24;
+    for (let i = 0; i <= STEPS_N; i++) {
+      const t = i / STEPS_N, u = 1 - t;
+      const bx = u * u * u * P[0][0] + 3 * u * u * t * P[1][0] + 3 * u * t * t * P[2][0] + t * t * t * P[3][0];
+      const by = u * u * u * P[0][1] + 3 * u * u * t * P[1][1] + 3 * u * t * t * P[2][1] + t * t * t * P[3][1];
+      const op = t < 0.15 ? t / 0.15 : t > 0.85 ? (1 - t) / 0.15 : 1;
+      frames.push({ transform: `translate(${bx.toFixed(1)}px, ${by.toFixed(1)}px)`, opacity: op, offset: t });
+    }
+    const opts = { duration: 1400, easing: 'linear', fill: 'forwards' };
+    const halo = document.createElement('div'); halo.className = 'cv-pulse-halo'; layer.appendChild(halo);
+    const tok = document.createElement('div'); tok.className = 'cv-pulse-token'; layer.appendChild(tok);
+    if (halo.animate) { halo.animate(frames, opts); tok.animate(frames, opts); }
+
+    dotEl.classList.add('asking');                  // the asker lights up cyan as the question flies
+    const tm = scene._cvTimers || (scene._cvTimers = []);
+    tm.push(setTimeout(() => dotEl.classList.remove('asking'), 1000));
+    tm.push(setTimeout(() => { svg.style.opacity = '0'; }, 1500));
+    tm.push(setTimeout(() => { svg.remove(); halo.remove(); tok.remove(); }, 2050));
+  }
+
+  // ── Conversational Interface: play people animation + stream questions ──
+  function stopConvoQuestions(scene) {
+    if (scene._qTimers) { scene._qTimers.forEach(clearTimeout); scene._qTimers = null; }
+    const list = scene.querySelector('.cv-qlist'); if (list) list.innerHTML = '';
+  }
+  function startConvoQuestions(scene) {
+    stopConvoQuestions(scene);
+    const list = scene.querySelector('.cv-qlist'); if (!list) return;
+    const timers = []; scene._qTimers = timers;
+    let qi = 0;
+    const addBubble = () => {
+      const b = document.createElement('div'); b.className = 'cv-q';
+      b.style.maxWidth = (72 + Math.random() * 26).toFixed(0) + '%';        // slight width variation
+      const av = document.createElement('span');
+      av.className = 'cv-q-av';
+      av.innerHTML = '<svg viewBox="-10 -10 20 20" aria-hidden="true"><path d="M-7,-7 a3,3 0 0 1 3,-3 H7 a3,3 0 0 1 3,3 V1 a3,3 0 0 1 -3,3 H-1 L-6,8 V4 a3,3 0 0 1 -4,-3 z" transform="translate(0,-1) scale(0.85)"/></svg>';
+      const body = document.createElement('span'); body.className = 'cv-q-body';
+      const txt = document.createElement('span'); body.appendChild(txt);
+      b.appendChild(av); b.appendChild(body);
+      list.appendChild(b);
+      while (list.children.length > 4) list.removeChild(list.firstChild);   // keep it a rolling feed
+      firePulse(scene, b);                                                  // a person "asks" this question
+      const q = CONVO_QUESTIONS[qi++ % CONVO_QUESTIONS.length];
+      const addTick = () => { const t = document.createElement('span'); t.className = 'cv-tick'; t.textContent = '✓'; body.appendChild(t); };
+      if (reduceMotion()) {
+        txt.textContent = q; addTick(); b.classList.add('answered');
+        timers.push(setTimeout(addBubble, 2200));
+        return;
+      }
+      const caret = document.createElement('span'); caret.className = 'cv-caret'; body.appendChild(caret);
+      let ci = 0;
+      const type = () => {
+        txt.textContent = q.slice(0, ci++);
+        if (ci <= q.length) { timers.push(setTimeout(type, 36)); }
+        else {
+          caret.remove(); addTick();
+          timers.push(setTimeout(() => b.classList.add('answered'), 220));
+          timers.push(setTimeout(addBubble, 1500));
+        }
+      };
+      type();
+    };
+    timers.push(setTimeout(addBubble, 150));   // narration has already played; begin promptly
+  }
+  // Typewriter for a narration line. `segments` = [{t, hl?}] so part of a line can be coloured.
+  function typeLine(scene, host, segments, cps, onDone) {
+    host.innerHTML = '';
+    const spans = segments.map(s => { const e = document.createElement('span'); if (s.hl) e.className = 'cv-hl'; host.appendChild(e); return e; });
+    if (reduceMotion()) { spans.forEach((e, i) => e.textContent = segments[i].t); onDone && onDone(); return; }
+    const caret = document.createElement('span'); caret.className = 'cv-caret'; host.appendChild(caret);
+    let si = 0, ci = 0;
+    const stepFn = () => {
+      if (si >= segments.length) { caret.remove(); onDone && onDone(); return; }
+      const seg = segments[si];
+      if (ci < seg.t.length) spans[si].textContent += seg.t[ci++];
+      else { si++; ci = 0; }
+      scene._cvTimers.push(setTimeout(stepFn, cps));
+    };
+    stepFn();
+  }
+
+  function playConvo(el) {
+    const scene = el.querySelector('.cv-scene'); if (!scene) return;
+    if (scene._cvTimers) scene._cvTimers.forEach(clearTimeout);
+    scene._cvTimers = [];
+    stopConvoQuestions(scene);
+    scene.classList.remove('playing', 'experts', 'revealed');
+    const narrate = scene.querySelector('.cv-narrate');
+    const rtitle = scene.querySelector('.cv-rtitle');
+    narrate.classList.remove('wipe'); narrate.innerHTML = ''; rtitle.innerHTML = '';
+    const layer = scene.querySelector('.cv-link-layer'); if (layer) layer.innerHTML = '';
+
+    // Frame the two experts as a side-by-side pair at the panel centre. Reset --sx/--sy to 0
+    // first so the measurement isn't thrown off by the previous play's offsets (replay fix).
+    const heroes = scene.querySelectorAll('.cv-hero-ic');
+    const people = scene.querySelector('.cv-people');
+    heroes.forEach(h => { h.style.transition = 'none'; h.style.setProperty('--sx', '0px'); h.style.setProperty('--sy', '0px'); });
+    void scene.offsetWidth;
+    const pr = people.getBoundingClientRect();
+    const cx = pr.left + pr.width / 2, cy = pr.top + pr.height * 0.58;
+    heroes.forEach((h, k) => {
+      const r = h.getBoundingClientRect();
+      const off = (k === 0 ? -1 : 1) * r.width * 0.52;   // spacing scales with the (large) start size
+      h.style.setProperty('--sx', (cx - (r.left + r.width / 2) + off) + 'px');
+      h.style.setProperty('--sy', (cy - (r.top + r.height / 2)) + 'px');
+    });
+    void scene.offsetWidth;                              // commit placement before re-enabling transition
+    heroes.forEach(h => { h.style.transition = ''; });
+
+    scene.classList.add('playing');                      // blank stage
+    const CPS = 67;                                       // ~40% slower typing
+    const T = (fn, ms) => scene._cvTimers.push(setTimeout(fn, ms));
+
+    // 1) "Everything you've just seen used to take experts." on the left; experts appear once it finishes.
+    typeLine(scene, narrate, [{ t: "Everything you've just seen used to take " }, { t: 'experts', hl: true }, { t: '.' }], CPS, () => scene.classList.add('experts'));
+    // 2) hold, then wipe the line away.
+    T(() => narrate.classList.add('wipe'), 4800);
+    // 3) experts shrink + crowd fades in while "Now anyone can get the answers they need." types
+    //    on the left (and then stays there).
+    T(() => {
+      narrate.classList.remove('wipe'); narrate.innerHTML = '';
+      scene.classList.add('revealed');
+      typeLine(scene, narrate, [{ t: 'Now ' }, { t: 'anyone', hl: true }, { t: ' can get the answers they need.' }], CPS);
+    }, 5650);
+    // 4) after a small beat, the right-hand title types at the same height; the questions (and
+    //    their pulses) wait until it has finished typing before they begin to stream in.
+    T(() => typeLine(scene, rtitle, [{ t: 'Simply by asking, in their own words.' }], CPS,
+      () => { if (scene._cvTimers) scene._cvTimers.push(setTimeout(() => startConvoQuestions(scene), 650)); }), 9300);
+  }
+  function stopConvo(el) {
+    const scene = el.querySelector('.cv-scene'); if (!scene) return;
+    if (scene._cvTimers) { scene._cvTimers.forEach(clearTimeout); scene._cvTimers = null; }
+    stopConvoQuestions(scene);
+    const narrate = scene.querySelector('.cv-narrate'); if (narrate) { narrate.classList.remove('wipe'); narrate.innerHTML = ''; }
+    const rtitle = scene.querySelector('.cv-rtitle'); if (rtitle) rtitle.innerHTML = '';
+    const layer = scene.querySelector('.cv-link-layer'); if (layer) layer.innerHTML = '';
+    scene.classList.remove('playing', 'experts', 'revealed');
+  }
+
+  function showBig(n) {
+    const next = (n >= 1 && n <= STEPS) ? bigs[n - 1] : null;
+    if (next === currentBig) return;
+    const prev = currentBig;
+    currentBig = next;
+    if (swapTimer) { clearTimeout(swapTimer); swapTimer = null; }
+    if (prev) {
+      prev.classList.remove('active'); prev.classList.add('closing');
+      stopScene(prev);                                        // halt timers + reset the leaving card
+    }
+    const delay = prev ? 280 : 0;           // close the last card, then raise the new one
+    swapTimer = setTimeout(() => {
+      if (prev) prev.classList.remove('closing');
+      if (next) {
+        // A rapid back-and-forth can cancel a pending swap, stranding a stale
+        // .closing (opacity 0) on this card — scrub it before re-activating.
+        next.classList.remove('closing');
+        next.classList.add('active');
+        playScene(next);
+      }
+    }, delay);
+  }
+
+  // Replay the animation in the currently-open card (driven by the in-iframe replay
+  // button and the deck's replay button via the 'replay' message).
+  function replayCurrent() {
+    const el = currentBig; if (!el) return;
+    playScene(el);
+  }
+
+  function render() {
+    // rail + pillar highlight
+    railCards.forEach((c, i) => {
+      c.classList.toggle('active', step === i + 1);
+      c.classList.toggle('done', step > i + 1);
+    });
+    pillar.classList.toggle('active', step === STEPS);
+
+    // big card
+    showBig(step);
+    const app = document.getElementById('app');
+    app.classList.toggle('intro-mode', step === 0);
+    app.classList.toggle('finale-mode', step === FINALE);
+    app.classList.toggle('finale-go', step === FINALE);
+    // reset any in-flight finale entry choreography
+    clearFinaleTimers();
+    caption.classList.remove('cap-hidden');
+    capSub.style.opacity = '';
+    railWrap.style.transform = ''; railWrap.style.transition = '';
+    pillarWrap.style.transform = ''; pillarWrap.style.transition = '';
+
+    // caption: set the title + sub text, then bounce eyebrow + title + sub together.
+    // Step 0 poses the bridging question; steps 1+ carry the layer's claim
+    // ("Process Mining: See how you actually run.") with the claim in accent blue.
+    capTitle.innerHTML = step === 0
+      ? 'How does <span class="hl">Apromore</span><br/>Process Intelligence <span class="hl">solve this?</span>'
+      : step === FINALE
+        ? '<span class="hl">Now you can.</span>'
+        : ALL[step - 1].name + ': <span class="hl">' + ALL[step - 1].claim + '</span>';
+    capSub.innerHTML = step === 0
+      ? ''
+      : step === FINALE
+        ? 'See how you run. Size what\'s at stake. Fix it, test it, keep it fixed.'
+        : ALL[step - 1].sub;
+    const capEls = [capEyebrow, capTitle, capSub];
+    capEls.forEach(el => el.classList.remove('cap-bounce'));
+    void capTitle.offsetWidth;                 // single reflow to re-fire the animation
+    capEls.forEach(el => el.classList.add('cap-bounce'));
+
+    // progress
+    dots.forEach((d, i) => { d.classList.toggle('on', step === i + 1); d.classList.toggle('done', step > i + 1); });
+    progLabel.textContent = step === 0 ? 'Overview' : step === FINALE ? 'Together' : ALL[step - 1].name;
+    navCount.textContent = step + ' / ' + FINALE;
+    btnPrev.disabled = step === 0;
+    btnNext.disabled = step === FINALE;
+
+    // Report the step to the deck — drives the autoplay dwell lookup.
+    if (embedded) toParent({ type: 'embed-step', step: step });
+  }
+
+  function goTo(n) {
+    n = Math.max(0, Math.min(FINALE, n));
+    if (n === step) return;
+    const from = step;
+    step = n;
+    clearFinaleTimers();
+    if (step === FINALE && from === STEPS && !REDUCED_MOTION) enterFinale();
+    else render();
+  }
+
+  // ── Finale entry choreography (forward 7 → 8 only) ───────────────
+  // The step-7 caption fades out, the stack slides down to its centred resting
+  // place (FLIP: measure, switch layout, transform back, release), then the
+  // closing caption fades in and the pulse travels the rail. Reverse entry
+  // and reduced motion land on the finished frame instantly via render().
+  const finaleTimers = [];
+  const FT = (fn, ms) => finaleTimers.push(setTimeout(fn, ms));
+  function clearFinaleTimers() { finaleTimers.forEach(clearTimeout); finaleTimers.length = 0; }
+  const REDUCED_MOTION = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function slideFrom(el, dy) {
+    el.style.transition = 'none';
+    el.style.transform = 'translateY(' + dy + 'px)';
+    void el.offsetWidth;
+    el.style.transition = 'transform 0.7s cubic-bezier(0.22,1,0.36,1)';
+    el.style.transform = '';
+    FT(() => { el.style.transition = ''; }, 760);
+  }
+
+  function enterFinale() {
+    const app = document.getElementById('app');
+    // chrome bookkeeping: same end state render() would set for the finale
+    railCards.forEach(c => { c.classList.remove('active'); c.classList.add('done'); });
+    pillar.classList.remove('active');
+    showBig(FINALE);                                  // closes the open card
+    dots.forEach((d, i) => { d.classList.toggle('on', i === FINALE - 1); d.classList.toggle('done', i < FINALE - 1); });
+    progLabel.textContent = 'Together';
+    navCount.textContent = FINALE + ' / ' + FINALE;
+    btnPrev.disabled = false;
+    btnNext.disabled = true;
+    if (embedded) toParent({ type: 'embed-step', step: FINALE });
+    // 1) the previous frame's caption fades out (big card is closing meanwhile)
+    caption.classList.add('cap-hidden');
+    FT(() => {
+      // 2) stage the question and the (hidden) sub while the caption is
+      //    invisible, so the layout the stack slides into never reflows
+      capTitle.innerHTML = '<span class="fin-q">Do you actually know how your business runs?</span>';
+      capSub.innerHTML = 'See how you run. Size what\'s at stake. Fix it, test it, keep it fixed.';
+      capSub.style.opacity = '0';                   // space reserved, revealed at the end
+      capSub.classList.remove('cap-bounce');        // its filled animation would override the inline opacity
+      const r1 = railWrap.getBoundingClientRect();
+      const p1 = pillarWrap.getBoundingClientRect();
+      app.classList.add('finale-mode');
+      const r2 = railWrap.getBoundingClientRect();
+      const p2 = pillarWrap.getBoundingClientRect();
+      slideFrom(railWrap, r1.top - r2.top);
+      slideFrom(pillarWrap, p1.top - p2.top);
+      // 3) the deck's master question returns once the stack has settled
+      FT(() => {
+        caption.classList.remove('cap-hidden');
+        capTitle.classList.remove('cap-bounce'); void capTitle.offsetWidth; capTitle.classList.add('cap-bounce');
+        // 4) hold, then the question fades away
+        FT(() => {
+          const q = capTitle.querySelector('.fin-q'); if (q) q.classList.add('fin-out');
+          // 5) the answer lands at full scale and the pulse travels the stack
+          FT(() => {
+            capTitle.innerHTML = '<span class="hl">Now you can.</span>';
+            capTitle.classList.remove('cap-bounce'); void capTitle.offsetWidth; capTitle.classList.add('cap-bounce');
+            app.classList.add('finale-go');
+            // 6) the recap line follows a beat later
+            FT(() => {
+              capSub.style.opacity = '';
+              capSub.classList.remove('cap-bounce'); void capSub.offsetWidth; capSub.classList.add('cap-bounce');
+            }, 420);
+          }, 460);
+        }, 2300);
+      }, 780);
+    }, 430);
+  }
+
+  btnPrev.addEventListener('click', () => goTo(step - 1));
+  btnNext.addEventListener('click', () => goTo(step + 1));
+  btnReplay.addEventListener('click', replayCurrent);
+
+  // ── Keyboard + deck bridge ─────────────────────────────────────
+  // Embedded in the deck (foundation.html), this file OWNS its own step sequence. The deck
+  // sends intent only — deck-enter / deck-advance / deck-reverse — and we reply deck-next /
+  // deck-prev when stepping past the first/last step so the deck changes slides. Because the
+  // step count lives here, layers can be added/removed without touching the deck.
+  const embedded = window.parent !== window;
+  const toParent = (msg) => { try { window.parent.postMessage(msg, '*'); } catch (err) {} };
+  const isArrowKey = k => k === 'ArrowRight' || k === 'ArrowLeft' || k === 'ArrowDown' || k === 'ArrowUp';
+  const isFwdKey   = k => k === 'ArrowRight' || k === 'ArrowDown';
+
+  function stepForward()  { if (step < FINALE) goTo(step + 1); else if (embedded) toParent({ type: 'deck-next' }); }
+  function stepBackward() { if (step > 0)     goTo(step - 1); else if (embedded) toParent({ type: 'deck-prev' }); }
+
+  // Local arrow keys — used standalone, and when the iframe itself holds focus inside the deck.
+  window.addEventListener('keydown', (e) => {
+    if (!isArrowKey(e.key)) return;
+    e.preventDefault();
+    isFwdKey(e.key) ? stepForward() : stepBackward();
+  });
+
+  // Parent → iframe messages (the deck's embed handshake):
+  window.addEventListener('message', (e) => {
+    if (!e.data) return;
+    switch (e.data.type) {
+      // Entered the slide (fwd/reverse). Set the step and ALWAYS render so the title
+      // bounces on entry too — goTo() would no-op if the step index is unchanged.
+      case 'deck-enter':       step = (e.data.dir === 'rev') ? FINALE : 0; render(); break;
+      case 'deck-advance':     stepForward();  break;
+      case 'deck-reverse':     stepBackward(); break;
+      case 'replay':           replayCurrent(); break;     // deck replay button
+    }
+  });
+
+  // ── Boot ───────────────────────────────────────────────────────
+  render();
+  // Tell the deck we're ready so it can (re)send deck-enter if it navigated here before load.
+  if (embedded) toParent({ type: 'embed-ready' });
+})();
+</script>
+</body>
+</html>

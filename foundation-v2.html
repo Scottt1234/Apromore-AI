@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="en"
+  data-deck-name="Apromore · Process Intelligence">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Apromore · Process Intelligence · Knowledge is Power · v2 sandbox</title>
+  <link rel="stylesheet" href="tokens.css" />
+  <link rel="stylesheet" href="components.css" />
+  <link rel="stylesheet" href="animation.css" />
+  <style>
+    /* ── Deck accent — held white ──── */
+    :root {
+      --accent:   #FFFFFF;
+      --accent-l: rgba(255,255,255,0.78);
+    }
+
+    html { height: 100%; }
+    /* iOS Safari: position:fixed on body keeps it from being a touch target
+       that swallows scroll events meant for absolute-positioned slide children. */
+    body {
+      height: 100%;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      overflow: hidden;
+      overscroll-behavior: none;
+    }
+
+    /* ── Slide engine (verbatim pattern from canonical composer) ─────── */
+    /* 100dvh tracks the actual visible viewport on mobile (excluding URL bar);
+       100vh is kept as a fallback for older browsers via CSS cascading. */
+    .slide-deck { width: 100vw; height: 100vh; height: 100dvh; position: relative; }
+    .slide {
+      position: absolute; inset: 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;     /* legacy iOS momentum scroll */
+      overscroll-behavior: contain;          /* don't bubble scroll to body */
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+    .slide.active { opacity: 1; pointer-events: all; touch-action: pan-y; }
+
+    /* Mobile: ditch the absolute-positioned overlay layout (which iOS Safari struggles
+       to scroll inside) and use natural document flow. Active slide flows in body,
+       inactive slides are display:none, body scrolls naturally with full iOS support. */
+    @media (max-width: 900px) {
+      html { height: auto; }
+      body {
+        height: auto; position: static;
+        overflow: auto; -webkit-overflow-scrolling: touch;
+      }
+      .slide-deck { height: auto; min-height: 100dvh; }
+      .slide {
+        position: relative; inset: auto;
+        height: auto; min-height: 100dvh;
+        overflow: visible; transition: none;
+      }
+      .slide:not(.active) { display: none; }
+      .slide.active { opacity: 1; }
+      /* Reset scroll to top whenever a new slide becomes active. Handled in JS — see go(). */
+    }
+
+    .slide-body { max-width: 1080px; margin: 0 auto; padding: 56px 48px 64px; }
+    .slide-body .section-sub { margin-bottom: 30px; }
+    .slide-hero { padding-top: 0; }
+    .slide-hero .hero { min-height: 100vh; min-height: 100dvh; display: flex; align-items: center; padding: 120px clamp(20px, 4vw, 48px) 80px; }
+
+    /* ── Co-brand pill ───────────────────────────────────────────────── */
+    .cobrand-pill {
+      position: fixed; top: 20px; left: 28px;
+      background: rgba(255,255,255,0.92);
+      border-radius: 40px; padding: 8px 18px;
+      display: flex; align-items: center; gap: 11px;
+      z-index: 200;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+      backdrop-filter: blur(4px);
+    }
+    .cobrand-name { font-size: 13px; font-weight: 700; color: var(--sf-navy); letter-spacing: 0.01em; }
+    .cobrand-pill img { display: block; }
+
+    /* ── Chrome: section label, controls, dots ───────────────────────── */
+    .section-label {
+      position: fixed; top: 24px; right: 32px;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+      color: rgba(0,30,91,0.28); z-index: 100;
+    }
+    .section-label.on-dark { color: rgba(255,255,255,0.4); }
+    .slide-controls { position: fixed; bottom: 20px; right: 24px; display: flex; align-items: center; gap: 8px; z-index: 200; }
+    .slide-btn {
+      width: 30px; height: 30px; border-radius: 50%;
+      border: 1px solid var(--gray-200); background: var(--white); color: var(--text);
+      font-size: 13px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: var(--shadow-card); transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+    .slide-btn:hover { background: var(--sf-blue); color: #fff; border-color: var(--sf-blue); }
+    .slide-btn:disabled { opacity: 0.3; cursor: default; }
+    .slide-btn.on, .slide-btn.on:hover { background: var(--sf-blue-m); color: #fff; border-color: var(--sf-blue-m); }
+    .slide-counter { font-size: 10px; font-weight: 600; color: var(--muted); letter-spacing: 0.05em; min-width: 38px; text-align: center; }
+    .slide-dots { position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%); display: flex; gap: 5px; z-index: 200; }
+    .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--gray-200); cursor: pointer; transition: background 0.2s, transform 0.2s; }
+    .dot.active { background: var(--sf-blue-m); transform: scale(1.4); }
+
+    /* ── Conceptual icon chips (geometric, never product icons) ──────── */
+    .ci { display: inline-flex; align-items: center; justify-content: center; border-radius: 14px; flex-shrink: 0; }
+    .ci svg { display: block; }
+    .ci-blue   { background: rgba(6,106,254,0.09);  color: var(--sf-blue-m); }
+    .ci-accent { background: rgba(6,106,254,0.10);  color: var(--sf-blue-m);  }
+
+    /* ── Slide 1 · Opening — stark, heavy whitespace ─────────────────── */
+    .open-hero { max-width: 1100px; margin: 0 auto; }
+    .hero .open-h1 {
+      font-family: var(--font-display);
+      font-size: clamp(28px, 8.2vw, 104px);
+      font-weight: 700; color: #fff; line-height: 1.0; letter-spacing: -0.03em;
+      margin-bottom: 28px;
+    }
+    .open-lead {
+      font-size: clamp(18px, 2.5vw, 31px); line-height: 1.34;
+      color: var(--sf-blue-l); font-style: italic; max-width: clamp(260px, 76vw, 964px); margin-bottom: 30px;
+    }
+    .open-sub {
+      font-size: clamp(16px, 1.5vw, 20px); line-height: 1.7;
+      color: rgba(255,255,255,0.72); max-width: clamp(260px, 76vw, 964px);
+    }
+
+    /* ── Slide 2 · Pressure cards ────────────────────────────────────── */
+    .pressure-card { display: flex; flex-direction: column; height: 100%; position: relative; transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease; }
+    .pressure-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-modal); border-color: rgba(6,106,254,0.35); }
+    .pressure-card .card-title { font-size: 19px; }
+    .pressure-card .card-body { margin-bottom: 22px; }
+    /* Slide 2 · keep subheading on one line; wraps only when the viewport is too narrow */
+    .slide[data-section="The Pressures"] .section-sub { max-width: 960px; }
+    /* Pressures slide — card titles in light accent blue so the priority names pop */
+    .slide[data-section="The Pressures"] .pressure-card .card-title {
+      color: var(--sf-blue-l);
+      line-height: 1.25;
+      min-height: 2.5em; /* reserve 2 lines so the p-lead beneath aligns across all three cards */
+    }
+    .p-index {
+      position: absolute; top: 24px; right: 26px;
+      font-family: var(--font-display); font-size: 22px; font-weight: 700;
+      color: var(--sf-blue-m); opacity: 0.4; line-height: 1; letter-spacing: -0.01em;
+    }
+    .p-lead { font-size: 14px; font-weight: 700; color: var(--text); line-height: 1.4; margin: 16px 0 11px; }
+    .p-punch {
+      margin-top: auto; padding: 0 0 0 14px;
+      border-left: 2.5px solid var(--sf-blue-m);
+      font-size: 13.5px; font-style: italic; font-weight: 700; color: var(--text); line-height: 1.55;
+      min-height: 3.1em;  /* reserve two lines so punch tops align across sibling cards */
+    }
+    /* ── Content slides · uniform brighter accent (Electric Blue 50) ── */
+    .eyebrow { color: var(--sf-blue-m); }
+    .slide[data-section="The Pressures"] .card-accent-blue { border-top: 2px solid rgba(6,106,254,0.42); }
+    /* ── Slide 3 · Common thread ─────────────────────────────────────── */
+    .thread { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 8px 0 52px; }
+    .thread-card { position: relative; display: flex; flex-direction: column; border-top: 2px solid rgba(6,106,254,0.42); transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease; }
+    .thread-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-modal); border-color: rgba(6,106,254,0.35); border-top-color: rgba(6,106,254,0.42); }
+    .thread-card .card-title { font-size: 17px; margin: 12px 0 5px; }
+    /* See it / Size it / Test it — accent-blue so the capability names pop (mirrors the Pressures cards) */
+    .sd .thread-card .card-title { color: var(--sf-blue-l); }
+    .thread-text { font-size: 16px; color: var(--text); line-height: 1.55; font-weight: 600; margin: 0; }
+    .slide[data-section="The Common Thread"] .section-sub { margin-bottom: 40px; max-width: 820px; }
+
+    /* ── Shared statement line (bold takeaways) ──────────────────────── */
+    .statement {
+      font-family: var(--font-display);
+      font-size: clamp(20px, 2.15vw, 28px); font-weight: 700; color: var(--text);
+      line-height: 1.34; letter-spacing: -0.015em; max-width: 920px;
+    }
+    .statement .hl { color: var(--sf-blue-m); }
+    /* gentle breathing pulse — used by the bridge slide's question line */
+    @keyframes hlPulse {
+      0%, 100% { opacity: 1; text-shadow: 0 0 18px rgba(143,184,255,0.45); }
+      50%      { opacity: 0.62; text-shadow: 0 0 4px rgba(143,184,255,0.1); }
+    }
+    .rule-accent { width: 44px; height: 3px; background: var(--sf-blue-m); border-radius: 2px; margin-bottom: 22px; }
+
+    /* ── Slide 9 · Either way ────────────────────────────────────────── */
+    .either { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 18px 0 46px; }
+    .either-card { position: relative; display: flex; flex-direction: column; background: var(--white); border: 1px solid var(--gray-200); border-top: 2px solid rgba(6,106,254,0.42); border-radius: 11px; padding: 26px 28px; transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease; }
+    /* case tags — amber = the "worst" outcome (still a win), green = the upside */
+    .ew-tag { position: absolute; top: 24px; right: 26px; font-size: 10px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; padding: 4px 11px; border-radius: 999px; border: 1px solid; }
+    .ew-tag--worst { color: #ffd98a; border-color: rgba(255,194,77,0.45); background: rgba(255,194,77,0.08); }
+    .ew-tag--best  { color: #7be8ad; border-color: rgba(95,227,160,0.45); background: rgba(95,227,160,0.08); }
+    .either-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-modal); border-color: rgba(6,106,254,0.35); border-top-color: rgba(6,106,254,0.42); }
+    .either-h { font-size: 17px; font-weight: 700; color: var(--text); margin: 14px 0 9px; }
+    .either-b { font-size: 13.5px; color: var(--muted); line-height: 1.72; margin-bottom: 18px; }
+
+    /* ── Slide 10 · Closing (dark, hero question) ────────────────────── */
+    .slide-close { min-height: 100vh; min-height: 100dvh; background: var(--grad-evening); display: flex; align-items: center; position: relative; overflow: hidden; }
+    .slide-close::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--sf-blue-m); }
+    .close-inner { max-width: 1000px; margin: 0 auto; padding: 60px 48px; width: 100%; }
+    .close-title { font-family: var(--font-display); font-size: clamp(40px, 5.2vw, 68px); font-weight: 700; color: #fff; letter-spacing: -0.025em; line-height: 1.08; margin-bottom: 18px; }
+    .close-body { font-size: 14.5px; color: rgba(255,255,255,0.74); line-height: 1.7; max-width: 620px; margin-bottom: 12px; }
+    .close-body em { color: #fff; font-style: italic; }
+    .site-link {
+      display: inline-flex; align-items: center; gap: 10px;
+      margin: 18px 0 6px; padding: 13px 26px; text-decoration: none; border-radius: 10px;
+      background: #fff; box-shadow: 0 8px 22px rgba(0,0,0,0.28);
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+    .site-link:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(0,0,0,0.34); }
+    .site-link .slp-label { font-size: 15px; font-weight: 700; color: var(--sf-navy); }
+    .site-link .slp-arrow { font-size: 17px; font-weight: 700; color: var(--sf-blue-m); }
+    .close-tail { margin-top: 28px; font-family: var(--font-display); font-size: clamp(36px, 4.4vw, 56px); font-weight: 700; color: #fff; line-height: 1.1; letter-spacing: -0.03em; }
+
+    /* ── Responsive ──────────────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .slide-body { padding: 76px 24px 150px; }
+      .thread { grid-template-columns: 1fr; gap: 18px; }
+      .split5 { grid-template-columns: 1fr; gap: 28px; }
+      .either { grid-template-columns: 1fr; }
+      .close-inner { padding: 76px 24px 150px; }
+    }
+  </style>
+
+  <!-- ════════ BOLD VARIANT — proof-of-concept layer (hero + Process Intelligence slide) ════════ -->
+  <style>
+    /* Keyframes */
+    @keyframes bMaskUp   { from { transform: translateY(115%); } to { transform: translateY(0); } }
+    @keyframes bDrawRule { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+    @keyframes bAuraDrift{ 0% { transform: translate(-4%,-2%) scale(1); } 100% { transform: translate(6%,5%) scale(1.18); } }
+
+    /* ══════════ SLIDE 1 · HERO (bold) ══════════ */
+    .slide-hero .hero {
+      position: relative; overflow: hidden;
+      background:
+        radial-gradient(80% 120% at 80% 10%, rgba(56,128,255,0.55), transparent 60%),
+        radial-gradient(70% 90% at 10% 98%, rgba(6,106,254,0.42), transparent 55%),
+        linear-gradient(155deg, #020e30 0%, #06246b 46%, #0a59f0 100%);
+    }
+    .b-hero-aura {
+      position: absolute; width: 70vw; height: 70vw; max-width: 880px; max-height: 880px;
+      right: -8%; top: -22%; border-radius: 50%; z-index: 0; pointer-events: none;
+      background: radial-gradient(circle, rgba(96,168,255,0.42) 0%, rgba(96,168,255,0) 62%);
+      filter: blur(6px); animation: bAuraDrift 17s ease-in-out infinite alternate;
+    }
+    .b-hero-grid {
+      position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0.55;
+      background-image: radial-gradient(rgba(255,255,255,0.11) 1px, transparent 1.5px);
+      background-size: 30px 30px;
+      -webkit-mask-image: radial-gradient(85% 80% at 50% 42%, #000 28%, transparent 78%);
+              mask-image: radial-gradient(85% 80% at 50% 42%, #000 28%, transparent 78%);
+    }
+    .slide-hero .open-hero { position: relative; z-index: 1; }
+    /* per-word headline reveal */
+    .open-h1 .w { display: inline-block; overflow: hidden; vertical-align: top; padding: 0 0.08em 0.16em 0.04em; margin: 0 -0.08em -0.16em -0.04em; }
+    .open-h1 .w > span { display: inline-block; transform: translateY(115%); }
+    .slide-hero.active .open-h1 .w > span { animation: bMaskUp 0.72s cubic-bezier(0.22,1,0.36,1) both; }
+    .slide-hero.active .open-h1 .w:nth-child(1) > span { animation-delay: 0.15s; }
+    .slide-hero.active .open-h1 .w:nth-child(2) > span { animation-delay: 0.29s; }
+    .slide-hero.active .open-h1 .w:nth-child(3) > span { animation-delay: 0.43s; }
+    /* accent rule under headline */
+    .b-rule {
+      height: 4px; width: 128px; border-radius: 3px; margin: 8px 0 26px;
+      background: linear-gradient(90deg, var(--sf-blue-l), #ffffff);
+      transform: scaleX(0); transform-origin: left;
+    }
+    .slide-hero.active .b-rule { animation: bDrawRule 0.7s 0.62s cubic-bezier(0.22,1,0.36,1) both; }
+
+    /* draw / pop keyframes — used by the slide-3 convergence diagram */
+    @keyframes piDraw { to { stroke-dashoffset: 0; } }
+    @keyframes piPop  { from { opacity: 0; } to { opacity: 1; } }
+
+    @media (prefers-reduced-motion: reduce) {
+      .b-hero-aura, .b-rule, .open-h1 .w > span { animation: none !important; }
+      .open-h1 .w > span { transform: none !important; }
+      .b-rule { transform: scaleX(1) !important; }
+    }
+  </style>
+
+  <!-- ════════ BOLD DARK SYSTEM — all content slides ════════ -->
+  <style>
+    @keyframes cvNode { 0% { opacity: 0; transform: translateY(8px) scale(0.96); box-shadow: 0 0 0 rgba(80,150,255,0); }
+                        60% { box-shadow: 0 0 34px rgba(80,150,255,0.6); } 100% { opacity: 1; transform: none; box-shadow: 0 0 20px rgba(80,150,255,0.3); } }
+    @keyframes ctaPulse { 0%,100% { box-shadow: 0 8px 22px rgba(0,0,0,0.3); } 50% { box-shadow: 0 10px 30px rgba(86,150,255,0.6); } }
+
+    /* dark canvas for the content slides */
+    .slide.sd {
+      color: #fff;
+      background:
+        radial-gradient(80% 60% at 82% -4%, rgba(20,86,220,0.42), transparent 60%),
+        radial-gradient(70% 60% at 4% 104%, rgba(10,60,200,0.32), transparent 60%),
+        linear-gradient(165deg, #04102f 0%, #061d52 60%, #0a3aa0 130%) !important;
+    }
+    /* readable chrome on the (now fully dark) deck */
+    .section-label { color: rgba(255,255,255,0.4) !important; }
+
+    /* shared text */
+    .sd .eyebrow { color: var(--sf-blue-l); }
+    .sd .section-title { color: #fff; }
+    .sd .section-sub { color: rgba(255,255,255,0.66); }
+    .sd .statement { color: #fff; }
+    .sd .statement .hl { color: var(--sf-blue-l); }
+    .sd .lead-big { color: #fff; }
+    .sd .prose p { color: rgba(255,255,255,0.74); }
+    .sd .prose p strong { color: #fff; }
+    .sd .thread-text { color: #fff; }
+    .sd .rule-accent { background: var(--sf-blue-l); }
+
+    /* surfaces */
+    .sd .card { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.12); }
+    .sd .card-accent-blue { border-top-color: rgba(143,184,255,0.6) !important; }
+    .sd .card-title { color: #fff; }
+    .sd .card-body { color: rgba(255,255,255,0.66); }
+    .sd .card-body strong { color: #fff; }
+    .sd .p-lead { color: #fff; }
+    /* punch lines carry the cards' strongest copy — a blue-white tint lifts them
+       above the body text without competing with the accent-blue card titles */
+    .sd .p-punch { color: #cfe0ff; border-left-color: var(--sf-blue-l); }
+    .sd .p-index { color: var(--sf-blue-l); opacity: 0.55; }
+    .sd .ci-blue, .sd .ci-accent { background: rgba(143,184,255,0.15); color: #cfe0ff; }
+    .sd .card:hover, .sd .pressure-card:hover, .sd .thread-card:hover, .sd .either-card:hover { border-color: rgba(143,184,255,0.5); }
+
+    /* slide 9 — either cards */
+    .sd .either-card { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.12); border-top-color: rgba(143,184,255,0.6); }
+    .sd .either-h { color: #fff; }
+    .sd .either-b { color: rgba(255,255,255,0.72); }
+
+    /* slide 3 — convergence diagram */
+    .cv-link { display: block; width: 100%; height: 92px; margin: 2px auto 0; }
+    .cv-link path { stroke: var(--sf-blue-l); fill: none; opacity: 0.9; }
+    .cv-drop { stroke-width: 2.2; stroke-dasharray: 60; stroke-dashoffset: 60; }
+    .cv-bus  { stroke-width: 2.2; stroke-dasharray: 720; stroke-dashoffset: 720; }
+    .cv-stem { stroke-width: 2.2; stroke-dasharray: 70; stroke-dashoffset: 70; }
+    .cv-dot  { fill: var(--sf-blue-l); opacity: 0; }
+    .slide.active .cv-dot  { animation: piPop .3s .85s ease-out forwards; }
+    .slide.active .cv-drop { animation: piDraw .45s .9s ease-out forwards; }
+    .slide.active .cv-bus  { animation: piDraw .6s 1.35s ease-out forwards; }
+    .slide.active .cv-stem { animation: piDraw .45s 1.95s ease-out forwards; }
+    .cv-node {
+      width: max-content; max-width: 92%; margin: 0 auto; text-align: center;
+      background: rgba(143,184,255,0.12); border: 1px solid rgba(143,184,255,0.55); border-radius: 14px;
+      padding: 14px 26px; color: #eaf1ff; font-weight: 700; font-size: 15px;
+      opacity: 0; transform: translateY(8px);
+    }
+    .cv-node .cv-node-k { color: var(--sf-blue-l); display: block; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 3px; }
+    .slide.active .cv-node { animation: cvNode .7s 2.55s var(--ease-out) forwards; }
+
+    /* slide 10 — CTA redesigned to match the deck's electric-blue accent language */
+    @keyframes ctaPulse {
+      0%, 100% { box-shadow: 0 10px 30px rgba(6,106,254,0.40); }
+      50%      { box-shadow: 0 14px 42px rgba(86,150,255,0.78); }
+    }
+    .slide-close .site-link {
+      background: linear-gradient(180deg, #2f86ff 0%, #066afe 100%) !important;
+      border: 1px solid rgba(170,205,255,0.55);
+      box-shadow: 0 10px 30px rgba(6,106,254,0.40);
+      padding: 15px 30px;
+      margin: 12px 0 24px !important;
+    }
+    .slide-close .site-link .slp-label { color: #fff; }
+    .slide-close .site-link .slp-arrow { color: #fff; transition: transform .18s ease; }
+    .slide-close .site-link:hover { transform: translateY(-2px); box-shadow: 0 16px 44px rgba(6,106,254,0.62); }
+    .slide-close .site-link:hover .slp-arrow { transform: translateX(4px); }
+    .slide.active .site-link { animation: ctaPulse 2.6s 1s ease-in-out infinite; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .cv-link path { stroke-dashoffset: 0 !important; animation: none !important; }
+      .cv-dot { opacity: 1 !important; animation: none !important; }
+      .cv-node { opacity: 1 !important; transform: none !important; animation: none !important; }
+      .slide.active .site-link { animation: none !important; }
+    }
+  </style>
+
+  <!-- ════════ FEEDBACK ROUND 1 — refinements ════════ -->
+  <style>
+    /* Slide 3 — compact, and a clean line draw (pathLength normalised) */
+    .slide[data-section="The Common Thread"] .section-sub { margin-bottom: 18px !important; }
+    .sd .thread { margin: 4px 0 10px !important; gap: 16px; }
+    .sd .thread-card { padding: 15px 18px; }
+    .sd .thread-card .ci { width: 42px !important; height: 42px !important; }
+    .sd .thread-text { font-size: 14px; }
+    .cv-link { max-width: none !important; }
+    .cv-node { padding: 12px 24px !important; font-size: 14.5px !important; margin-bottom: 32px !important; }
+
+    /* remove the top-right section labels on every slide */
+    .section-label { display: none !important; }
+
+    /* Slide 10 — same background as the hero */
+    .slide-close {
+      background:
+        radial-gradient(80% 120% at 80% 10%, rgba(56,128,255,0.55), transparent 60%),
+        radial-gradient(70% 90% at 10% 98%, rgba(6,106,254,0.42), transparent 55%),
+        linear-gradient(155deg, #020e30 0%, #06246b 46%, #0a59f0 100%) !important;
+    }
+
+  </style>
+
+  <!-- ════════ Evidence wall ════════ -->
+  <style>
+    /* ── Evidence wall: sector-grouped, white-logo treatment, no tiles ─────
+       One quiet uppercase label per sector group; logos render white via the
+       brightness-invert filter (any transparent-background file works). Brands
+       without a sourced file yet render as styled wordmarks (.ev-wordmark) —
+       drop a transparent SVG/PNG into assets/logos/ and swap the span for an
+       <img class="ev-logo2 inv"> to upgrade. */
+    .ev-wall { display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: 1fr; gap: 20px; margin: 26px 0 6px; }
+    /* one card per SECTOR (not per logo) — the deck's dark card language */
+    .ev-group {
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+      border-top: 2px solid rgba(143,184,255,0.6); border-radius: 11px;
+      padding: 20px 22px 22px;
+      display: flex; flex-direction: column;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    }
+    .ev-group:hover { transform: translateY(-3px); box-shadow: var(--shadow-modal); border-color: rgba(143,184,255,0.5); border-top-color: rgba(143,184,255,0.6); }
+    .ev-group-label { font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--sf-blue-l); margin-bottom: 16px; }
+    .ev-group-logos { flex: 1; display: flex; align-items: center; align-content: center; justify-content: center; flex-wrap: wrap; gap: 16px 26px; min-height: 46px; }
+    .ev-logo2 { height: var(--h, 30px); width: auto; object-fit: contain; opacity: 0.92; }
+    .ev-logo2.inv { filter: brightness(0) invert(1); }
+    .ev-wordmark { font-family: var(--font-display); font-weight: 700; font-size: 17px; color: rgba(255,255,255,0.9); letter-spacing: 0.01em; line-height: 1; white-space: nowrap; }
+    .ev-wordmark.sm { font-size: 14.5px; }
+    @media (max-width: 900px) { .ev-wall { grid-template-columns: 1fr; gap: 16px; } }
+
+    /* The slide engine skips slides carrying .deck-hidden. */
+    .deck-hidden { display: none; }
+  </style>
+
+  <!-- ════════ FINAL CLOSE — hero mirror ════════ -->
+  <style>
+    /* The last slide mirrors the first: same canvas, same per-word headline
+       reveal, and the deck's opening motif finally pays off. */
+    .close-inner { max-width: 1100px; }
+    .close-title { font-size: clamp(36px, 7vw, 100px); line-height: 1.06; margin-bottom: 24px; }
+    .close-title .hl2 { color: var(--sf-blue-l); }
+    .close-title .w { display: inline-block; overflow: hidden; vertical-align: top; padding: 0 0.08em 0.16em 0.04em; margin: 0 -0.08em -0.16em -0.04em; }
+    .close-title .w > span { display: inline-block; transform: translateY(115%); }
+    .slide-close.active .close-title .w > span { animation: bMaskUp 0.72s cubic-bezier(0.22,1,0.36,1) both; }
+    .slide-close.active .close-title .w:nth-child(1) > span { animation-delay: 0.15s; }
+    .slide-close.active .close-title .w:nth-child(2) > span { animation-delay: 0.29s; }
+    .slide-close.active .close-title .w:nth-child(3) > span { animation-delay: 0.43s; }
+    /* the blue payoff line rises after the white words have landed */
+    .close-title .hl2 { display: inline-block; opacity: 0; font-size: 0.72em; line-height: 1.15; }
+    .slide-close.active .close-title .hl2 { animation: fallInUp 0.6s 0.75s cubic-bezier(0.22,1,0.36,1) both; }
+    @keyframes fallInUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+    .close-body { font-size: clamp(15px, 1.6vw, 19px); max-width: none; white-space: nowrap; }
+    .slide-close .site-link { margin-top: 38px !important; }
+    @media (max-width: 900px) { .close-body { white-space: normal; } }
+    @media (prefers-reduced-motion: reduce) {
+      .close-title .w > span { transform: none !important; animation: none !important; }
+      .close-title .hl2 { opacity: 1 !important; animation: none !important; }
+    }
+  </style>
+
+  <!-- ════════ BRIDGE (slide 4) — the question, alone ════════ -->
+  <style>
+    /* Chapter-break slide: the slide-3 closing question promoted to its own
+       dark slide, asked the same visual way as the hero/close word reveal.
+       The next slide (Process Reality) answers it. */
+    .slide-bridge { display: flex; align-items: center; }
+    .bridge-inner { max-width: 1100px; margin: 0 auto; padding: 60px 48px; width: 100%; text-align: center; }
+    .bridge-q {
+      font-family: var(--font-display);
+      font-size: clamp(34px, 5.4vw, 72px); font-weight: 700; color: #fff;
+      letter-spacing: -0.03em; line-height: 1.14;
+    }
+    .bridge-q .w { display: inline-block; overflow: hidden; vertical-align: top; padding: 0 0.08em 0.16em 0.04em; margin: 0 -0.08em -0.16em -0.04em; }
+    .bridge-q .w > span { display: inline-block; transform: translateY(115%); }
+    .slide-bridge.active .bridge-q .w > span { animation: bMaskUp 0.72s cubic-bezier(0.22,1,0.36,1) both; }
+    .slide-bridge.active .bridge-q .w:nth-child(1) > span { animation-delay: 0.15s; }
+    .slide-bridge.active .bridge-q .w:nth-child(2) > span { animation-delay: 0.27s; }
+    .slide-bridge.active .bridge-q .w:nth-child(3) > span { animation-delay: 0.39s; }
+    .slide-bridge.active .bridge-q .w:nth-child(4) > span { animation-delay: 0.51s; }
+    /* the blue payoff line rises after the white words, then breathes */
+    .bridge-q .bq-hl { display: inline-block; color: var(--sf-blue-l); opacity: 0; }
+    .slide-bridge.active .bridge-q .bq-hl {
+      animation: fallInUp 0.6s 0.85s cubic-bezier(0.22,1,0.36,1) both,
+                 hlPulse 2.6s 2.2s ease-in-out infinite;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .bridge-q .w > span { transform: none !important; animation: none !important; }
+      .bridge-q .bq-hl { opacity: 1 !important; animation: none !important; }
+    }
+  </style>
+
+  <!-- ════════ PRE-PRESENTATION SETUP overlay ════════ -->
+  <style>
+    .setup-cover {
+      position: fixed; inset: 0; z-index: 1000;
+      display: flex; align-items: center; justify-content: center;
+      padding: 40px 24px; overflow-y: auto;
+      background:
+        radial-gradient(80% 120% at 80% 10%, rgba(56,128,255,0.55), transparent 60%),
+        radial-gradient(70% 90% at 10% 98%, rgba(6,106,254,0.42), transparent 55%),
+        linear-gradient(155deg, #020e30 0%, #06246b 46%, #0a59f0 100%);
+    }
+    .setup-inner { max-width: 760px; width: 100%; text-align: center; }
+    .setup-eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--sf-blue-l); margin-bottom: 14px; }
+    .setup-title { font-family: var(--font-display); font-size: clamp(26px, 4.4vw, 44px); font-weight: 700; color: #fff; letter-spacing: -0.02em; line-height: 1.1; margin: 0 0 30px; }
+    .setup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px; }
+    .setup-card {
+      position: relative; text-align: left; cursor: pointer; font: inherit; color: #fff;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14);
+      border-top: 2px solid rgba(143,184,255,0.6); border-radius: 14px;
+      padding: 22px 24px 24px;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+    }
+    .setup-card:hover, .setup-card:focus-visible {
+      transform: translateY(-4px); background: rgba(255,255,255,0.10);
+      border-color: rgba(143,184,255,0.6); box-shadow: 0 16px 40px rgba(0,0,0,0.35); outline: none;
+    }
+    .setup-ico { font-size: 22px; line-height: 1; margin-bottom: 13px; }
+    .setup-card-h { font-size: 17px; font-weight: 700; color: #eaf1ff; margin-bottom: 6px; }
+    .setup-card-s { font-size: 13.5px; color: rgba(255,255,255,0.7); line-height: 1.5; }
+    .setup-rec {
+      position: absolute; top: 18px; right: 18px; font-size: 9.5px; font-weight: 800;
+      letter-spacing: 0.12em; text-transform: uppercase; color: #7be8ad;
+      border: 1px solid rgba(95,227,160,0.45); background: rgba(95,227,160,0.08);
+      padding: 3px 9px; border-radius: 999px;
+    }
+    .setup-legend { display: flex; flex-wrap: wrap; gap: 8px 18px; justify-content: center; align-items: center; font-size: 12px; color: rgba(255,255,255,0.66); }
+    .setup-legend b { color: #fff; font-weight: 700; background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; padding: 1px 7px; margin-right: 5px; font-family: var(--font-display); }
+    .setup-legend-note { width: 100%; margin-top: 4px; font-size: 11.5px; color: rgba(255,255,255,0.5); }
+    .setup-legend .tap-only { display: none; }
+    @media (max-width: 640px) {
+      .setup-grid { grid-template-columns: 1fr; }
+      .setup-legend .k-only { display: none; }
+      .setup-legend .tap-only { display: inline; }
+    }
+  </style>
+
+</head>
+<body>
+
+  <!-- ─── CO-BRAND PILL — Salesforce × Apromore partnership ──────── -->
+  <div class="cobrand-pill">
+    <img src="assets/logos/Salesforce-Corporate-Logo-Cloud-RBG.svg" width="26" height="26" alt="Salesforce" />
+    <span class="cobrand-name">Apromore</span>
+  </div>
+
+
+  <!-- ─── SLIDE DECK ──────────────────────────────────────────────── -->
+  <div class="slide-deck">
+
+    <!-- ═══ SLIDE 1 · OPENING ═══════════════════════════════════════ -->
+    <div class="slide slide-hero active" data-section="">
+      <div class="hero">
+        <div class="b-hero-aura" aria-hidden="true"></div>
+        <div class="b-hero-grid" aria-hidden="true"></div>
+        <div class="open-hero">
+          <h1 class="open-h1"><span class="w"><span>Knowledge</span></span> <span class="w"><span>is</span></span> <span class="w"><span>power</span></span></h1>
+          <div class="b-rule" aria-hidden="true"></div>
+          <p class="open-lead" data-animate="fade-up" data-anim-delay="600"><em>Are you making your decisions on evidence, or on assumption?</em></p>
+          <p class="open-sub" data-animate="fade-up" data-anim-delay="760">The decisions you face right now have never mattered more.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SLIDE 2 · THREE PRESSURES ═══════════════════════════════ -->
+    <div class="slide sd" data-section="The Pressures">
+      <div class="slide-body">
+        <div class="eyebrow" data-animate="fade-up" data-anim-delay="0">Decisions that matter</div>
+        <div class="section-title" data-animate="fade-up" data-anim-delay="60">Common decisions where the stakes are high.</div>
+        <div class="section-sub" data-animate="fade-up" data-anim-delay="120">Most organisations are facing at least one of these right now. Many are facing all three.</div>
+        <div class="card-grid-3">
+
+          <div class="card card-accent-blue pressure-card" data-animate="scale-in" data-anim-delay="200">
+            <span class="p-index">01</span>
+            <div class="ci ci-blue" style="width:52px;height:52px;" aria-hidden="true">
+              <svg width="28" height="28" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6">
+                <circle cx="16" cy="16" r="11"/><circle cx="16" cy="16" r="6"/>
+                <circle cx="16" cy="16" r="1.7" fill="currentColor" stroke="none"/>
+              </svg>
+            </div>
+            <div class="card-title" style="margin-top:14px;">AI Deployment</div>
+            <div class="p-lead">Where to deploy AI, not if.</div>
+            <div class="card-body">The opportunity isn't to slow down. It's to know where to aim.</div>
+            <div class="p-punch">Everyone&rsquo;s AI will work.<br/>Not everyone&rsquo;s will matter.</div>
+          </div>
+
+          <div class="card card-accent-blue pressure-card" data-animate="scale-in" data-anim-delay="280">
+            <span class="p-index">02</span>
+            <div class="ci ci-blue" style="width:52px;height:52px;" aria-hidden="true">
+              <svg width="28" height="28" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 6.5V25"/><path d="M9 25h14"/><path d="M5.5 11h21"/>
+                <path d="M5.5 11l-3 6a3 3 0 0 0 6 0z"/><path d="M26.5 11l-3 6a3 3 0 0 0 6 0z"/>
+                <circle cx="16" cy="8.3" r="1.5" fill="currentColor" stroke="none"/>
+              </svg>
+            </div>
+            <div class="card-title" style="margin-top:14px;">Cost Pressure</div>
+            <div class="p-lead">Reducing cost without reducing capability.</div>
+            <div class="card-body">Cost decisions are moving faster than the data that should support them.</div>
+            <div class="p-punch">The most expensive cuts are the ones you have to reverse.</div>
+          </div>
+
+          <div class="card card-accent-blue pressure-card" data-animate="scale-in" data-anim-delay="360">
+            <span class="p-index">03</span>
+            <div class="ci ci-blue" style="width:52px;height:52px;" aria-hidden="true">
+              <svg width="28" height="28" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M25.5 11A10.5 10.5 0 0 0 7 8.5"/>
+                <path d="M6.5 21A10.5 10.5 0 0 0 25 23.5"/>
+                <path d="M7 4v5h5"/>
+                <path d="M25 28v-5h-5"/>
+              </svg>
+            </div>
+            <div class="card-title" style="margin-top:14px;">Transformation</div>
+            <div class="p-lead">Backing the right changes, and knowing they worked.</div>
+            <div class="card-body">Change launches on a business case and is rarely checked against what actually changed.</div>
+            <div class="p-punch">Most change is declared a success. Very little is ever proven to be.</div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SLIDE 3 · THE COMMON THREAD ═════════════════════════════ -->
+    <div class="slide sd" data-section="The Common Thread">
+      <div class="slide-body">
+        <div class="eyebrow" data-animate="fade-up" data-anim-delay="0">The common thread</div>
+        <div class="section-title" data-animate="fade-up" data-anim-delay="60">These decisions have one thing in common.<br/><span style="color:var(--sf-blue-l)">Limited room for error.</span></div>
+        <div class="section-sub" data-animate="fade-up" data-anim-delay="120">And they all need the same thing.</div>
+
+        <div class="thread">
+          <div class="card card-accent-blue thread-card" data-animate="scale-in" data-anim-delay="200">
+            <span class="p-index">01</span>
+            <div class="ci ci-blue" style="width:52px;height:52px;" aria-hidden="true">
+              <svg width="28" height="28" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+                <rect x="3" y="13" width="7.5" height="6" rx="1"/><rect x="21.5" y="6" width="7.5" height="6" rx="1"/><rect x="21.5" y="20" width="7.5" height="6" rx="1"/>
+                <path d="M10.5 16h5M15.5 16V9h6M15.5 16v7h6"/>
+              </svg>
+            </div>
+            <div class="card-title">See it</div>
+            <div class="thread-text">How your business actually operates today.</div>
+          </div>
+          <div class="card card-accent-blue thread-card" data-animate="scale-in" data-anim-delay="280">
+            <span class="p-index">02</span>
+            <div class="ci ci-blue" style="width:52px;height:52px;" aria-hidden="true">
+              <svg width="28" height="28" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+                <path d="M5 26.5h22"/>
+                <rect x="7" y="18" width="4.2" height="8.5" rx="0.6"/><rect x="13.9" y="12.5" width="4.2" height="14" rx="0.6"/><rect x="20.8" y="7" width="4.2" height="19.5" rx="0.6"/>
+              </svg>
+            </div>
+            <div class="card-title">Size it</div>
+            <div class="thread-text">What your current state is costing you.</div>
+          </div>
+          <div class="card card-accent-blue thread-card" data-animate="scale-in" data-anim-delay="360">
+            <span class="p-index">03</span>
+            <div class="ci ci-blue" style="width:52px;height:52px;" aria-hidden="true">
+              <svg width="28" height="28" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+                <line x1="16" y1="4" x2="16" y2="28" stroke-dasharray="2 2.6"/>
+                <path d="M12.5 8.5L5 16l7.5 7.5z"/><path d="M19.5 8.5L27 16l-7.5 7.5z"/>
+              </svg>
+            </div>
+            <div class="card-title">Test it</div>
+            <div class="thread-text">The impact of a change, before you commit.</div>
+          </div>
+        </div>
+
+        <svg class="cv-link" viewBox="0 0 1000 96" preserveAspectRatio="none" aria-hidden="true">
+          <path class="cv-drop" d="M161 0 L161 44"/>
+          <path class="cv-drop" d="M500 0 L500 44"/>
+          <path class="cv-drop" d="M839 0 L839 44"/>
+          <path class="cv-bus cv-bus-l" d="M161 44 L500 44"/>
+          <path class="cv-bus cv-bus-r" d="M839 44 L500 44"/>
+          <path class="cv-stem" d="M500 44 L500 96"/>
+          <circle class="cv-dot" cx="161" cy="2" r="4"/>
+          <circle class="cv-dot" cx="500" cy="2" r="4"/>
+          <circle class="cv-dot" cx="839" cy="2" r="4"/>
+        </svg>
+        <div class="cv-node"><span class="cv-node-k">Together</span>Everything you need to make informed decisions.</div>
+
+        <div data-animate="fade-up" data-anim-delay="440">
+          <div class="rule-accent"></div>
+          <div class="statement">It all starts with <span class="hl">understanding.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SLIDE 4 · THE QUESTION — chapter break before Process Reality ═══ -->
+    <div class="slide sd slide-bridge" data-section="The Question">
+      <div class="bridge-inner">
+        <div class="bridge-q">
+          <span class="w"><span>Do</span></span> <span class="w"><span>you</span></span> <span class="w"><span>actually</span></span> <span class="w"><span>know</span></span><br/>
+          <span class="bq-hl">how your business runs?</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SLIDE 5 · PROCESS REALITY — designed → believed → actual (embedded) ═══ -->
+    <div class="slide slide-embed" data-section="Process Reality">
+      <iframe
+        src="process-reality-v2.html?embed=1"
+        title="Process Reality — designed vs believed vs actual"
+        loading="lazy"
+        referrerpolicy="no-referrer"
+        style="position:absolute; inset:0; width:100%; height:100%; border:0; background:#04102f;"></iframe>
+    </div>
+
+    <!-- ═══ SLIDE 6 · PROCESS INTELLIGENCE LAYERS — arrow-key walkthrough (embedded) ═══
+         Self-contained in process-intelligence.html. The deck drives it via the generic
+         embed handshake below (deck-enter / deck-advance / deck-reverse ↔ deck-next /
+         deck-prev), so the layer count and all behaviour live entirely in that file —
+         no deck changes needed to add/remove layers or edit the animation. -->
+    <div class="slide slide-embed" data-section="Process Intelligence">
+      <iframe
+        src="process-intelligence-v2.html?embed=1"
+        title="The layers of Process Intelligence"
+        referrerpolicy="no-referrer"
+        style="position:absolute; inset:0; width:100%; height:100%; border:0; background:#04102f;"></iframe>
+    </div>
+
+    <!-- ═══ SLIDE 7 · WHY NOW — the task-mining time asymmetry ═══════ -->
+    <div class="slide sd" data-section="Why Now">
+      <div class="slide-body">
+        <div class="eyebrow" data-animate="fade-up" data-anim-delay="0">Timing</div>
+        <div class="section-title" data-animate="fade-up" data-anim-delay="60">Why act now?<br/><span style="color:var(--sf-blue-l)">Because evidence can&rsquo;t be backdated.</span></div>
+        <div class="section-sub" data-animate="fade-up" data-anim-delay="120" style="max-width:960px;">Your systems remember everything. Your desktops remember nothing.</div>
+        <div class="card-grid-3">
+
+          <div class="card card-accent-blue pressure-card" data-animate="scale-in" data-anim-delay="200">
+            <span class="p-index">01</span>
+            <div class="ci ci-blue" style="width:52px;height:52px;" aria-hidden="true">
+              <svg width="28" height="28" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <ellipse cx="16" cy="8" rx="9" ry="3.5"/>
+                <path d="M7 8v16c0 1.9 4 3.5 9 3.5s9-1.6 9-3.5V8"/>
+                <path d="M7 16c0 1.9 4 3.5 9 3.5s9-1.6 9-3.5"/>
+              </svg>
+            </div>
+            <div class="card-title" style="margin-top:14px;">The data you already have</div>
+            <div class="p-lead">Your event logs reach back years.</div>
+            <div class="card-body">Process mining works on history your systems have been writing all along.</div>
+            <div class="p-punch">This data waits for you.</div>
+          </div>
+
+          <div class="card card-accent-blue pressure-card" data-animate="scale-in" data-anim-delay="280">
+            <span class="p-index">02</span>
+            <div class="ci ci-blue" style="width:52px;height:52px;" aria-hidden="true">
+              <svg width="28" height="28" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="5" y="6" width="22" height="14.5" rx="2"/>
+                <path d="M12.5 25.5h7M16 20.5v5"/>
+                <circle cx="16" cy="13" r="1.7" fill="currentColor" stroke="none"/>
+              </svg>
+            </div>
+            <div class="card-title" style="margin-top:14px;">The data you don&rsquo;t</div>
+            <div class="p-lead">The work between systems has no history.</div>
+            <div class="card-body">Task mining can only see forward, scoped, governed and anonymised by design. It watches the work, not the worker.</div>
+            <div class="p-punch">This data doesn&rsquo;t wait. It doesn&rsquo;t exist until you start capturing it.</div>
+          </div>
+
+          <div class="card card-accent-blue pressure-card" data-animate="scale-in" data-anim-delay="360">
+            <span class="p-index">03</span>
+            <div class="ci ci-blue" style="width:52px;height:52px;" aria-hidden="true">
+              <svg width="28" height="28" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10 4.5h12M10 27.5h12"/>
+                <path d="M11.5 4.5v3c0 4 4.5 5.5 4.5 8.5s-4.5 4.5-4.5 8.5v3"/>
+                <path d="M20.5 4.5v3c0 4-4.5 5.5-4.5 8.5s4.5 4.5 4.5 8.5v3"/>
+              </svg>
+            </div>
+            <div class="card-title" style="margin-top:14px;">The cost of waiting</div>
+            <div class="p-lead">The advantage compounds for whoever starts first.</div>
+            <div class="card-body">Start now, and the data quietly accumulates while you decide everything else.</div>
+            <div class="p-punch">You can&rsquo;t buy back a quarter of evidence.</div>
+          </div>
+
+        </div>
+
+        <div data-animate="fade-up" data-anim-delay="440" style="margin-top: 30px;">
+          <div class="statement">You don&rsquo;t have to capture much.<br/><span class="hl">But you can&rsquo;t afford to capture nothing.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SLIDE 8 · EVIDENCE — customer logos + supporting outcomes ═ -->
+    <div class="slide sd" data-section="Evidence">
+      <div class="slide-body">
+        <div class="eyebrow" data-animate="fade-up" data-anim-delay="0">Evidence</div>
+        <div class="section-title" data-animate="fade-up" data-anim-delay="60">Where this has worked.<br/><span style="color:var(--sf-blue-l)">Trusted by names you know.</span></div>
+        <div class="section-sub" data-animate="fade-up" data-anim-delay="120">Trusted across banking, insurance, energy, manufacturing and the public sector.</div>
+
+        <div class="ev-wall">
+          <div class="ev-group" data-animate="fade-up" data-anim-delay="200">
+            <div class="ev-group-label">Banking &amp; Wealth</div>
+            <div class="ev-group-logos">
+              <img class="ev-logo2" src="assets/logos/anz.png"     alt="ANZ"     style="--h:38px" />
+              <img class="ev-logo2" src="assets/logos/westpac.png" alt="Westpac" style="--h:26px" />
+              <img class="ev-logo2" src="assets/logos/nab.png"     alt="NAB"     style="--h:36px" />
+              <img class="ev-logo2" src="assets/logos/compass.png" alt="Compass" style="--h:26px" />
+              <img class="ev-logo2" src="assets/logos/rest.png" alt="Rest" style="--h:30px" />
+            </div>
+          </div>
+          <div class="ev-group" data-animate="fade-up" data-anim-delay="260">
+            <div class="ev-group-label">Insurance</div>
+            <div class="ev-group-logos">
+              <img class="ev-logo2 inv" src="assets/logos/topdanmark.png" alt="Topdanmark" style="--h:112px; margin:-34px 0" />
+              <img class="ev-logo2 inv" src="assets/logos/capricorn.png"  alt="Capricorn"  style="--h:52px; margin:-6px 0" />
+              <img class="ev-logo2" src="assets/logos/assurant.png" alt="Assurant" style="--h:26px" />
+            </div>
+          </div>
+          <div class="ev-group" data-animate="fade-up" data-anim-delay="320">
+            <div class="ev-group-label">Energy &amp; Utilities</div>
+            <div class="ev-group-logos">
+              <img class="ev-logo2" src="assets/logos/nextera.png" alt="NextEra Energy" style="--h:38px" />
+              <img class="ev-logo2" src="assets/logos/bkw.png" alt="BKW" style="--h:24px" />
+              <img class="ev-logo2" src="assets/logos/alia-plures.png" alt="Alia Plures" style="--h:46px" />
+            </div>
+          </div>
+          <div class="ev-group" data-animate="fade-up" data-anim-delay="380">
+            <div class="ev-group-label">Manufacturing &amp; Pharma</div>
+            <div class="ev-group-logos">
+              <img class="ev-logo2" src="assets/logos/leonardo.png" alt="Leonardo" style="--h:22px" />
+              <img class="ev-logo2" src="assets/logos/komatsu.png" alt="Komatsu" style="--h:20px" />
+              <img class="ev-logo2" src="assets/logos/daiichi-sankyo.png" alt="Daiichi Sankyo" style="--h:54px" />
+            </div>
+          </div>
+          <div class="ev-group" data-animate="fade-up" data-anim-delay="440">
+            <div class="ev-group-label">Consulting &amp; Technology</div>
+            <div class="ev-group-logos">
+              <img class="ev-logo2" src="assets/logos/deloitte.png" alt="Deloitte" style="--h:22px" />
+              <img class="ev-logo2" src="assets/logos/pwc.png" alt="PwC" style="--h:40px" />
+              <img class="ev-logo2" src="assets/logos/hitachi-solutions.png" alt="Hitachi Solutions" style="--h:30px" />
+            </div>
+          </div>
+          <div class="ev-group" data-animate="fade-up" data-anim-delay="500">
+            <div class="ev-group-label">Public Sector, Travel &amp; Education</div>
+            <div class="ev-group-logos">
+              <img class="ev-logo2" src="assets/logos/inail.png" alt="INAIL" style="--h:32px" />
+              <img class="ev-logo2" src="assets/logos/amex-gbt.png" alt="American Express Global Business Travel" style="--h:34px" />
+              <img class="ev-logo2" src="assets/logos/unimelb.png" alt="The University of Melbourne" style="--h:32px" />
+              <img class="ev-logo2" src="assets/logos/veyer.png" alt="Veyer" style="--h:20px" />
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══ SLIDE 9 · EITHER WAY — knowledge is power. Apromore gives you both. ═ -->
+    <div class="slide sd" data-section="Either Way">
+      <div class="slide-body">
+        <div class="eyebrow" data-animate="fade-up" data-anim-delay="0">The decision</div>
+        <div class="section-title" data-animate="fade-up" data-anim-delay="60">An easy decision.<br/><span style="color:var(--sf-blue-l)">Either way, you win.</span></div>
+        <div class="section-sub" data-animate="fade-up" data-anim-delay="120">Whatever you find, Apromore shows you exactly how your business actually runs. On your data, not industry benchmarks.</div>
+
+        <div class="either">
+          <div class="either-card" data-animate="scale-in" data-anim-delay="200">
+            <div class="ci ci-blue" style="width:52px;height:52px;" aria-hidden="true">
+              <svg width="28" height="28" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 4 L26 8 V15 C26 22 21 26.5 16 28 C11 26.5 6 22 6 15 V8 Z"/>
+                <path d="M11.5 16.5 L14.5 19.5 L20.5 12.5"/>
+              </svg>
+            </div>
+            <span class="ew-tag ew-tag--worst">Worst case</span>
+            <div class="either-h">If you're already efficient</div>
+            <div class="either-b">Prove it. To your ExCo, to the board, to the regulator. With forensic evidence, not well-argued confidence.</div>
+            <div class="p-punch">Defending no action is often the most valuable finding of all.</div>
+          </div>
+          <div class="either-card" data-animate="scale-in" data-anim-delay="280">
+            <div class="ci ci-blue" style="width:52px;height:52px;" aria-hidden="true">
+              <svg width="28" height="28" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+                <circle cx="14" cy="14" r="8.5"/><path d="M20.5 20.5 L27 27"/>
+              </svg>
+            </div>
+            <span class="ew-tag ew-tag--best">Best case</span>
+            <div class="either-h">If you're not</div>
+            <div class="either-b">Know exactly where the inefficiency lives, what it&rsquo;s costing you, and where to act first.</div>
+            <div class="p-punch">Stop investing in what barely moves the needle. Start investing in what does.</div>
+          </div>
+        </div>
+
+        <div data-animate="fade-up" data-anim-delay="360">
+          <div class="statement">The one guaranteed outcome:<br/><span class="hl">You will know your business better than you do today.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SLIDE 10 · FINAL CLOSE — the hero, answered ═══════════════ -->
+    <div class="slide slide-close" data-section="Knowledge Is Power">
+      <div class="close-inner">
+        <div class="close-title">
+          <span class="w"><span>Knowledge</span></span> <span class="w"><span>is</span></span> <span class="w"><span>power.</span></span><br/>
+          <span class="hl2">Apromore gives you both.</span>
+        </div>
+        <p class="close-body" data-animate="fade-up" data-anim-delay="900">The decisions you face haven&rsquo;t changed. <em>The evidence you make them on is about to.</em></p>
+        <!-- Pilot-explorer CTA — temporarily removed; restore by uncommenting.
+        <a class="site-link" href="https://scottt1234.github.io/top-30-processes/" target="_blank" rel="noopener" data-animate="fade-up" data-anim-delay="1100">
+          <span class="slp-label">Start with what matters most to you</span>
+          <span class="slp-arrow">&rarr;</span>
+        </a>
+        -->
+      </div>
+    </div>
+
+  </div><!-- /slide-deck -->
+
+  <!-- ─── PRE-PRESENTATION SETUP ──────────────────────────────────────
+       Shown on load. Picking a card sets the mode AND is the gesture that
+       unlocks audio, so no separate "click to start" prompt is needed.
+       Reopen any time with the gear button or Esc. -->
+  <div id="setup" class="setup-cover">
+    <div class="setup-inner">
+      <div class="setup-eyebrow">Before we start</div>
+      <h2 class="setup-title">How would you like to watch?</h2>
+      <div class="setup-grid">
+        <button class="setup-card" data-auto="1" data-audio="1" data-loop="1">
+          <span class="setup-rec">Recommended</span>
+          <div class="setup-ico">&#9654; &#128266;</div>
+          <div class="setup-card-h">Auto-play &middot; with narration</div>
+          <div class="setup-card-s">Sit back &mdash; it runs and narrates itself, then loops.</div>
+        </button>
+        <button class="setup-card" data-auto="1" data-audio="0" data-loop="1">
+          <div class="setup-ico">&#9654; &#128263;</div>
+          <div class="setup-card-h">Auto-play &middot; silent</div>
+          <div class="setup-card-s">Runs and loops itself. No sound.</div>
+        </button>
+        <button class="setup-card" data-auto="0" data-audio="1">
+          <div class="setup-ico">&#128070; &#128266;</div>
+          <div class="setup-card-h">Manual &middot; with narration</div>
+          <div class="setup-card-s">You click through. Each slide narrates.</div>
+        </button>
+        <button class="setup-card" data-auto="0" data-audio="0">
+          <div class="setup-ico">&#128070; &#128263;</div>
+          <div class="setup-card-h">Manual &middot; silent</div>
+          <div class="setup-card-s">You click through. No sound.</div>
+        </button>
+      </div>
+      <div class="setup-legend">
+        <span class="k-only"><b>&rarr;</b> Next</span>
+        <span class="k-only"><b>&larr;</b> Back</span>
+        <span class="k-only"><b>P</b> Play / Pause</span>
+        <span class="k-only"><b>M</b> Mute</span>
+        <span class="setup-legend-note k-only">Press any arrow to take over from auto-play</span>
+        <span class="tap-only">Tap the &lsaquo; &rsaquo; arrows to move &middot; &#9881; to change mode</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── CHROME ──────────────────────────────────────────────────── -->
+  <div class="section-label" id="section-label"></div>
+  <div class="slide-dots" id="dots"></div>
+  <div class="slide-controls">
+    <button class="slide-btn" id="setup-btn" title="How to watch (Esc)">&#9881;</button>
+    <button class="slide-btn" id="mute-btn" title="Mute narration">&#128266;</button>
+    <button class="slide-btn" id="autoplay-btn" title="Autoplay">&#9654;</button>
+    <button class="slide-btn" id="replay-embed" title="Replay animation" style="display:none;">&#8635;</button>
+    <button class="slide-btn" id="prev" title="Previous (←)">&#8592;</button>
+    <span class="slide-counter" id="counter">1 / 10</span>
+    <button class="slide-btn" id="next" title="Next (→)">&#8594;</button>
+  </div>
+
+  <script>
+    // A/B mock: forward ?nosubs=1 into the embedded slides (hides their per-frame subs).
+    if (new URLSearchParams(location.search).get('nosubs') === '1') {
+      document.querySelectorAll('.slide-embed iframe').forEach(f => { f.src = f.src + '&nosubs=1'; });
+    }
+
+    // Visible slides only — filter by class (not computed display) so the mobile
+    // media query that hides inactive slides via `display: none` doesn't remove them.
+    const slides = [...document.querySelectorAll('.slide:not(.deck-hidden)')];
+    const dotsEl = document.getElementById('dots');
+    const counterEl = document.getElementById('counter');
+    const prevBtn = document.getElementById('prev');
+    const nextBtn = document.getElementById('next');
+    const sectionLabel = document.getElementById('section-label');
+    let current = 0;
+
+    slides.forEach((_, i) => {
+      const d = document.createElement('div');
+      d.className = 'dot' + (i === 0 ? ' active' : '');
+      d.addEventListener('click', () => { userPause(); go(i); });
+      dotsEl.appendChild(d);
+    });
+
+    function go(n, opts) {
+      opts = opts || {};
+      slides[current].classList.remove('active');
+      document.querySelectorAll('.dot')[current].classList.remove('active');
+      current = Math.max(0, Math.min(n, slides.length - 1));
+      slides[current].classList.add('active');
+      slides[current].scrollTop = 0;
+      // Mobile uses body scroll (see media query) — reset window scroll on every slide change.
+      window.scrollTo(0, 0);
+      document.querySelectorAll('.dot')[current].classList.add('active');
+      counterEl.textContent = `${current + 1} / ${slides.length}`;
+      const sec = slides[current].dataset.section || '';
+      sectionLabel.textContent = sec;
+      // Closing slide is dark — lighten the section label for contrast
+      sectionLabel.classList.toggle('on-dark', current === slides.length - 1);
+      prevBtn.disabled = current === 0;
+      nextBtn.disabled = current === slides.length - 1;
+      // Reset (or reverse-set) the Process Reality act tracker on every entry.
+      prAct = (isProcessReality(current) && opts.reverse) ? PR_ACTS : 1;
+      // Tell any iframes in the newly-active slide which act to show. The Process Reality
+      // iframe responds to 'set-act'; other iframes simply ignore unknown message types.
+      slides[current].querySelectorAll('iframe').forEach(f => {
+        try { f.contentWindow && f.contentWindow.postMessage({ type: 'set-act', act: prAct }, '*'); } catch (e) {}
+      });
+      // Generic embed-nav slides (e.g. Process Intelligence layers) own their own internal
+      // step count. Tell the iframe to enter at its first step (forward) or last (reverse).
+      // layersDir is also re-sent on the iframe's 'embed-ready' handshake to survive load timing.
+      if (isLayers(current)) {
+        layersDir = opts.reverse ? 'rev' : 'fwd';
+        // Forward entry always starts at the first step; reset so the entry
+        // beatChanged() below plays S06F00 rather than a stale step's clip.
+        // (Reverse entry keeps the last step until the embed reports its own.)
+        if (!opts.reverse) piStep = 0;
+        postIframe(slides[current], { type: 'deck-enter', dir: layersDir });
+      }
+      // Replay button is only meaningful on embedded-animation slides.
+      replayBtn.style.display = isLayers(current) ? 'flex' : 'none';
+      beatChanged();
+    }
+
+    // ── Process Reality act-aware navigation ─────────────────────────
+    // The Process Reality slide has 3 internal frames (Designed / Believed / Reality).
+    // Forward and backward commands first step through those internal frames; once at
+    // the boundary they fall through to the deck's slide nav. Result: the presenter
+    // drives the entire deck from one keyboard model — no clicking into the iframe.
+    let prAct = 1;
+    const PR_ACTS = 3;
+    const isProcessReality = i => slides[i] && slides[i].dataset.section === 'Process Reality';
+    const setIframeAct = (slide, n) => {
+      const f = slide.querySelector('iframe');
+      if (f && f.contentWindow) {
+        try { f.contentWindow.postMessage({ type: 'set-act', act: n }, '*'); } catch (e) {}
+      }
+    };
+
+    // ── Generic embed-nav slides ─────────────────────────────────────
+    // Slides whose embedded page owns its own internal step sequence. The deck only sends
+    // intent (deck-advance / deck-reverse / deck-enter); the iframe replies with deck-next /
+    // deck-prev when it reaches its first/last step, at which point the deck changes slides.
+    // The step count lives entirely inside the embedded file.
+    let layersDir = 'fwd';
+    const isLayers = i => slides[i] && slides[i].dataset.section === 'Process Intelligence';
+    const postIframe = (slide, msg) => {
+      const f = slide.querySelector('iframe');
+      if (f && f.contentWindow) { try { f.contentWindow.postMessage(msg, '*'); } catch (e) {} }
+    };
+
+    function advance() {
+      if (isProcessReality(current) && prAct < PR_ACTS) {
+        prAct++;
+        setIframeAct(slides[current], prAct);
+        beatChanged();
+      } else if (isLayers(current)) {
+        postIframe(slides[current], { type: 'deck-advance' });   // iframe steps, or replies deck-next
+      } else {
+        go(current + 1);
+      }
+    }
+    function reverse() {
+      if (isProcessReality(current) && prAct > 1) {
+        prAct--;
+        setIframeAct(slides[current], prAct);
+        beatChanged();
+      } else if (isLayers(current)) {
+        postIframe(slides[current], { type: 'deck-reverse' });   // iframe steps, or replies deck-prev
+      } else {
+        // {reverse:true} tells go() to set the new slide's act to the LAST one,
+        // so reversing into the Process Reality slide lands on Reality, not Designed.
+        go(current - 1, { reverse: true });
+      }
+    }
+
+    const replayBtn = document.getElementById('replay-embed');
+    replayBtn.addEventListener('click', () => { userPause(); postIframe(slides[current], { type: 'replay' }); });
+
+    prevBtn.addEventListener('click', () => { userPause(); reverse(); });
+    nextBtn.addEventListener('click', () => { userPause(); advance(); });
+    document.addEventListener('keydown', e => {
+      if (setupOpen) return;                       // setup overlay up — ignore deck keys
+      switch (e.key) {
+        case 'ArrowRight': case 'ArrowDown': case ' ': case 'Spacebar':
+          e.preventDefault(); userPause(); advance(); break;
+        case 'ArrowLeft': case 'ArrowUp':
+          e.preventDefault(); userPause(); reverse(); break;
+        case 'p': case 'P': setAutoplay(!autoplayOn); break;   // Play / Pause auto
+        case 'm': case 'M': toggleMute(); break;
+        case 'Escape': showSetup(); break;                     // reopen the mode picker
+      }
+    });
+    // Iframe relays arrow keys up here when it has focus (e.g. after click-trace),
+    // so the deck-wide flow keeps working even when the user has clicked inside it.
+    window.addEventListener('message', e => {
+      if (!e.data) return;
+      // Process Reality relays raw arrow keys when it has focus.
+      if (e.data.type === 'arrow') {
+        userPause();
+        if (e.data.key === 'ArrowRight' || e.data.key === 'ArrowDown') advance();
+        if (e.data.key === 'ArrowLeft'  || e.data.key === 'ArrowUp')   reverse();
+        return;
+      }
+      // The layers embed reports each internal step — drives the autoplay dwell lookup.
+      if (e.data.type === 'embed-step') { piStep = e.data.step; beatChanged(); return; }
+      // Generic embed-nav: the iframe hit its first/last step and is handing control back.
+      if (e.data.type === 'deck-next') { go(current + 1); return; }
+      if (e.data.type === 'deck-prev') { go(current - 1, { reverse: true }); return; }
+      // The embed finished loading after we already navigated onto it — (re)send the enter.
+      if (e.data.type === 'embed-ready' && isLayers(current)) {
+        postIframe(slides[current], { type: 'deck-enter', dir: layersDir });
+      }
+    });
+
+    // ── Autoplay ─────────────────────────────────────────────────────
+    // One timer walks the deck through advance() — the same path the arrow
+    // keys use, so every slide, act and embed step behaves identically. Any
+    // manual navigation pauses it; the ▶ button resumes from wherever the
+    // presenter has navigated to. Dwell times (ms) per beat: plain slides
+    // carry one number; multi-beat slides carry an array indexed by their
+    // internal step. Tune the rhythm here — it's data, not code.
+    const AUTO_DWELL = {
+      default: 12000,
+      '': 8000,                                   // 1 · hero
+      'The Pressures': 18000,
+      'The Common Thread': 16000,
+      'The Question': 6000,
+      'Process Reality': [9000, 10000, 16000],    // designed / believed / actual
+      'Process Intelligence': [6000, 16000, 17000, 15000, 16000, 17000, 15000, 18000, 12000],  // steps 0–8
+      'Why Now': 18000,
+      'Evidence': 12000,
+      'Either Way': 16000,
+      'Knowledge Is Power': 15000,
+    };
+    let autoplayOn = false;
+    let autoTimer = null;
+    let loopOn = false;   // option 1 only: restart the deck after a pause at the end
+    let piStep = 0;    // the layers embed's internal step, reported via 'embed-step'
+    const autoBtn = document.getElementById('autoplay-btn');
+
+    function currentDwell() {
+      const d = AUTO_DWELL[slides[current].dataset.section || ''] ?? AUTO_DWELL.default;
+      if (!Array.isArray(d)) return d;
+      const i = isProcessReality(current) ? prAct - 1 : isLayers(current) ? piStep : 0;
+      return d[Math.max(0, Math.min(i, d.length - 1))];
+    }
+    // autoToken invalidates a beat's pending advance once it (or a newer beat)
+    // has fired, so the 'ended' event and the backstop timer can never both
+    // advance the same beat. pendingAudioAdvance is the current beat's step fn,
+    // called by the narration 'ended' handler (defined in the audio block).
+    let autoToken = 0;
+    let pendingAudioAdvance = null;
+    function beatChanged() { playBeatAudio(); if (autoplayOn) scheduleAuto(); }
+    function scheduleAuto() {
+      clearTimeout(autoTimer);
+      pendingAudioAdvance = null;
+      const myToken = ++autoToken;
+      const step = () => {
+        if (!autoplayOn || myToken !== autoToken) return;   // stale (paused or superseded)
+        autoToken++;                                         // consume this beat's advance
+        // the deck's final beat: loop back to the start after a pause, or rest here
+        if (current === slides.length - 1 && !isLayers(current) && !isProcessReality(current)) {
+          if (loopOn) {
+            autoTimer = setTimeout(() => { if (autoplayOn) go(0); }, 3000);  // 3s, then restart
+          } else {
+            setAutoplay(false);
+          }
+          return;
+        }
+        advance();
+        // Slide moves and PR acts reschedule synchronously via beatChanged(); the
+        // layers embed reschedules when it reports its new step. Re-arm defensively
+        // in case an embed is still loading and no report arrives.
+        if (autoplayOn) scheduleAuto();
+      };
+      // Narrated beats advance when their clip ends (see the 'ended' handler); the
+      // backstop timer only fires if 'ended' never arrives. Silent beats keep the
+      // fixed AUTO_DWELL rhythm.
+      if (currentClipName() && audioUnlocked) {
+        pendingAudioAdvance = step;
+        const guess = isFinite(narration.duration) && narration.duration > 0 ? narration.duration : 90;
+        autoTimer = setTimeout(step, (guess + 3) * 1000);
+      } else {
+        autoTimer = setTimeout(step, currentDwell());
+      }
+    }
+    function setAutoplay(on) {
+      autoplayOn = on;
+      clearTimeout(autoTimer);
+      autoToken++;                 // invalidate any pending advance
+      pendingAudioAdvance = null;
+      autoBtn.classList.toggle('on', on);
+      autoBtn.innerHTML = on ? '&#10074;&#10074;' : '&#9654;';
+      autoBtn.title = on ? 'Pause autoplay' : 'Autoplay';
+      // Restart the current beat's clip from the top so pressing ▶ narrates it in full.
+      if (on) { if (audioUnlocked) playBeatAudio(); scheduleAuto(); }
+    }
+    function userPause() { if (autoplayOn) setAutoplay(false); }
+    autoBtn.addEventListener('click', () => setAutoplay(!autoplayOn));
+
+    // ── Slide narration audio ────────────────────────────────────────
+    // One <audio> element walks the deck: whenever the active beat changes
+    // (slide entry, or a Process Reality act), it plays the matching clip if one
+    // exists. Filenames follow SxxFyy — xx = slide number, yy = frame. Add files
+    // to assets/audio/ and list them in AUDIO_FILES to bring more beats online.
+    // Browsers block audio-with-sound until a user gesture, so playback is gated
+    // behind audioUnlocked, flipped true when a mode is chosen on the setup overlay.
+    const AUDIO_FILES = new Set([
+      'S01F00', 'S02F00', 'S03F00', 'S04F00',
+      'S05F01', 'S05F02', 'S05F03',
+      'S06F00', 'S06F01', 'S06F02', 'S06F03', 'S06F04', 'S06F05', 'S06F06', 'S06F07', 'S06F08',
+      'S07F00', 'S08F00', 'S09F00', 'S10F00',
+    ]);
+    const narration = new Audio();
+    narration.preload = 'auto';
+    let audioUnlocked = false;
+
+    // During autoplay, a clip finishing drives the advance — a short breath, then
+    // the deck moves on. pendingAudioAdvance / autoToken (set in scheduleAuto)
+    // guard against double-advancing if the backstop timer also fires.
+    narration.addEventListener('ended', () => {
+      if (!autoplayOn || !pendingAudioAdvance) return;
+      const fn = pendingAudioAdvance;
+      pendingAudioAdvance = null;
+      setTimeout(() => { if (autoplayOn) fn(); }, 600);
+    });
+
+    // ── Mute toggle ──────────────────────────────────────────────────
+    // Muting only silences the element: a muted clip still plays through and
+    // fires 'ended', so autoplay's beat timing is unchanged. Preference persists.
+    const muteBtn = document.getElementById('mute-btn');
+    let muted = localStorage.getItem('deckMuted') === '1';
+    function applyMute() {
+      narration.muted = muted;
+      muteBtn.classList.toggle('on', muted);
+      muteBtn.innerHTML = muted ? '&#128263;' : '&#128266;';
+      muteBtn.title = muted ? 'Unmute narration' : 'Mute narration';
+    }
+    function toggleMute() {
+      muted = !muted;
+      localStorage.setItem('deckMuted', muted ? '1' : '0');
+      applyMute();
+    }
+    muteBtn.addEventListener('click', toggleMute);
+    applyMute();
+
+    // The clip for the current beat, or null if none is on file.
+    // Frame index: Process Reality uses its act (1–3 → F01–F03, matching the
+    // uploaded files); the layers embed uses its step; plain slides are F00.
+    function currentClipName() {
+      const nn = String(current + 1).padStart(2, '0');
+      const ff = isProcessReality(current) ? prAct
+               : isLayers(current)         ? piStep
+               : 0;
+      const name = 'S' + nn + 'F' + String(ff).padStart(2, '0');
+      return AUDIO_FILES.has(name) ? name : null;
+    }
+    function playBeatAudio() {
+      const name = currentClipName();
+      if (!name) { narration.pause(); return; }   // no clip for this beat → silence
+      if (!audioUnlocked) return;                  // wait for the first gesture
+      const src = 'assets/audio/' + name + '.mp3';
+      if (narration.src.endsWith(src)) {
+        narration.currentTime = 0;                 // re-entered the same beat → restart
+      } else {
+        narration.src = src;
+      }
+      narration.play().catch(() => {});            // ignore transient play() rejections
+    }
+    // ── Pre-presentation setup overlay ───────────────────────────────
+    // The card click is the user gesture that unlocks audio, so choosing a
+    // mode and unlocking sound happen together — no separate prompt needed.
+    // Reopening mid-show (gear / Esc) re-applies the chosen mode from the
+    // current slide rather than restarting the deck.
+    const setupEl = document.getElementById('setup');
+    let setupOpen = true;
+    function showSetup() {
+      setupOpen = true;
+      setAutoplay(false);
+      narration.pause();
+      setupEl.style.display = 'flex';
+    }
+    function startDeck(auto, withAudio, loop) {
+      muted = !withAudio;
+      localStorage.setItem('deckMuted', muted ? '1' : '0');
+      applyMute();
+      audioUnlocked = true;
+      loopOn = !!loop;
+      setupOpen = false;
+      setupEl.style.display = 'none';
+      if (auto) {
+        setAutoplay(true);     // restarts the current clip and drives the advance
+      } else {
+        setAutoplay(false);
+        playBeatAudio();       // narrate the current slide (silent if muted)
+      }
+    }
+    setupEl.querySelectorAll('.setup-card').forEach(card =>
+      card.addEventListener('click', () =>
+        startDeck(card.dataset.auto === '1', card.dataset.audio === '1', card.dataset.loop === '1')));
+    document.getElementById('setup-btn').addEventListener('click', showSetup);
+
+    go(0);
+  </script>
+  <script src="animation.js"></script>
+
+</body>
+</html>
