@@ -654,7 +654,9 @@
     stat.cases.tgt = 312847;
     if (act === 1) { stat.variants.tgt = 1; stat.paths.tgt = 7; }
     else if (act === 2) { stat.variants.tgt = 6; stat.paths.tgt = 14; }
-    else { stat.variants.tgt = Math.round(6 + easeOut(P3)*3211); stat.paths.tgt = 7 + Math.round(REAL_TOTAL*easeOut(P3)); }
+    // Act 3 connections climb FROM the act-2 value (14: spine + detours, both still
+    // drawn) as the reality edges reveal — no dip, and the count matches the canvas.
+    else { stat.variants.tgt = Math.round(6 + easeOut(P3)*3211); stat.paths.tgt = 14 + Math.round(REAL_TOTAL*easeOut(P3)); }
     for (const key in stat) {
       const s = stat[key];
       s.cur += (s.tgt - s.cur) * (1 - Math.pow(0.004, dt));
