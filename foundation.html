@@ -1031,10 +1031,20 @@
       const i = isProcessReality(current) ? prAct - 1 : isLayers(current) ? piStep : 0;
       return d[Math.max(0, Math.min(i, d.length - 1))];
     }
+    // autoToken invalidates a beat's pending advance once it (or a newer beat)
+    // has fired, so the 'ended' event and the backstop timer can never both
+    // advance the same beat. pendingAudioAdvance is the current beat's step fn,
+    // called by the narration 'ended' handler (defined in the audio block).
+    let autoToken = 0;
+    let pendingAudioAdvance = null;
     function beatChanged() { playBeatAudio(); if (autoplayOn) scheduleAuto(); }
     function scheduleAuto() {
       clearTimeout(autoTimer);
-      autoTimer = setTimeout(() => {
+      pendingAudioAdvance = null;
+      const myToken = ++autoToken;
+      const step = () => {
+        if (!autoplayOn || myToken !== autoToken) return;   // stale (paused or superseded)
+        autoToken++;                                         // consume this beat's advance
         // the deck's final beat: rest there instead of knocking on a locked door
         if (current === slides.length - 1 && !isLayers(current) && !isProcessReality(current)) {
           setAutoplay(false);
@@ -1045,15 +1055,28 @@
         // layers embed reschedules when it reports its new step. Re-arm defensively
         // in case an embed is still loading and no report arrives.
         if (autoplayOn) scheduleAuto();
-      }, currentDwell());
+      };
+      // Narrated beats advance when their clip ends (see the 'ended' handler); the
+      // backstop timer only fires if 'ended' never arrives. Silent beats keep the
+      // fixed AUTO_DWELL rhythm.
+      if (currentClipName() && audioUnlocked) {
+        pendingAudioAdvance = step;
+        const guess = isFinite(narration.duration) && narration.duration > 0 ? narration.duration : 90;
+        autoTimer = setTimeout(step, (guess + 3) * 1000);
+      } else {
+        autoTimer = setTimeout(step, currentDwell());
+      }
     }
     function setAutoplay(on) {
       autoplayOn = on;
       clearTimeout(autoTimer);
+      autoToken++;                 // invalidate any pending advance
+      pendingAudioAdvance = null;
       autoBtn.classList.toggle('on', on);
       autoBtn.innerHTML = on ? '&#10074;&#10074;' : '&#9654;';
       autoBtn.title = on ? 'Pause autoplay' : 'Autoplay';
-      if (on) scheduleAuto();
+      // Restart the current beat's clip from the top so pressing ▶ narrates it in full.
+      if (on) { if (audioUnlocked) playBeatAudio(); scheduleAuto(); }
     }
     function userPause() { if (autoplayOn) setAutoplay(false); }
     autoBtn.addEventListener('click', () => setAutoplay(!autoplayOn));
@@ -1072,6 +1095,16 @@
     const narration = new Audio();
     narration.preload = 'auto';
     let audioUnlocked = false;
+
+    // During autoplay, a clip finishing drives the advance — a short breath, then
+    // the deck moves on. pendingAudioAdvance / autoToken (set in scheduleAuto)
+    // guard against double-advancing if the backstop timer also fires.
+    narration.addEventListener('ended', () => {
+      if (!autoplayOn || !pendingAudioAdvance) return;
+      const fn = pendingAudioAdvance;
+      pendingAudioAdvance = null;
+      setTimeout(() => { if (autoplayOn) fn(); }, 600);
+    });
 
     // The clip for the current beat, or null if none is on file.
     // Frame index: Process Reality uses its act (1–3 → F01–F03, matching the
