@@ -521,27 +521,51 @@
     }
   </style>
 
-  <!-- ════════ In-slide beat spotlight (Pressures cards) ════════ -->
+  <!-- ════════ In-slide beat spotlight + slide-3 gated reveal ════════ -->
   <style>
     /* Active card "lights up" as its beat is narrated — the deck's electric-blue
-       glow language (mirrors the slide-3 convergence node), with a gentle pulse. */
+       glow language (mirrors the slide-3 convergence node), with a gentle pulse.
+       Covers both the Pressures cards (slide 2) and the Thread cards (slide 3). */
     @keyframes beatGlow {
       0%, 100% { box-shadow: 0 0 22px rgba(80,150,255,0.42), 0 14px 40px rgba(0,0,0,0.34); }
       50%      { box-shadow: 0 0 42px rgba(80,150,255,0.72), 0 14px 40px rgba(0,0,0,0.34); }
     }
-    .sd .pressure-card.beat-spot {
+    .sd .card.beat-spot {
       background: rgba(255,255,255,0.10) !important;   /* brighter fill, like the setup cards */
       border-color: rgba(143,184,255,0.9) !important;
       transform: translateY(-4px) scale(1.03);
       animation: beatGlow 2.4s ease-in-out infinite;
     }
     @media (prefers-reduced-motion: reduce) {
-      .sd .pressure-card.beat-spot {
+      .sd .card.beat-spot {
         transform: none;
         animation: none;
         box-shadow: 0 0 30px rgba(80,150,255,0.55);
       }
     }
+
+    /* ── Slide 3: hold the convergence diagram + tagline until the final beat ──
+       Beats 1–4 show only the three cards; the lines, the Together node and the
+       tagline stay blank until JS adds .s3-revealed / .s3-tagline-in on beat 5. */
+    .slide[data-section="The Common Thread"] .cv-link { opacity: 0; transition: opacity .35s ease; }
+    .slide[data-section="The Common Thread"]:not(.s3-revealed) .cv-dot,
+    .slide[data-section="The Common Thread"]:not(.s3-revealed) .cv-drop,
+    .slide[data-section="The Common Thread"]:not(.s3-revealed) .cv-bus,
+    .slide[data-section="The Common Thread"]:not(.s3-revealed) .cv-stem,
+    .slide[data-section="The Common Thread"]:not(.s3-revealed) .cv-node { animation: none !important; }
+    .slide[data-section="The Common Thread"]:not(.s3-revealed) .cv-node { opacity: 0 !important; }
+    .slide[data-section="The Common Thread"] .s3-tagline {
+      opacity: 0; transform: translateY(14px);
+      transition: opacity .6s ease, transform .6s ease;
+    }
+    /* Revealed (beat 5): draw the lines, raise the node — tagline rises with .s3-tagline-in. */
+    .slide[data-section="The Common Thread"].s3-revealed .cv-link { opacity: 1; }
+    .slide[data-section="The Common Thread"].s3-revealed .cv-dot  { animation: piPop  .3s  .05s ease-out forwards; }
+    .slide[data-section="The Common Thread"].s3-revealed .cv-drop { animation: piDraw .45s .10s ease-out forwards; }
+    .slide[data-section="The Common Thread"].s3-revealed .cv-bus  { animation: piDraw .6s  .55s ease-out forwards; }
+    .slide[data-section="The Common Thread"].s3-revealed .cv-stem { animation: piDraw .45s 1.15s ease-out forwards; }
+    .slide[data-section="The Common Thread"].s3-revealed .cv-node { animation: cvNode .7s 1.6s var(--ease-out) forwards; }
+    .slide[data-section="The Common Thread"].s3-tagline-in .s3-tagline { opacity: 1; transform: none; }
   </style>
 
 </head>
@@ -684,7 +708,7 @@
         </svg>
         <div class="cv-node"><span class="cv-node-k">Together</span>Everything you need to make informed decisions.</div>
 
-        <div data-animate="fade-up" data-anim-delay="440">
+        <div class="s3-tagline">
           <div class="rule-accent"></div>
           <div class="statement">It all starts with <span class="hl">understanding.</span></div>
         </div>
@@ -988,6 +1012,7 @@
     function go(n, opts) {
       opts = opts || {};
       clearTimeout(beatTimer);
+      clearTimeout(threadTimer);
       slides[current].classList.remove('active');
       document.querySelectorAll('.dot')[current].classList.remove('active');
       current = Math.max(0, Math.min(n, slides.length - 1));
@@ -1008,6 +1033,13 @@
       // Same for the Pressures beat tracker (last beat when reversing in).
       pBeat = (isPressures(current) && opts.reverse) ? P_BEATS : 1;
       if (isPressures(current)) applyPressureBeat();
+      // Thread (slide 3): forward = first beat (diagram held); reverse = fully revealed.
+      if (isThread(current)) {
+        tBeat = opts.reverse ? T_BEATS : 1;
+        slides[current].classList.toggle('s3-revealed', !!opts.reverse);
+        slides[current].classList.toggle('s3-tagline-in', !!opts.reverse);
+        applyThreadSpot();
+      }
       // Tell any iframes in the newly-active slide which act to show. The Process Reality
       // iframe responds to 'set-act'; other iframes simply ignore unknown message types.
       slides[current].querySelectorAll('iframe').forEach(f => {
@@ -1058,6 +1090,30 @@
       cards.forEach((c, i) => c.classList.toggle('beat-spot', i === activeIdx));
     }
 
+    // ── In-slide beats · The Common Thread (slide 3) ─────────────────
+    // Five clips. Beat 1 intro; beats 2–4 spotlight cards 1–3; beat 5 draws the
+    // convergence lines + Together node (silent), then ~1.8s later the tagline
+    // rises and S03B05 plays.
+    let tBeat = 1;
+    const T_BEATS = 5;
+    let threadTimer = null;
+    const isThread = i => slides[i] && slides[i].dataset.section === 'The Common Thread';
+    function applyThreadSpot() {
+      const cards = slides[current].querySelectorAll('.thread-card');
+      const activeIdx = (tBeat >= 2 && tBeat <= 4) ? tBeat - 2 : -1;   // beats 1 & 5 → none
+      cards.forEach((c, i) => c.classList.toggle('beat-spot', i === activeIdx));
+    }
+    function revealThreadTogether() {
+      applyThreadSpot();                            // beat 5 → clears the card spotlight
+      const slide = slides[current];
+      slide.classList.add('s3-revealed');           // draw the lines + raise the Together node
+      clearTimeout(threadTimer);
+      threadTimer = setTimeout(() => {              // once the node has landed…
+        slide.classList.add('s3-tagline-in');       // …the tagline rises…
+        beatChanged();                              // …and S03B05 plays
+      }, 1800);
+    }
+
     // ── Generic embed-nav slides ─────────────────────────────────────
     // Slides whose embedded page owns its own internal step sequence. The deck only sends
     // intent (deck-advance / deck-reverse / deck-enter); the iframe replies with deck-next /
@@ -1072,6 +1128,7 @@
 
     function advance() {
       clearTimeout(beatTimer);
+      clearTimeout(threadTimer);
       if (isProcessReality(current) && prAct < PR_ACTS) {
         prAct++;
         setIframeAct(slides[current], prAct);
@@ -1080,6 +1137,14 @@
         pBeat++;
         applyPressureBeat();
         beatChanged();
+      } else if (isThread(current) && tBeat < T_BEATS) {
+        tBeat++;
+        if (tBeat === T_BEATS) {
+          revealThreadTogether();   // draw lines + node, then (after a beat) tagline + S03B05
+        } else {
+          applyThreadSpot();
+          beatChanged();
+        }
       } else if (isLayers(current)) {
         postIframe(slides[current], { type: 'deck-advance' });   // iframe steps, or replies deck-next
       } else {
@@ -1088,6 +1153,7 @@
     }
     function reverse() {
       clearTimeout(beatTimer);
+      clearTimeout(threadTimer);
       if (isProcessReality(current) && prAct > 1) {
         prAct--;
         setIframeAct(slides[current], prAct);
@@ -1095,6 +1161,12 @@
       } else if (isPressures(current) && pBeat > 1) {
         pBeat--;
         applyPressureBeat();
+        beatChanged();
+      } else if (isThread(current) && tBeat > 1) {
+        tBeat--;
+        // leaving beat 5 → hide the Together node + tagline again
+        slides[current].classList.remove('s3-revealed', 's3-tagline-in');
+        applyThreadSpot();
         beatChanged();
       } else if (isLayers(current)) {
         postIframe(slides[current], { type: 'deck-reverse' });   // iframe steps, or replies deck-prev
@@ -1239,8 +1311,9 @@
     // Browsers block audio-with-sound until a user gesture, so playback is gated
     // behind audioUnlocked, flipped true when a mode is chosen on the setup overlay.
     const AUDIO_FILES = new Set([
-      'S01B00', 'S03F00', 'S04F00',
+      'S01B00', 'S04F00',
       'S02B01', 'S02B02', 'S02B03', 'S02B04',   // slide 2 in-slide beats (intro + 3 cards)
+      'S03B01', 'S03B02', 'S03B03', 'S03B04', 'S03B05',   // slide 3 beats (intro, 3 cards, together+tagline)
       'S05F01', 'S05F02', 'S05F03',
       'S06F00', 'S06F01', 'S06F02', 'S06F03', 'S06F04', 'S06F05', 'S06F06', 'S06F07', 'S06F08',
       'S07F00', 'S08F00', 'S09F00', 'S10F00',
@@ -1253,7 +1326,9 @@
     // the deck moves on. pendingAudioAdvance / autoToken (set in scheduleAuto)
     // guard against double-advancing if the backstop timer also fires.
     // More beats left to play inside the current slide? (auto-sequences in any mode)
-    function inSlideBeatsRemain() { return isPressures(current) && pBeat < P_BEATS; }
+    function inSlideBeatsRemain() {
+      return (isPressures(current) && pBeat < P_BEATS) || (isThread(current) && tBeat < T_BEATS);
+    }
 
     narration.addEventListener('ended', () => {
       // Autoplay drives everything via the scheduled step — within the slide AND
@@ -1302,6 +1377,8 @@
         name = 'S01B00';                                  // slide 1 (hero) uses a beat-named clip
       } else if (isPressures(current)) {
         name = 'S02B' + String(pBeat).padStart(2, '0');   // S02B01–04, one per beat
+      } else if (isThread(current)) {
+        name = 'S03B' + String(tBeat).padStart(2, '0');   // S03B01–05, one per beat
       } else {
         const ff = isProcessReality(current) ? prAct
                  : isLayers(current)         ? piStep
@@ -1333,6 +1410,7 @@
       setupOpen = true;
       setAutoplay(false);
       clearTimeout(beatTimer);
+      clearTimeout(threadTimer);
       narration.pause();
       setupEl.style.display = 'flex';
     }
