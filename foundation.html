@@ -911,6 +911,10 @@
       // layersDir is also re-sent on the iframe's 'embed-ready' handshake to survive load timing.
       if (isLayers(current)) {
         layersDir = opts.reverse ? 'rev' : 'fwd';
+        // Forward entry always starts at the first step; reset so the entry
+        // beatChanged() below plays S06F00 rather than a stale step's clip.
+        // (Reverse entry keeps the last step until the embed reports its own.)
+        if (!opts.reverse) piStep = 0;
         postIframe(slides[current], { type: 'deck-enter', dir: layersDir });
       }
       // Replay button is only meaningful on embedded-animation slides.
@@ -1092,6 +1096,7 @@
     const AUDIO_FILES = new Set([
       'S01F00', 'S02F00', 'S03F00', 'S04F00',
       'S05F01', 'S05F02', 'S05F03',
+      'S06F00', 'S06F01', 'S06F02', 'S06F03', 'S06F04', 'S06F05', 'S06F06', 'S06F07', 'S06F08',
     ]);
     const narration = new Audio();
     narration.preload = 'auto';
