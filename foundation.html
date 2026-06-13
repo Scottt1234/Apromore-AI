@@ -839,6 +839,15 @@
   </div><!-- /slide-deck -->
 
   <!-- ─── CHROME ──────────────────────────────────────────────────── -->
+  <!-- One-time gesture prompt: browsers block audio-with-sound until the user
+       interacts. The first click/key/tap anywhere unlocks narration and hides this. -->
+  <div id="audio-hint" aria-hidden="true"
+       style="position:fixed; bottom:64px; left:50%; transform:translateX(-50%);
+              background:rgba(255,255,255,0.92); color:#06246b; font-size:12px; font-weight:700;
+              letter-spacing:0.02em; padding:8px 16px; border-radius:999px;
+              box-shadow:0 2px 12px rgba(0,0,0,0.18); z-index:300; cursor:pointer;">
+    &#128266; Click anywhere to start narration
+  </div>
   <div class="section-label" id="section-label"></div>
   <div class="slide-dots" id="dots"></div>
   <div class="slide-controls">
@@ -1022,7 +1031,7 @@
       const i = isProcessReality(current) ? prAct - 1 : isLayers(current) ? piStep : 0;
       return d[Math.max(0, Math.min(i, d.length - 1))];
     }
-    function beatChanged() { if (autoplayOn) scheduleAuto(); }
+    function beatChanged() { playBeatAudio(); if (autoplayOn) scheduleAuto(); }
     function scheduleAuto() {
       clearTimeout(autoTimer);
       autoTimer = setTimeout(() => {
@@ -1048,6 +1057,54 @@
     }
     function userPause() { if (autoplayOn) setAutoplay(false); }
     autoBtn.addEventListener('click', () => setAutoplay(!autoplayOn));
+
+    // ── Slide narration audio ────────────────────────────────────────
+    // One <audio> element walks the deck: whenever the active beat changes
+    // (slide entry, or a Process Reality act), it plays the matching clip if one
+    // exists. Filenames follow SxxFyy — xx = slide number, yy = frame. Add files
+    // to assets/audio/ and list them in AUDIO_FILES to bring more beats online.
+    // Browsers block audio-with-sound until a user gesture, so playback is gated
+    // behind audioUnlocked, flipped true on the first click/key/tap (see below).
+    const AUDIO_FILES = new Set([
+      'S01F00', 'S02F00', 'S03F00', 'S04F00',
+      'S05F01', 'S05F02', 'S05F03',
+    ]);
+    const narration = new Audio();
+    narration.preload = 'auto';
+    let audioUnlocked = false;
+
+    // The clip for the current beat, or null if none is on file.
+    // Frame index: Process Reality uses its act (1–3 → F01–F03, matching the
+    // uploaded files); the layers embed uses its step; plain slides are F00.
+    function currentClipName() {
+      const nn = String(current + 1).padStart(2, '0');
+      const ff = isProcessReality(current) ? prAct
+               : isLayers(current)         ? piStep
+               : 0;
+      const name = 'S' + nn + 'F' + String(ff).padStart(2, '0');
+      return AUDIO_FILES.has(name) ? name : null;
+    }
+    function playBeatAudio() {
+      const name = currentClipName();
+      if (!name) { narration.pause(); return; }   // no clip for this beat → silence
+      if (!audioUnlocked) return;                  // wait for the first gesture
+      const src = 'assets/audio/' + name + '.mp3';
+      if (narration.src.endsWith(src)) {
+        narration.currentTime = 0;                 // re-entered the same beat → restart
+      } else {
+        narration.src = src;
+      }
+      narration.play().catch(() => {});            // ignore transient play() rejections
+    }
+    function unlockAudio() {
+      if (audioUnlocked) return;
+      audioUnlocked = true;
+      const hint = document.getElementById('audio-hint');
+      if (hint) hint.style.display = 'none';
+      playBeatAudio();                             // start the clip for wherever we are
+    }
+    ['click', 'keydown', 'touchstart'].forEach(ev =>
+      document.addEventListener(ev, unlockAudio, { once: true, capture: true }));
 
     go(0);
   </script>
