@@ -530,6 +530,7 @@
       50%      { box-shadow: 0 0 42px rgba(80,150,255,0.72), 0 14px 40px rgba(0,0,0,0.34); }
     }
     .sd .pressure-card.beat-spot {
+      background: rgba(255,255,255,0.10) !important;   /* brighter fill, like the setup cards */
       border-color: rgba(143,184,255,0.9) !important;
       transform: translateY(-4px) scale(1.03);
       animation: beatGlow 2.4s ease-in-out infinite;
@@ -986,6 +987,7 @@
 
     function go(n, opts) {
       opts = opts || {};
+      clearTimeout(beatTimer);
       slides[current].classList.remove('active');
       document.querySelectorAll('.dot')[current].classList.remove('active');
       current = Math.max(0, Math.min(n, slides.length - 1));
@@ -1069,6 +1071,7 @@
     };
 
     function advance() {
+      clearTimeout(beatTimer);
       if (isProcessReality(current) && prAct < PR_ACTS) {
         prAct++;
         setIframeAct(slides[current], prAct);
@@ -1084,6 +1087,7 @@
       }
     }
     function reverse() {
+      clearTimeout(beatTimer);
       if (isProcessReality(current) && prAct > 1) {
         prAct--;
         setIframeAct(slides[current], prAct);
@@ -1162,6 +1166,7 @@
     };
     let autoplayOn = false;
     let autoTimer = null;
+    let beatTimer = null;   // manual mode: auto-sequences in-slide beats (stops at slide edge)
     let loopOn = false;   // option 1 only: restart the deck after a pause at the end
     let piStep = 0;    // the layers embed's internal step, reported via 'embed-step'
     const autoBtn = document.getElementById('autoplay-btn');
@@ -1247,11 +1252,25 @@
     // During autoplay, a clip finishing drives the advance — a short breath, then
     // the deck moves on. pendingAudioAdvance / autoToken (set in scheduleAuto)
     // guard against double-advancing if the backstop timer also fires.
+    // More beats left to play inside the current slide? (auto-sequences in any mode)
+    function inSlideBeatsRemain() { return isPressures(current) && pBeat < P_BEATS; }
+
     narration.addEventListener('ended', () => {
-      if (!autoplayOn || !pendingAudioAdvance) return;
-      const fn = pendingAudioAdvance;
-      pendingAudioAdvance = null;
-      setTimeout(() => { if (autoplayOn) fn(); }, 600);
+      // Autoplay drives everything via the scheduled step — within the slide AND
+      // across slides — so let it run and stop here.
+      if (autoplayOn) {
+        if (!pendingAudioAdvance) return;
+        const fn = pendingAudioAdvance;
+        pendingAudioAdvance = null;
+        setTimeout(() => { if (autoplayOn) fn(); }, 600);
+        return;
+      }
+      // Manual: in-slide beats still auto-sequence within the slide, then stop at
+      // the slide boundary so the presenter controls slide-to-slide movement.
+      if (inSlideBeatsRemain()) {
+        clearTimeout(beatTimer);
+        beatTimer = setTimeout(() => { if (!autoplayOn && inSlideBeatsRemain()) advance(); }, 600);
+      }
     });
 
     // ── Mute toggle ──────────────────────────────────────────────────
@@ -1311,6 +1330,7 @@
     function showSetup() {
       setupOpen = true;
       setAutoplay(false);
+      clearTimeout(beatTimer);
       narration.pause();
       setupEl.style.display = 'flex';
     }
