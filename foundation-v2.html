@@ -1033,6 +1033,9 @@
       // Same for the Pressures beat tracker (last beat when reversing in).
       pBeat = (isPressures(current) && opts.reverse) ? P_BEATS : 1;
       if (isPressures(current)) applyPressureBeat();
+      // Why Now (slide 7): same pattern as the Pressures.
+      wBeat = (isWhyNow(current) && opts.reverse) ? W_BEATS : 1;
+      if (isWhyNow(current)) applyWhyNowBeat();
       // Thread (slide 3): forward = first beat (diagram held); reverse = fully revealed.
       if (isThread(current)) {
         tBeat = opts.reverse ? T_BEATS : 1;
@@ -1087,6 +1090,17 @@
     function applyPressureBeat() {
       const cards = slides[current].querySelectorAll('.pressure-card');
       const activeIdx = pBeat - 2;   // beat 2→card 0, 3→card 1, 4→card 2; beat 1 → none
+      cards.forEach((c, i) => c.classList.toggle('beat-spot', i === activeIdx));
+    }
+
+    // ── In-slide beats · Why Now (slide 7) ───────────────────────────
+    // Same shape as The Pressures: B01 intro, B02–04 spotlight cards 1–3.
+    let wBeat = 1;
+    const W_BEATS = 4;
+    const isWhyNow = i => slides[i] && slides[i].dataset.section === 'Why Now';
+    function applyWhyNowBeat() {
+      const cards = slides[current].querySelectorAll('.pressure-card');
+      const activeIdx = wBeat - 2;   // beat 2→card 0, 3→card 1, 4→card 2; beat 1 → none
       cards.forEach((c, i) => c.classList.toggle('beat-spot', i === activeIdx));
     }
 
@@ -1157,6 +1171,10 @@
         pBeat++;
         applyPressureBeat();
         beatChanged();
+      } else if (isWhyNow(current) && wBeat < W_BEATS) {
+        wBeat++;
+        applyWhyNowBeat();
+        beatChanged();
       } else if (isThread(current) && tBeat < T_BEATS) {
         tBeat++;
         if (tBeat === T_BEATS) {
@@ -1183,6 +1201,10 @@
       } else if (isPressures(current) && pBeat > 1) {
         pBeat--;
         applyPressureBeat();
+        beatChanged();
+      } else if (isWhyNow(current) && wBeat > 1) {
+        wBeat--;
+        applyWhyNowBeat();
         beatChanged();
       } else if (isThread(current) && tBeat > 1) {
         tBeat--;
@@ -1341,7 +1363,8 @@
       'S03B01', 'S03B02', 'S03B03', 'S03B04', 'S03B05',   // slide 3 beats (intro, 3 cards, together+tagline)
       'S05F01', 'S05F02', 'S05F03',
       'S06F00', 'S06F01', 'S06F02', 'S06F03', 'S06F04', 'S06F05', 'S06F06', 'S06F07', 'S06F08',
-      'S07F00', 'S08F00', 'S09F00', 'S10F00',
+      'S07B01', 'S07B02', 'S07B03', 'S07B04',   // slide 7 in-slide beats (intro + 3 cards)
+      'S08F00', 'S09F00', 'S10F00',
     ]);
     const narration = new Audio();
     narration.preload = 'auto';
@@ -1352,7 +1375,8 @@
     // guard against double-advancing if the backstop timer also fires.
     // More beats left to play inside the current slide? (auto-sequences in any mode)
     function inSlideBeatsRemain() {
-      return (isPressures(current) && pBeat < P_BEATS) || (isThread(current) && tBeat < T_BEATS);
+      return (isPressures(current) && pBeat < P_BEATS) || (isThread(current) && tBeat < T_BEATS)
+          || (isWhyNow(current) && wBeat < W_BEATS);
     }
 
     narration.addEventListener('ended', () => {
@@ -1406,6 +1430,8 @@
         name = 'S02B' + String(pBeat).padStart(2, '0');   // S02B01–04, one per beat
       } else if (isThread(current)) {
         name = 'S03B' + String(tBeat).padStart(2, '0');   // S03B01–05, one per beat
+      } else if (isWhyNow(current)) {
+        name = 'S07B' + String(wBeat).padStart(2, '0');   // S07B01–04, one per beat
       } else {
         const ff = isProcessReality(current) ? prAct
                  : isLayers(current)         ? piStep
