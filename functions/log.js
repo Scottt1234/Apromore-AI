@@ -1,4 +1,4 @@
-// Cloudflare Pages Function — /log  (DIAGNOSTIC: reports state + always attempts a write)
+// Cloudflare Pages Function — /log  (DIAGNOSTIC: GET w/ query params + reports state)
 export async function onRequest(context) {
   const { request, env } = context;
 
@@ -10,12 +10,10 @@ export async function onRequest(context) {
   let posted = false, postStatus = 0, postErr = '';
   if (env.SHEET_URL) {
     try {
-      const r = await fetch(env.SHEET_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, time: new Date().toISOString() }),
-        redirect: 'follow',
-      });
+      const url = new URL(env.SHEET_URL);
+      url.searchParams.set('email', email);
+      url.searchParams.set('time', new Date().toISOString());
+      const r = await fetch(url.toString(), { method: 'GET', redirect: 'follow' });
       posted = true;
       postStatus = r.status;
     } catch (e) {
