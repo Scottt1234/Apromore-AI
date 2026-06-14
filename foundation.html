@@ -999,11 +999,19 @@
   </div>
 
   <script>
-    // Permanent view log: ping the /log function once on load. It reads the
-    // visitor's email from the trusted Cloudflare Access header (server-side) and
-    // appends it to the Google Sheet. Harmless 404 if not running behind the
-    // Cloudflare Pages deployment (e.g. plain GitHub Pages).
-    fetch('/log', { method: 'POST' }).catch(() => {});
+    // Permanent view log: read this visit's Cloudflare Access identity, then record
+    // it via the /log function (which appends {email, time} to the Google Sheet).
+    // Harmless no-op when not running behind Cloudflare Access.
+    fetch('/cdn-cgi/access/get-identity')
+      .then(r => (r.ok ? r.json() : null))
+      .then(id => {
+        fetch('/log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: (id && id.email) || '' }),
+        }).catch(() => {});
+      })
+      .catch(() => {});
 
     // A/B mock: forward ?nosubs=1 into the embedded slides (hides their per-frame subs).
     if (new URLSearchParams(location.search).get('nosubs') === '1') {
