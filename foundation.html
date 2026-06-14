@@ -519,14 +519,22 @@
     }
 
     /* Help footer */
-    .setup-help { font-size: 13px; color: rgba(255,255,255,0.62); line-height: 1.7; }
-    .setup-help p { margin: 3px 0; }
-    .setup-help .kbd { color: #fff; font-weight: 700; background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.22); border-radius: 6px; padding: 1px 8px; font-family: var(--font-display); }
-    .setup-help-ico {
-      display: inline-flex; align-items: center; justify-content: center;
-      width: 22px; height: 22px; border-radius: 50%; vertical-align: -6px; margin-right: 3px;
-      background: #fff; box-shadow: 0 1px 5px rgba(0,0,0,0.3); font-size: 12px;
+    .setup-help { color: rgba(255,255,255,0.78); line-height: 1.65; }
+    /* The audio-off instruction is the critical one — call it out as a pill. */
+    .setup-help-audio {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: rgba(143,184,255,0.10); border: 1px solid rgba(143,184,255,0.42);
+      border-radius: 999px; padding: 12px 24px; margin: 0 0 14px;
+      font-size: 16px; font-weight: 600; color: #fff;
     }
+    .setup-help-esc { font-size: 15px; color: rgba(255,255,255,0.7); margin: 0; }
+    .setup-help .kbd { color: #fff; font-weight: 700; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.24); border-radius: 6px; padding: 2px 9px; font-family: var(--font-display); }
+    .setup-help-ico {
+      display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+      width: 28px; height: 28px; border-radius: 50%;
+      background: #fff; box-shadow: 0 1px 6px rgba(0,0,0,0.32); font-size: 15px;
+    }
+    @media (max-width: 640px) { .setup-help-audio { font-size: 15px; padding: 11px 18px; } }
     @media (max-width: 640px) {
       .setup-choices { grid-template-columns: 1fr; }
     }
@@ -960,21 +968,19 @@
       <h2 class="setup-title">How would you like to experience Apromore?</h2>
       <div class="setup-choices">
         <button class="setup-choice" data-auto="1" data-audio="1" data-loop="1">
-          <span class="setup-rec">Recommended</span>
           <div class="setup-choice-ico">&#9654;</div>
           <div class="setup-choice-h">Auto&nbsp;play</div>
           <div class="setup-choice-s">Sit back &mdash; the slides progress automatically, in time with the narration.</div>
         </button>
         <button class="setup-choice" data-auto="0" data-audio="1" data-loop="0">
-          <span class="setup-rec">Recommended</span>
           <div class="setup-choice-ico">&#8592;&#8202;&#8594;</div>
           <div class="setup-choice-h">Manual</div>
           <div class="setup-choice-s">Use the left and right arrows to progress at your own pace.</div>
         </button>
       </div>
       <div class="setup-help">
-        <p><span class="setup-help-ico">&#128266;</span> Turn the audio off at any time with the audio button, bottom&#8209;right.</p>
-        <p>Return to this screen at any time by pressing <span class="kbd">Esc</span>.</p>
+        <p class="setup-help-audio"><span class="setup-help-ico">&#128266;</span> Turn the audio off at any time with the audio button, bottom&#8209;right.</p>
+        <p class="setup-help-esc">Return to this screen at any time by pressing <span class="kbd">Esc</span>.</p>
       </div>
     </div>
   </div>
