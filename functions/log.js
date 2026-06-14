@@ -1,43 +1,28 @@
-// Cloudflare Pages Function — /log  (DIAGNOSTIC MODE 2 — returns its state)
+// Cloudflare Pages Function — POST /log
 //
-// Visit /log directly and read the JSON it returns to see whether SHEET_URL is
-// present, what email it sees, and whether the POST to the Sheet succeeded.
+// Appends each authenticated view to a Google Sheet (permanent record beyond
+// Cloudflare's ~7-day Access log retention). The email comes from the trusted
+// Cf-Access-Authenticated-User-Email header that Access injects; a posted body
+// {email} is used as a fallback. The Sheet web-app URL is the SHEET_URL env var
+// (Pages project → Settings → Variables and Secrets), kept out of the repo/client.
 export async function onRequest(context) {
   const { request, env } = context;
 
-  const hdrEmail = request.headers.get('Cf-Access-Authenticated-User-Email') || '';
-  let bodyEmail = '';
-  try {
-    const body = await request.json();
-    bodyEmail = (body && body.email) || '';
-  } catch (e) {}
-
-  const email = hdrEmail || bodyEmail || '(no email)';
-
-  let posted = false;
-  let postErr = '';
-  if (env.SHEET_URL) {
-    try {
-      await fetch(env.SHEET_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, time: new Date().toISOString() }),
-      });
-      posted = true;
-    } catch (e) {
-      postErr = String(e);
-    }
+  let email = request.headers.get('Cf-Access-Authenticated-User-Email');
+  if (!email) {
+    try { const body = await request.json(); email = body && body.email; } catch (e) {}
   }
 
-  return new Response(
-    JSON.stringify({
-      sheetUrlSet: !!env.SHEET_URL,
-      sheetUrlStart: env.SHEET_URL ? env.SHEET_URL.slice(0, 45) : null,
-      hdrEmail: hdrEmail || null,
-      bodyEmail: bodyEmail || null,
-      posted,
-      postErr,
-    }),
-    { status: 200, headers: { 'Content-Type': 'application/json' } }
-  );
+  if (email && env.SHEET_URL) {
+    const payload = JSON.stringify({ email, time: new Date().toISOString() });
+    context.waitUntil(
+      fetch(env.SHEET_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload,
+      }).catch(() => {})
+    );
+  }
+
+  return new Response(null, { status: 204 });
 }

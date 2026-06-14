@@ -999,19 +999,10 @@
   </div>
 
   <script>
-    // Permanent view log: read this visit's Cloudflare Access identity, then record
-    // it via the /log function (which appends {email, time} to the Google Sheet).
+    // Permanent view log: ping /log on load. The function reads this visit's email
+    // from the trusted Cloudflare Access header and appends it to the Google Sheet.
     // Harmless no-op when not running behind Cloudflare Access.
-    fetch('/cdn-cgi/access/get-identity')
-      .then(r => (r.ok ? r.json() : null))
-      .then(id => {
-        fetch('/log', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: (id && id.email) || '' }),
-        }).catch(() => {});
-      })
-      .catch(() => {});
+    fetch('/log', { method: 'POST' }).catch(() => {});
 
     // A/B mock: forward ?nosubs=1 into the embedded slides (hides their per-frame subs).
     if (new URLSearchParams(location.search).get('nosubs') === '1') {
