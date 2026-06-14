@@ -27,3 +27,5 @@ export async function onRequest(context) {
 
   return new Response(null, { status: 204 });
 }
+
+// redeploy trigger: activate SHEET_URL logging
