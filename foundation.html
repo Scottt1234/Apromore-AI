@@ -1450,7 +1450,7 @@
         pendingAudioAdvance = null;
         // Per-beat hold before moving on: slide 3 close (reduced), slide 6 frame 07, else ~0.6s.
         const breath = (isThread(current) && tBeat === T_BEATS) ? 1500   // slide 3 close
-                     : (isLayers(current) && piStep === 3)       ? 2000   // slide 6 · frame 03
+                     : (isLayers(current) && piStep === 3)       ? 3500   // slide 6 · frame 03
                      : (isLayers(current) && piStep === 7)       ? 8000   // slide 6 · frame 07
                      : 600;
         setTimeout(() => { if (autoplayOn) fn(); }, breath);
