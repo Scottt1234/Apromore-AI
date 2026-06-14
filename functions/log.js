@@ -1,7 +1,7 @@
-// Cloudflare Pages Function — /log  (DIAGNOSTIC MODE)
+// Cloudflare Pages Function — /log  (DIAGNOSTIC MODE 2 — returns its state)
 //
-// Temporarily logs EVERY hit so we can see whether the function is invoked and
-// whether it receives an email. Revert to email-required once confirmed working.
+// Visit /log directly and read the JSON it returns to see whether SHEET_URL is
+// present, what email it sees, and whether the POST to the Sheet succeeded.
 export async function onRequest(context) {
   const { request, env } = context;
 
@@ -12,19 +12,32 @@ export async function onRequest(context) {
     bodyEmail = (body && body.email) || '';
   } catch (e) {}
 
-  const email = hdrEmail || bodyEmail
-    || ('(no email — hdr=' + (hdrEmail ? 'y' : 'n') + ' body=' + (bodyEmail ? 'y' : 'n') + ')');
+  const email = hdrEmail || bodyEmail || '(no email)';
 
+  let posted = false;
+  let postErr = '';
   if (env.SHEET_URL) {
-    const payload = JSON.stringify({ email, time: new Date().toISOString() });
-    context.waitUntil(
-      fetch(env.SHEET_URL, {
+    try {
+      await fetch(env.SHEET_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: payload,
-      }).catch(() => {})
-    );
+        body: JSON.stringify({ email, time: new Date().toISOString() }),
+      });
+      posted = true;
+    } catch (e) {
+      postErr = String(e);
+    }
   }
 
-  return new Response(null, { status: 204 });
+  return new Response(
+    JSON.stringify({
+      sheetUrlSet: !!env.SHEET_URL,
+      sheetUrlStart: env.SHEET_URL ? env.SHEET_URL.slice(0, 45) : null,
+      hdrEmail: hdrEmail || null,
+      bodyEmail: bodyEmail || null,
+      posted,
+      postErr,
+    }),
+    { status: 200, headers: { 'Content-Type': 'application/json' } }
+  );
 }
