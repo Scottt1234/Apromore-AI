@@ -530,19 +530,27 @@
       0%, 100% { box-shadow: 0 0 22px rgba(80,150,255,0.42), 0 14px 40px rgba(0,0,0,0.34); }
       50%      { box-shadow: 0 0 42px rgba(80,150,255,0.72), 0 14px 40px rgba(0,0,0,0.34); }
     }
-    .sd .card.beat-spot {
+    .sd .card.beat-spot,
+    .sd .either-card.beat-spot {
       background: rgba(255,255,255,0.10) !important;   /* brighter fill, like the setup cards */
       border-color: rgba(143,184,255,0.9) !important;
       transform: translateY(-4px) scale(1.03);
       animation: beatGlow 2.4s ease-in-out infinite;
     }
     @media (prefers-reduced-motion: reduce) {
-      .sd .card.beat-spot {
+      .sd .card.beat-spot,
+      .sd .either-card.beat-spot {
         transform: none;
         animation: none;
         box-shadow: 0 0 30px rgba(80,150,255,0.55);
       }
     }
+    /* Slide 9: hold the closing statement until the final beat (.either-revealed). */
+    .slide[data-section="Either Way"] .either-statement {
+      opacity: 0; transform: translateY(14px);
+      transition: opacity .6s ease, transform .6s ease;
+    }
+    .slide[data-section="Either Way"].either-revealed .either-statement { opacity: 1; transform: none; }
 
     /* ── Slide 3: hold the convergence diagram + tagline until the final beat ──
        Beats 1–4 show only the three cards; the lines, the Together node and the
@@ -906,7 +914,7 @@
           </div>
         </div>
 
-        <div data-animate="fade-up" data-anim-delay="360">
+        <div class="either-statement">
           <div class="statement">The one guaranteed outcome:<br/><span class="hl">You will understand your business better than you do today.</span></div>
         </div>
       </div>
@@ -1037,6 +1045,9 @@
       // Why Now (slide 7): same pattern as the Pressures.
       wBeat = (isWhyNow(current) && opts.reverse) ? W_BEATS : 1;
       if (isWhyNow(current)) applyWhyNowBeat();
+      // Either Way (slide 9): forward = first beat; reverse = final beat (both lit + statement).
+      eBeat = (isEither(current) && opts.reverse) ? E_BEATS : 1;
+      if (isEither(current)) applyEitherBeat();
       // Give slide 7 a 1s silent breath before its opening line (forward entry only).
       pendingIntroMs = (isWhyNow(current) && !opts.reverse) ? WHYNOW_INTRO_MS : 0;
       // Thread (slide 3): forward = first beat (diagram held); reverse = fully revealed.
@@ -1105,6 +1116,22 @@
       const cards = slides[current].querySelectorAll('.pressure-card');
       const activeIdx = wBeat - 2;   // beat 2→card 0, 3→card 1, 4→card 2; beat 1 → none
       cards.forEach((c, i) => c.classList.toggle('beat-spot', i === activeIdx));
+    }
+
+    // ── In-slide beats · Either Way (slide 9) ────────────────────────
+    // Two cards. B01 intro; B02 lights card 1 (worst case); B03 lights card 2
+    // (best case); B04 lights BOTH ("either way, you win") and raises the
+    // closing statement.
+    let eBeat = 1;
+    const E_BEATS = 4;
+    const isEither = i => slides[i] && slides[i].dataset.section === 'Either Way';
+    function applyEitherBeat() {
+      const slide = slides[current];
+      slide.querySelectorAll('.either-card').forEach((c, i) => {
+        const on = eBeat === 4 ? true : eBeat === 2 ? i === 0 : eBeat === 3 ? i === 1 : false;
+        c.classList.toggle('beat-spot', on);
+      });
+      slide.classList.toggle('either-revealed', eBeat === E_BEATS);   // statement rises on the final beat
     }
 
     // ── In-slide beats · The Common Thread (slide 3) ─────────────────
@@ -1179,6 +1206,10 @@
         wBeat++;
         applyWhyNowBeat();
         beatChanged();
+      } else if (isEither(current) && eBeat < E_BEATS) {
+        eBeat++;
+        applyEitherBeat();
+        beatChanged();
       } else if (isThread(current) && tBeat < T_BEATS) {
         tBeat++;
         if (tBeat === T_BEATS) {
@@ -1210,6 +1241,10 @@
       } else if (isWhyNow(current) && wBeat > 1) {
         wBeat--;
         applyWhyNowBeat();
+        beatChanged();
+      } else if (isEither(current) && eBeat > 1) {
+        eBeat--;
+        applyEitherBeat();   // also drops .either-revealed when leaving the final beat
         beatChanged();
       } else if (isThread(current) && tBeat > 1) {
         tBeat--;
@@ -1381,7 +1416,8 @@
       'S05F01', 'S05F02', 'S05F03',
       'S06F00', 'S06F01', 'S06F02', 'S06F03', 'S06F04', 'S06F05', 'S06F06', 'S06F07', 'S06F08',
       'S07B01', 'S07B02', 'S07B03', 'S07B04',   // slide 7 in-slide beats (intro + 3 cards)
-      'S08F00', 'S09F00', 'S10F00',
+      'S09B01', 'S09B02', 'S09B03', 'S09B04',   // slide 9 in-slide beats (intro, 2 cards, both+statement)
+      'S08F00', 'S10F00',
     ]);
     const narration = new Audio();
     narration.preload = 'auto';
@@ -1393,7 +1429,7 @@
     // More beats left to play inside the current slide? (auto-sequences in any mode)
     function inSlideBeatsRemain() {
       return (isPressures(current) && pBeat < P_BEATS) || (isThread(current) && tBeat < T_BEATS)
-          || (isWhyNow(current) && wBeat < W_BEATS);
+          || (isWhyNow(current) && wBeat < W_BEATS) || (isEither(current) && eBeat < E_BEATS);
     }
 
     narration.addEventListener('ended', () => {
@@ -1449,6 +1485,8 @@
         name = 'S03B' + String(tBeat).padStart(2, '0');   // S03B01–05, one per beat
       } else if (isWhyNow(current)) {
         name = 'S07B' + String(wBeat).padStart(2, '0');   // S07B01–04, one per beat
+      } else if (isEither(current)) {
+        name = 'S09B' + String(eBeat).padStart(2, '0');   // S09B01–04, one per beat
       } else {
         const ff = isProcessReality(current) ? prAct
                  : isLayers(current)         ? piStep
