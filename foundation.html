@@ -1048,8 +1048,8 @@
       // Either Way (slide 9): forward = first beat; reverse = final beat (both lit + statement).
       eBeat = (isEither(current) && opts.reverse) ? E_BEATS : 1;
       if (isEither(current)) applyEitherBeat();
-      // Give slide 7 a 1s silent breath before its opening line (forward entry only).
-      pendingIntroMs = (isWhyNow(current) && !opts.reverse) ? WHYNOW_INTRO_MS : 0;
+      // Silent lead-in before the slide's first clip (forward entry only) — see LEAD_IN.
+      pendingIntroMs = (!opts.reverse && LEAD_IN[slides[current].dataset.section || '']) || 0;
       // Thread (slide 3): forward = first beat (diagram held); reverse = fully revealed.
       if (isThread(current)) {
         tBeat = opts.reverse ? T_BEATS : 1;
@@ -1325,7 +1325,12 @@
     let beatTimer = null;   // manual mode: auto-sequences in-slide beats (stops at slide edge)
     let introTimer = null;  // optional silent lead-in before a slide's first clip
     let pendingIntroMs = 0;
-    const WHYNOW_INTRO_MS = 1000;   // breathe before slide 7's opening line
+    // Per-slide silent lead-in (ms) before the slide's first clip, keyed by section.
+    const LEAD_IN = {
+      'The Common Thread': 1500,   // slide 3
+      'The Question': 1500,        // slide 4
+      'Why Now': 1000,             // slide 7
+    };
     let loopOn = false;   // option 1 only: restart the deck after a pause at the end
     let piStep = 0;    // the layers embed's internal step, reported via 'embed-step'
     const autoBtn = document.getElementById('autoplay-btn');
@@ -1439,8 +1444,10 @@
         if (!pendingAudioAdvance) return;
         const fn = pendingAudioAdvance;
         pendingAudioAdvance = null;
-        // Hold ~3s on slide 3's closing beat before moving on; ~0.6s elsewhere.
-        const breath = (isThread(current) && tBeat === T_BEATS) ? 3000 : 600;
+        // Per-beat hold before moving on: slide 3 close (reduced), slide 6 frame 07, else ~0.6s.
+        const breath = (isThread(current) && tBeat === T_BEATS) ? 1500   // slide 3 close
+                     : (isLayers(current) && piStep === 7)       ? 4000   // slide 6 · frame 07
+                     : 600;
         setTimeout(() => { if (autoplayOn) fn(); }, breath);
         return;
       }
