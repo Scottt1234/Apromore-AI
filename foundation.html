@@ -501,6 +501,16 @@
     .accent-opt:hover { color: #fff; }
     .accent-opt.on { background: var(--sf-blue-m); color: #fff; }
     .accent-opt:focus-visible { outline: 2px solid var(--sf-blue-l); outline-offset: 2px; }
+    /* Start-muted toggle, sits beside the accent picker */
+    .setup-mute { display: inline-flex; align-items: center; gap: 8px; font: inherit;
+      font-family: var(--font-display); font-size: 14px; font-weight: 600;
+      color: rgba(255,255,255,0.78); cursor: pointer; padding: 7px 16px; border-radius: 10px;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.16);
+      transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease; }
+    .setup-mute:hover { color: #fff; }
+    .setup-mute:focus-visible { outline: 2px solid var(--sf-blue-l); outline-offset: 2px; }
+    .setup-mute.muted { color: #ffd5d5; border-color: rgba(255,120,120,0.5); background: rgba(255,80,80,0.10); }
+    .setup-mute-ico { font-size: 16px; line-height: 1; }
 
     /* Two large mode buttons */
     .setup-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
@@ -984,6 +994,10 @@
           <button type="button" class="accent-opt" data-accent="uk">UK</button>
           <button type="button" class="accent-opt" data-accent="au">AU</button>
         </div>
+        <button type="button" id="setup-mute" class="setup-mute" aria-pressed="false">
+          <span class="setup-mute-ico">&#128266;</span>
+          <span class="setup-mute-txt">Sound on</span>
+        </button>
       </div>
       <div class="setup-choices">
         <button class="setup-choice" data-auto="1" data-audio="1" data-loop="1">
@@ -1518,12 +1532,18 @@
     // Muting only silences the element: a muted clip still plays through and
     // fires 'ended', so autoplay's beat timing is unchanged. Preference persists.
     const muteBtn = document.getElementById('mute-btn');
+    const setupMuteBtn = document.getElementById('setup-mute');
     let muted = localStorage.getItem('deckMuted') === '1';
     function applyMute() {
       narration.muted = muted;
       muteBtn.classList.toggle('on', muted);
       muteBtn.innerHTML = muted ? '&#128263;' : '&#128266;';
       muteBtn.title = muted ? 'Unmute narration' : 'Mute narration';
+      // Mirror the state on the setup-screen toggle so you can start muted.
+      setupMuteBtn.classList.toggle('muted', muted);
+      setupMuteBtn.setAttribute('aria-pressed', muted ? 'true' : 'false');
+      setupMuteBtn.querySelector('.setup-mute-ico').innerHTML = muted ? '&#128263;' : '&#128266;';
+      setupMuteBtn.querySelector('.setup-mute-txt').textContent = muted ? 'Muted' : 'Sound on';
     }
     function toggleMute() {
       muted = !muted;
@@ -1531,6 +1551,7 @@
       applyMute();
     }
     muteBtn.addEventListener('click', toggleMute);
+    setupMuteBtn.addEventListener('click', toggleMute);
     applyMute();
 
     // The clip for the current beat, or null if none is on file.
@@ -1590,9 +1611,8 @@
       setupEl.style.display = 'flex';
     }
     function startDeck(auto, withAudio, loop) {
-      muted = !withAudio;
-      localStorage.setItem('deckMuted', muted ? '1' : '0');
-      applyMute();
+      // Start-mute is driven by the setup-screen mute toggle (persisted in
+      // `muted`), so a presenter can begin with sound already off.
       audioUnlocked = true;
       loopOn = !!loop;
       setupOpen = false;
