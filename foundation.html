@@ -488,10 +488,10 @@
     }
     .setup-inner { max-width: 720px; width: 100%; text-align: center; }
     .setup-eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--sf-blue-l); margin-bottom: 14px; }
-    .setup-title { font-family: var(--font-display); font-size: clamp(26px, 4.4vw, 44px); font-weight: 700; color: #fff; letter-spacing: -0.02em; line-height: 1.12; margin: 0 0 26px; }
+    .setup-title { font-family: var(--font-display); font-size: clamp(26px, 4.4vw, 44px); font-weight: 700; color: #fff; letter-spacing: -0.02em; line-height: 1.12; margin: 0 0 34px; }
 
-    /* Narration accent selector */
-    .setup-accent { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; margin: 0 0 30px; }
+    /* Narration accent selector (sits below the mode cards, above the help note) */
+    .setup-accent { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; margin: 0 0 24px; }
     .setup-accent-label { font-size: 13px; font-weight: 600; letter-spacing: 0.04em; color: rgba(255,255,255,0.66); }
     .setup-accent-opts { display: inline-flex; gap: 4px; padding: 4px; border-radius: 11px;
       background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.16); }
@@ -987,18 +987,6 @@
     <div class="setup-inner">
       <div class="setup-eyebrow">Before we start</div>
       <h2 class="setup-title">How would you like to experience Apromore?</h2>
-      <div class="setup-accent">
-        <span class="setup-accent-label">Narration accent</span>
-        <div class="setup-accent-opts" role="group" aria-label="Narration accent">
-          <button type="button" class="accent-opt" data-accent="us">US</button>
-          <button type="button" class="accent-opt" data-accent="uk">UK</button>
-          <button type="button" class="accent-opt" data-accent="au">AU</button>
-        </div>
-        <button type="button" id="setup-mute" class="setup-mute" aria-pressed="false">
-          <span class="setup-mute-ico">&#128266;</span>
-          <span class="setup-mute-txt">Sound on</span>
-        </button>
-      </div>
       <div class="setup-choices">
         <button class="setup-choice" data-auto="1" data-audio="1" data-loop="1">
           <span class="setup-rec">Recommended</span>
@@ -1010,6 +998,18 @@
           <div class="setup-choice-ico">&#8592;&#8202;&#8594;</div>
           <div class="setup-choice-h">Manual</div>
           <div class="setup-choice-s">Use the left and right arrows to progress at your own pace.</div>
+        </button>
+      </div>
+      <div class="setup-accent">
+        <span class="setup-accent-label">Narration accent</span>
+        <div class="setup-accent-opts" role="group" aria-label="Narration accent">
+          <button type="button" class="accent-opt" data-accent="us">US</button>
+          <button type="button" class="accent-opt" data-accent="uk">UK</button>
+          <button type="button" class="accent-opt" data-accent="au">AU</button>
+        </div>
+        <button type="button" id="setup-mute" class="setup-mute" aria-pressed="false">
+          <span class="setup-mute-ico">&#128266;</span>
+          <span class="setup-mute-txt">Narration on</span>
         </button>
       </div>
       <div class="setup-help">
@@ -1558,7 +1558,7 @@
       setupMuteBtn.classList.toggle('muted', startMuted);
       setupMuteBtn.setAttribute('aria-pressed', startMuted ? 'true' : 'false');
       setupMuteBtn.querySelector('.setup-mute-ico').innerHTML = startMuted ? '&#128263;' : '&#128266;';
-      setupMuteBtn.querySelector('.setup-mute-txt').textContent = startMuted ? 'Muted' : 'Sound on';
+      setupMuteBtn.querySelector('.setup-mute-txt').textContent = startMuted ? 'Muted' : 'Narration on';
     }
     setupMuteBtn.addEventListener('click', () => { startMuted = !startMuted; applyStartMute(); });
     applyStartMute();
