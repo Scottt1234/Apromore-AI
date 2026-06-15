@@ -44,6 +44,11 @@ the whole slide.
 
 **Slide 6 — Process Intelligence** (9 frames, layers 1–7 revealed across 9 steps):
 - `S06F00.mp3` … `S06F08.mp3`
+- **Frame 7 follow-up questions:** `S06F07Q1.mp3`, `S06F07Q2.mp3`,
+  `S06F07Q3.mp3`, `S06F07Q4.mp3`. After the main `S06F07` clip ends, these play
+  in sequence over the on-screen questions, then the deck advances (replacing the
+  old hold). They're optional — any you omit are simply skipped — and obey the
+  same accent-folder + fallback rules as every other clip.
 
 ## Notes
 

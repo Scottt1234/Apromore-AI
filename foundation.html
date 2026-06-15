@@ -1237,6 +1237,7 @@
       clearTimeout(threadTimer);
       clearTimeout(introTimer); introTimer = null;
       disarmThreadReveal();
+      cancelF7Questions();   // user moved on — stop any frame-7 question run
       if (isProcessReality(current) && prAct < PR_ACTS) {
         prAct++;
         setIframeAct(slides[current], prAct);
@@ -1273,6 +1274,7 @@
       clearTimeout(threadTimer);
       clearTimeout(introTimer); introTimer = null;
       disarmThreadReveal();
+      cancelF7Questions();   // user moved on — stop any frame-7 question run
       if (isProcessReality(current) && prAct > 1) {
         prAct--;
         setIframeAct(slides[current], prAct);
@@ -1394,6 +1396,9 @@
     let autoToken = 0;
     let pendingAudioAdvance = null;
     function beatChanged() {
+      // Any genuine beat change ends the frame-7 question context and allows a
+      // fresh run if we land back on frame 7 later.
+      cancelF7Questions(); f7qTriggered = false;
       // If a lead-in is already counting down for this beat, let it fire — don't
       // restart or bypass it. (The layers embed re-reports its step on entry, which
       // would otherwise re-enter here and play the audio immediately.)
@@ -1447,6 +1452,7 @@
       clearTimeout(autoTimer);
       autoToken++;                 // invalidate any pending advance
       pendingAudioAdvance = null;
+      if (!on) f7qAuto = false;    // pausing won't auto-advance after the questions
       autoBtn.classList.toggle('on', on);
       autoBtn.innerHTML = on ? '&#10074;&#10074;' : '&#9654;';
       autoBtn.title = on ? 'Pause autoplay' : 'Autoplay';
@@ -1490,10 +1496,15 @@
     // If the accent-specific clip 404s, retry once on the base set.
     narration.addEventListener('error', () => {
       const fb = narration._fallback;
-      if (!fb || narration._triedFallback || narration.src.endsWith(fb)) return;
-      narration._triedFallback = true;
-      narration.src = fb;
-      if (audioUnlocked) narration.play().catch(() => {});
+      if (fb && !narration._triedFallback && !narration.src.endsWith(fb)) {
+        narration._triedFallback = true;
+        narration.src = fb;
+        if (audioUnlocked) narration.play().catch(() => {});
+        return;
+      }
+      // Fallback also missing — if we're mid frame-7 question run, keep going so a
+      // not-yet-recorded question clip can't stall the deck.
+      if (f7qIndex >= 0) stepF7Questions();
     });
 
     // During autoplay, a clip finishing drives the advance — a short breath, then
@@ -1506,20 +1517,26 @@
     }
 
     narration.addEventListener('ended', () => {
+      // A frame-7 question clip just finished → play the next one (or wrap up).
+      if (f7qIndex >= 0) { stepF7Questions(); return; }
       // Autoplay drives everything via the scheduled step — within the slide AND
       // across slides — so let it run and stop here.
       if (autoplayOn) {
         if (!pendingAudioAdvance) return;
         const fn = pendingAudioAdvance;
         pendingAudioAdvance = null;
-        // Per-beat hold before moving on: slide 3 close (reduced), slide 6 frame 07, else ~0.6s.
+        // Slide 6 frame 7: don't hold — narrate the on-screen questions, then advance.
+        if (isLayers(current) && piStep === 7 && !f7qTriggered) { startF7Questions(true); return; }
+        // Per-beat hold before moving on: slide 3 close (reduced), slide 6 frame 03, else ~0.6s.
         const breath = (isThread(current) && tBeat === T_BEATS) ? 1500   // slide 3 close
                      : (isLayers(current) && piStep === 3)       ? 3500   // slide 6 · frame 03
-                     : (isLayers(current) && piStep === 7)       ? 8000   // slide 6 · frame 07
                      : 600;
         setTimeout(() => { if (autoplayOn) fn(); }, breath);
         return;
       }
+      // Slide 6 frame 7 (manual): still narrate the questions in sequence; the
+      // presenter controls when to move on to the next frame.
+      if (isLayers(current) && piStep === 7 && !f7qTriggered) { startF7Questions(false); return; }
       // Manual: in-slide beats still auto-sequence within the slide, then stop at
       // the slide boundary so the presenter controls slide-to-slide movement.
       if (inSlideBeatsRemain()) {
@@ -1602,6 +1619,55 @@
       }
       narration.play().catch(() => {});            // ignore transient play() rejections
     }
+
+    // ── Slide 6, frame 7 · Conversational Interface question audio ────
+    // After the main S06F07 clip, the embed streams questions on screen; play
+    // matching clips S06F07Q1..Q4 in sequence, then move on (this replaces the
+    // old long hold). These are audio-only sub-beats — no extra visual frame —
+    // and live alongside the others (assets/audio/ + accent folders, same
+    // fallback). A missing or stalled clip can't hang the deck (see backstop +
+    // the error handler), so the questions are safe to add incrementally.
+    const F7_QUESTIONS = ['S06F07Q1', 'S06F07Q2', 'S06F07Q3', 'S06F07Q4'];
+    let f7qIndex = -1;       // -1 = idle; 0..3 = the question clip currently playing
+    let f7qAuto = false;     // true when autoplay should advance after the last one
+    let f7qTimer = null;     // safety backstop so a missing/stalled clip can't stall
+    let f7qTriggered = false; // questions already run for this frame-7 visit (no restart)
+    function playClip(name) {
+      narration._key = 'clip:' + name;
+      narration._fallback = AUDIO_BASE + '/' + name + '.mp3';
+      narration._triedFallback = false;
+      narration.src = (ACCENT_DIRS[accent] || AUDIO_BASE) + '/' + name + '.mp3';
+      narration.play().catch(() => {});
+      clearTimeout(f7qTimer);
+      f7qTimer = setTimeout(() => { if (f7qIndex >= 0) stepF7Questions(); }, 30000);
+    }
+    function startF7Questions(auto) {
+      f7qAuto = !!auto;
+      f7qTriggered = true;        // don't restart this run if 'ended' fires again
+      f7qIndex = 0;
+      clearTimeout(autoTimer);    // cancel the main clip's autoplay backstop
+      playClip(F7_QUESTIONS[0]);
+    }
+    function stepF7Questions() {
+      clearTimeout(f7qTimer);
+      if (f7qIndex >= 0 && f7qIndex < F7_QUESTIONS.length - 1) {
+        f7qIndex++;
+        playClip(F7_QUESTIONS[f7qIndex]);
+        return;
+      }
+      const advanceAfter = f7qAuto;                 // sequence complete
+      f7qIndex = -1; f7qAuto = false;
+      if (advanceAfter) {
+        setTimeout(() => {
+          if (autoplayOn && f7qIndex < 0) { advance(); if (autoplayOn) scheduleAuto(); }
+        }, 600);                                     // brief breath, then frame 8
+      }
+    }
+    function cancelF7Questions() {
+      f7qIndex = -1; f7qAuto = false;
+      clearTimeout(f7qTimer);
+    }
+
     // ── Pre-presentation setup overlay ───────────────────────────────
     // The card click is the user gesture that unlocks audio, so choosing a
     // mode and unlocking sound happen together — no separate prompt needed.
@@ -1616,6 +1682,7 @@
       clearTimeout(threadTimer);
       clearTimeout(introTimer); introTimer = null;
       disarmThreadReveal();
+      cancelF7Questions(); f7qTriggered = false;
       narration.pause();
       setupEl.style.display = 'flex';
     }
