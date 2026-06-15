@@ -556,6 +556,17 @@
       width: 28px; height: 28px; border-radius: 50%;
       background: #fff; box-shadow: 0 1px 6px rgba(0,0,0,0.32); font-size: 15px;
     }
+    /* Discreet, unlabelled offline-cache control (bottom-left of the setup screen) */
+    #offline-dot { position: absolute; left: 16px; bottom: 14px; width: 12px; height: 12px;
+      padding: 0; border: 0; border-radius: 50%; background: rgba(255,255,255,0.07);
+      cursor: default; -webkit-tap-highlight-color: transparent; transition: background 0.3s ease; }
+    #offline-dot.saved { background: rgba(95,227,160,0.55); }
+    #offline-toast { position: fixed; left: 50%; bottom: 22px; z-index: 1200;
+      transform: translateX(-50%) translateY(8px); background: rgba(2,14,48,0.92); color: #fff;
+      font-size: 13px; font-weight: 600; padding: 8px 16px; border-radius: 999px;
+      border: 1px solid rgba(143,184,255,0.4); opacity: 0; pointer-events: none;
+      transition: opacity 0.25s ease, transform 0.25s ease; }
+    #offline-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
     @media (max-width: 640px) { .setup-help-audio { font-size: 15px; padding: 11px 18px; } }
     @media (max-width: 640px) {
       .setup-choices { grid-template-columns: 1fr; }
@@ -1017,7 +1028,12 @@
         <p class="setup-help-esc">Return to this screen at any time by pressing <span class="kbd">Esc</span>.</p>
       </div>
     </div>
+    <!-- Discreet offline-cache control: double-click (or long-press) to download
+         the whole deck for offline-safe presenting. Unlabelled on purpose. -->
+    <button id="offline-dot" type="button" aria-hidden="true" tabindex="-1"></button>
   </div>
+
+  <div id="offline-toast" role="status" aria-live="polite"></div>
 
   <!-- ─── CHROME ──────────────────────────────────────────────────── -->
   <div class="section-label" id="section-label"></div>
@@ -1720,6 +1736,63 @@
     setupEl.querySelectorAll('.setup-choice').forEach(card =>
       card.addEventListener('click', () =>
         startDeck(card.dataset.auto === '1', card.dataset.audio === '1', card.dataset.loop === '1')));
+
+    // ── Discreet offline cache ───────────────────────────────────────
+    // The unlabelled dot on the setup screen: double-click (desktop) or
+    // long-press (touch) to download the whole deck — every narration clip plus
+    // the app, embeds and logos — into the browser so it presents smoothly even
+    // if the connection drops. The service worker is registered ONLY when you
+    // trigger this, so ordinary visitors cache nothing and download nothing
+    // extra. To remove later: delete sw.js + this block (and ship a
+    // self-unregistering sw.js to clear it from any device that ran it).
+    (function offlineCache() {
+      const dot = document.getElementById('offline-dot');
+      const toast = document.getElementById('offline-toast');
+      if (!dot || !('serviceWorker' in navigator)) return;
+      let toastTimer;
+      function showToast(msg, sticky) {
+        toast.textContent = msg; toast.classList.add('show');
+        clearTimeout(toastTimer);
+        if (!sticky) toastTimer = setTimeout(() => toast.classList.remove('show'), 2400);
+      }
+      function assetList() {
+        const core = [location.pathname, 'tokens.css', 'components.css', 'animation.css', 'animation.js',
+                      'process-reality.html?embed=1', 'process-intelligence.html?embed=1'];
+        const imgs = [...document.querySelectorAll('img[src]')].map(i => i.getAttribute('src'));
+        const names = [...AUDIO_FILES, ...F7_QUESTIONS];
+        const dirs = [AUDIO_BASE, ACCENT_DIRS[accent]].filter(Boolean);
+        const audio = [];
+        names.forEach(n => dirs.forEach(d => audio.push(d + '/' + n + '.mp3')));
+        return [...new Set([...core, ...imgs, ...audio])];
+      }
+      navigator.serviceWorker.addEventListener('message', (e) => {
+        const d = e.data || {};
+        if (d.type === 'cache-progress') {
+          showToast('Saving for offline… ' + Math.round(d.done / d.total * 100) + '%', true);
+        } else if (d.type === 'cache-done') {
+          dot.classList.add('saved');
+          showToast('Saved for offline ✓');
+        }
+      });
+      let busy = false;
+      async function cacheAll() {
+        if (busy) return; busy = true;
+        showToast('Saving for offline…', true);
+        try {
+          const reg = await navigator.serviceWorker.register('/sw.js');
+          await navigator.serviceWorker.ready;
+          const target = reg.active || reg.waiting || reg.installing;
+          if (!target) { showToast('Offline save failed — reload and retry'); busy = false; return; }
+          target.postMessage({ type: 'cache-all', urls: assetList() });
+        } catch (e) { showToast('Offline save failed'); }
+        busy = false;
+      }
+      dot.addEventListener('dblclick', cacheAll);
+      let press;
+      dot.addEventListener('touchstart', () => { press = setTimeout(cacheAll, 800); }, { passive: true });
+      dot.addEventListener('touchend',  () => clearTimeout(press));
+      dot.addEventListener('touchmove', () => clearTimeout(press), { passive: true });
+    })();
 
     go(0);
   </script>
