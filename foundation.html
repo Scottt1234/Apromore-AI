@@ -1502,9 +1502,13 @@
         if (audioUnlocked) narration.play().catch(() => {});
         return;
       }
-      // Fallback also missing — if we're mid frame-7 question run, keep going so a
-      // not-yet-recorded question clip can't stall the deck.
-      if (f7qIndex >= 0) stepF7Questions();
+      // Fallback also missing — keep the frame-7 question run going at a readable
+      // pace (so the on-screen questions still appear in sequence) rather than
+      // flashing past, and so a not-yet-recorded clip can't stall the deck.
+      if (f7qIndex >= 0) { clearTimeout(f7qTimer); f7qTimer = setTimeout(stepF7Questions, 2600); }
+      // The main S06F07 clip is missing — still run the questions (the deck drives
+      // the on-screen ones when embedded, so otherwise none would appear).
+      else if (isLayers(current) && piStep === 7 && !f7qTriggered) startF7Questions(autoplayOn);
     });
 
     // During autoplay, a clip finishing drives the advance — a short breath, then
@@ -1633,6 +1637,9 @@
     let f7qTimer = null;     // safety backstop so a missing/stalled clip can't stall
     let f7qTriggered = false; // questions already run for this frame-7 visit (no restart)
     function playClip(name) {
+      // Reveal the matching on-screen question as this clip starts, so the
+      // animation stays in lock-step with the audio.
+      if (f7qIndex >= 0) postIframe(slides[current], { type: 'convo-q', i: f7qIndex });
       narration._key = 'clip:' + name;
       narration._fallback = AUDIO_BASE + '/' + name + '.mp3';
       narration._triedFallback = false;

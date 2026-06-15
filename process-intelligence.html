@@ -2414,6 +2414,36 @@
     };
     timers.push(setTimeout(addBubble, 150));   // narration has already played; begin promptly
   }
+  // Reveal one specific question bubble on demand. The deck calls this (via the
+  // 'convo-q' message) as each S06F07Qn audio clip starts, so the on-screen
+  // question animates in sync with its narration. idx indexes CONVO_QUESTIONS.
+  function showConvoQuestion(scene, idx) {
+    if (!scene) return;
+    const list = scene.querySelector('.cv-qlist'); if (!list) return;
+    const timers = scene._qTimers || (scene._qTimers = []);
+    const n = CONVO_QUESTIONS.length;
+    const q = CONVO_QUESTIONS[((idx % n) + n) % n];
+    const b = document.createElement('div'); b.className = 'cv-q';
+    b.style.maxWidth = (72 + Math.random() * 26).toFixed(0) + '%';
+    const av = document.createElement('span'); av.className = 'cv-q-av';
+    av.innerHTML = '<svg viewBox="-10 -10 20 20" aria-hidden="true"><path d="M-7,-7 a3,3 0 0 1 3,-3 H7 a3,3 0 0 1 3,3 V1 a3,3 0 0 1 -3,3 H-1 L-6,8 V4 a3,3 0 0 1 -4,-3 z" transform="translate(0,-1) scale(0.85)"/></svg>';
+    const body = document.createElement('span'); body.className = 'cv-q-body';
+    const txt = document.createElement('span'); body.appendChild(txt);
+    b.appendChild(av); b.appendChild(body);
+    list.appendChild(b);
+    while (list.children.length > 4) list.removeChild(list.firstChild);
+    firePulse(scene, b);
+    const addTick = () => { const t = document.createElement('span'); t.className = 'cv-tick'; t.textContent = '✓'; body.appendChild(t); };
+    if (reduceMotion()) { txt.textContent = q; addTick(); b.classList.add('answered'); return; }
+    const caret = document.createElement('span'); caret.className = 'cv-caret'; body.appendChild(caret);
+    let ci = 0;
+    const type = () => {
+      txt.textContent = q.slice(0, ci++);
+      if (ci <= q.length) { timers.push(setTimeout(type, 36)); }
+      else { caret.remove(); addTick(); timers.push(setTimeout(() => b.classList.add('answered'), 220)); }
+    };
+    type();
+  }
   // Typewriter for a narration line. `segments` = [{t, hl?}] so part of a line can be coloured.
   function typeLine(scene, host, segments, cps, onDone) {
     host.innerHTML = '';
@@ -2476,8 +2506,10 @@
     }, 5650);
     // 4) after a small beat, the right-hand title types at the same height; the questions (and
     //    their pulses) wait until it has finished typing before they begin to stream in.
+    //    Embedded in the deck, the questions are deck-driven (one per S06F07Qn
+    //    audio clip, via 'convo-q'); standalone, they auto-stream as a demo.
     T(() => typeLine(scene, rtitle, [{ t: 'Simply by asking, in their own words.' }], CPS,
-      () => { if (scene._cvTimers) scene._cvTimers.push(setTimeout(() => startConvoQuestions(scene), 650)); }), 9300);
+      () => { if (!embedded && scene._cvTimers) scene._cvTimers.push(setTimeout(() => startConvoQuestions(scene), 650)); }), 9300);
   }
   function stopConvo(el) {
     const scene = el.querySelector('.cv-scene'); if (!scene) return;
@@ -2683,6 +2715,8 @@
       case 'deck-advance':     stepForward();  break;
       case 'deck-reverse':     stepBackward(); break;
       case 'replay':           replayCurrent(); break;     // deck replay button
+      // Frame-7 question, synced to its narration clip: reveal CONVO_QUESTIONS[i].
+      case 'convo-q':          if (typeof e.data.i === 'number') showConvoQuestion(document.querySelector('.cv-scene'), e.data.i); break;
     }
   });
 

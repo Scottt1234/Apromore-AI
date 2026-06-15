@@ -45,10 +45,18 @@ the whole slide.
 **Slide 6 — Process Intelligence** (9 frames, layers 1–7 revealed across 9 steps):
 - `S06F00.mp3` … `S06F08.mp3`
 - **Frame 7 follow-up questions:** `S06F07Q1.mp3`, `S06F07Q2.mp3`,
-  `S06F07Q3.mp3`, `S06F07Q4.mp3`. After the main `S06F07` clip ends, these play
-  in sequence over the on-screen questions, then the deck advances (replacing the
-  old hold). They're optional — any you omit are simply skipped — and obey the
-  same accent-folder + fallback rules as every other clip.
+  `S06F07Q3.mp3`, `S06F07Q4.mp3`. After the main `S06F07` clip ends, each of
+  these plays in turn and **triggers the matching on-screen question to animate
+  in** (Q1→question 1, Q2→question 2, …), then the deck advances (replacing the
+  old hold). The four questions, in order, are:
+  1. "How can I reduce call handling time?"
+  2. "Where's the bottleneck in onboarding?"
+  3. "What's driving claims rework this quarter?"
+  4. "Which process costs us the most?"
+  Record `S06F07` itself as the ~10s intro narration so the questions begin just
+  as the on-screen build-up finishes. The clips are optional — any you omit are
+  skipped (the question still appears) — and obey the same accent-folder +
+  fallback rules as every other clip.
 
 ## Notes
 
