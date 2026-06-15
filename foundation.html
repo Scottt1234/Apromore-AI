@@ -1531,28 +1531,37 @@
     // ── Mute toggle ──────────────────────────────────────────────────
     // Muting only silences the element: a muted clip still plays through and
     // fires 'ended', so autoplay's beat timing is unchanged. Preference persists.
+    // Two independent things:
+    //  • `muted` — the live state of the in-deck mute button during the show.
+    //  • `startMuted` — the setup-screen choice for how the deck begins. It only
+    //    seeds `muted` when a mode is picked, and always defaults to Sound on on
+    //    each load (it is not persisted), so viewers always start with audio on.
     const muteBtn = document.getElementById('mute-btn');
     const setupMuteBtn = document.getElementById('setup-mute');
-    let muted = localStorage.getItem('deckMuted') === '1';
+    let muted = false;
+    let startMuted = false;
     function applyMute() {
       narration.muted = muted;
       muteBtn.classList.toggle('on', muted);
       muteBtn.innerHTML = muted ? '&#128263;' : '&#128266;';
       muteBtn.title = muted ? 'Unmute narration' : 'Mute narration';
-      // Mirror the state on the setup-screen toggle so you can start muted.
-      setupMuteBtn.classList.toggle('muted', muted);
-      setupMuteBtn.setAttribute('aria-pressed', muted ? 'true' : 'false');
-      setupMuteBtn.querySelector('.setup-mute-ico').innerHTML = muted ? '&#128263;' : '&#128266;';
-      setupMuteBtn.querySelector('.setup-mute-txt').textContent = muted ? 'Muted' : 'Sound on';
     }
     function toggleMute() {
       muted = !muted;
-      localStorage.setItem('deckMuted', muted ? '1' : '0');
       applyMute();
     }
     muteBtn.addEventListener('click', toggleMute);
-    setupMuteBtn.addEventListener('click', toggleMute);
     applyMute();
+
+    // Setup-screen start toggle — only governs the opening state.
+    function applyStartMute() {
+      setupMuteBtn.classList.toggle('muted', startMuted);
+      setupMuteBtn.setAttribute('aria-pressed', startMuted ? 'true' : 'false');
+      setupMuteBtn.querySelector('.setup-mute-ico').innerHTML = startMuted ? '&#128263;' : '&#128266;';
+      setupMuteBtn.querySelector('.setup-mute-txt').textContent = startMuted ? 'Muted' : 'Sound on';
+    }
+    setupMuteBtn.addEventListener('click', () => { startMuted = !startMuted; applyStartMute(); });
+    applyStartMute();
 
     // The clip for the current beat, or null if none is on file.
     // Frame index: Process Reality uses its act (1–3 → F01–F03, matching the
@@ -1611,8 +1620,10 @@
       setupEl.style.display = 'flex';
     }
     function startDeck(auto, withAudio, loop) {
-      // Start-mute is driven by the setup-screen mute toggle (persisted in
-      // `muted`), so a presenter can begin with sound already off.
+      // Begin in the state chosen on the setup screen (defaults to Sound on);
+      // the in-deck mute button then takes over for the rest of the show.
+      muted = startMuted;
+      applyMute();
       audioUnlocked = true;
       loopOn = !!loop;
       setupOpen = false;
