@@ -105,6 +105,9 @@
     @media (max-width: 680px) {
       #stats { gap: 16px; }
     }
+    /* Case-trace disabled in this deck variant — hide its UI and the crosshair */
+    #tracehint, #traceread { display: none !important; }
+    #fx { cursor: default; }
   </style>
 </head>
 <body>
@@ -466,6 +469,7 @@
   document.getElementById('traceclear').addEventListener('click', () => clearTrace(true));
 
   cv.addEventListener('click', (e) => {
+    return;   // case-trace disabled in this deck variant
     if (act !== 3) return;
     // Invert the camera zoom — hit-testing happens in unzoomed scene space.
     const zcx = W / 2, zcy = py(0.5);
@@ -497,7 +501,7 @@
     2: { eyebrow:'HOW YOU THINK IT RUNS',
          title:'The process you think you have.<br/><span class="hl">A few detours you already know about.</span>' },
     3: { eyebrow:'AND HOW IT REALLY LOOKS',
-         title:'The process you actually have.<br/><span class="hl">312,847 cases rarely follow the same route twice.</span>' },
+         title:'The process you actually have.<br/><span class="hl">This is the process you are about to delegate.</span>' },
   };
 
   let act = 1;

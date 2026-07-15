@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>The Process You Think You Have · Apromore</title>
+  <title>The Process You Think You Have (Horizontal) · Apromore</title>
   <link rel="stylesheet" href="tokens.css" />
   <style>
     /* ───────────────────────────────────────────────────────────────
@@ -237,41 +237,41 @@
   ];
 
   const nodes = [];
-  const colY = i => 0.05 + i * (0.92 / 7);
-  const MAIN_X1 = 0.50, MAIN_X2 = 0.50;  // keep the stem fixed in frame 1 → frame 2
+  const colX = i => 0.03 + i * (0.94 / 7);
+  const MAIN_Y1 = 0.50, MAIN_Y2 = 0.50;  // keep the stem fixed in frame 1 → frame 2
   MAIN.forEach((m, i) => nodes.push({ label:m.label, color:m.color, kind:'main', r:9,
-    a1:{x:MAIN_X1, y:colY(i)}, a2:{x:MAIN_X2, y:colY(i)}, a3:null }));
-  // Branches pushed out to the column edges so frame 2 fills the deck's content
-  // column rather than clustering near the central spine.
+    a1:{x:colX(i), y:MAIN_Y1}, a2:{x:colX(i), y:MAIN_Y2}, a3:null }));
+  // Branches pushed out to the band's top/bottom edges so frame 2 fills the
+  // canvas band rather than clustering along the central spine.
   const bPlace = [
-    { x:0.00, y:(colY(1)+colY(2))/2 - 0.02 },  // Refer to senior UW (left)
-    { x:1.00, y:(colY(2)+colY(3))/2 },          // Request broker info (right)
-    { x:0.00, y:(colY(4)+colY(5))/2 },          // Declined (left)
-    { x:0.00, y:colY(5)+0.04 },                 // Decline rationale (left)
+    { x:(colX(1)+colX(2))/2 - 0.02, y:0.00 },  // Refer to senior UW (top)
+    { x:(colX(2)+colX(3))/2,        y:1.00 },  // Request broker info (bottom)
+    { x:(colX(4)+colX(5))/2,        y:0.00 },  // Declined (top)
+    { x:colX(5)+0.06,               y:0.00 },  // Decline rationale (top)
   ];
   const bParent = [1,2,4,4];
   BRANCH.forEach((b, i) => nodes.push({ label:b.label, color:b.color, kind:'branch', r:8,
     a1:{ x:nodes[bParent[i]].a1.x, y:nodes[bParent[i]].a1.y }, a2:bPlace[i], a3:null }));
-  // Act-3 layout lives on a loose column grid: nodes gather into NCOL vertical
+  // Act-3 layout lives on a loose row grid: nodes gather into NROW horizontal
   // lanes and reality edges bundle their bezier control points through those
-  // lanes, so the chaos reads as hundreds of flowing rivers, not a random hairball.
-  const NCOL = 13;
-  const laneX = c => 0.02 + c * (0.96 / (NCOL - 1));
-  const nearCol = x => Math.round((x - 0.02) / (0.96 / (NCOL - 1)));
+  // lanes, so the chaos reads as hundreds of rivers flowing left → right.
+  const NROW = 9;
+  const laneY = r => 0.03 + r * (0.94 / (NROW - 1));
+  const nearRow = y => Math.round((y - 0.03) / (0.94 / (NROW - 1)));
   const CLOUD_N = 120;
   for (let i = 0; i < CLOUD_N; i++)
     nodes.push({ label:'', color:CLOUD_COLORS[i % CLOUD_COLORS.length], kind:'cloud',
-      r:2.4 + rnd()*2.2, a1:null, a2:null, a3:null, col:(rnd()*NCOL)|0 });
+      r:2.4 + rnd()*2.2, a1:null, a2:null, a3:null, row:(rnd()*NROW)|0 });
   nodes.forEach(n => {
-    if (n.col == null) n.col = (rnd()*NCOL)|0;   // main + branch nodes scatter too
-    n.a3 = { x: clamp(laneX(n.col) + (rnd()-0.5)*0.045, 0.01, 0.99), y: 0.02 + rnd()*0.96 };
+    if (n.row == null) n.row = (rnd()*NROW)|0;   // main + branch nodes scatter too
+    n.a3 = { x: 0.02 + rnd()*0.96, y: clamp(laneY(n.row) + (rnd()-0.5)*0.06, 0.01, 0.99) };
   });
   // Pin Process Start and Process End to the exact spots they sit in frames 1 & 2 — so
   // when the transition to frame 3 happens, those two nodes stay still and everything else
   // explodes into chaos around them. Reads as "the start and end are fixed, the middle is
   // wildly more complex than the diagram on the wall said."
-  nodes[0].a3 = { ...nodes[0].a2 };  nodes[0].col = nearCol(nodes[0].a2.x);  // Process Start — top of column
-  nodes[7].a3 = { ...nodes[7].a2 };  nodes[7].col = nearCol(nodes[7].a2.x);  // Process End — bottom of column
+  nodes[0].a3 = { ...nodes[0].a2 };  nodes[0].row = nearRow(nodes[0].a2.y);  // Process Start — left of band
+  nodes[7].a3 = { ...nodes[7].a2 };  nodes[7].row = nearRow(nodes[7].a2.y);  // Process End — right of band
   nodes.forEach(n => { if (n.kind === 'cloud') { n.a1 = {x:0.5,y:0.5}; n.a2 = {x:0.5,y:0.5}; } });
   nodes.forEach(n => {
     const s = n.a1;
@@ -302,10 +302,10 @@
   function edgeScreen3(e) {
     const A = nodes[e.a], B = nodes[e.b];
     const ax = px(A.a3.x), ay = py(A.a3.y), bx = px(B.a3.x), by = py(B.a3.y);
-    const dy = by - ay, lx = px(e.lane);
+    const dx = bx - ax, ly = py(e.lane);
     return { ax, ay, bx, by,
-      c1x: ax + (lx - ax) * 0.85, c1y: ay + dy * 0.30,
-      c2x: bx + (lx - bx) * 0.85, c2y: ay + dy * 0.70 };
+      c1x: ax + dx * 0.30, c1y: ay + (ly - ay) * 0.85,
+      c2x: ax + dx * 0.70, c2y: by + (ly - by) * 0.85 };
   }
   function strokeEdgeIntoLayer(e) {
     const g = layerCtx[e.layer], p = edgeScreen3(e);
@@ -347,41 +347,41 @@
     if (seen.has(key)) return;
     seen.add(key);
     const e = mkEdge(a, b, 'real', 0);
-    // Bundle lane: control points route through the column midway between the
-    // endpoints, so overlapping curves gather into shared vertical rivers.
-    const midCol = Math.round((nodes[a].col + nodes[b].col) / 2);
-    e.lane = clamp(laneX(midCol) + (rnd() - 0.5) * 0.02, 0.005, 0.995);
+    // Bundle lane: control points route through the row midway between the
+    // endpoints, so overlapping curves gather into shared horizontal rivers.
+    const midRow = Math.round((nodes[a].row + nodes[b].row) / 2);
+    e.lane = clamp(laneY(midRow) + (rnd() - 0.5) * 0.03, 0.005, 0.995);
     e.layer = (rnd() * LAYERS) | 0;
     edges.push(e); realityEdges.push(e);
   }
-  // 1 · Column highways — chain each column's nodes top-to-bottom, plus
-  //     skip-links, so every column reads as a continuous vertical river.
-  for (let c = 0; c < NCOL; c++) {
-    const colIdx = [];
-    nodes.forEach((n, i) => { if (n.col === c) colIdx.push(i); });
-    colIdx.sort((p, q) => nodes[p].a3.y - nodes[q].a3.y);
-    for (let k = 0; k + 1 < colIdx.length; k++) addReality(colIdx[k], colIdx[k+1]);
-    for (let k = 0; k + 2 < colIdx.length; k += 2) addReality(colIdx[k], colIdx[k+2]);
+  // 1 · Row highways — chain each row's nodes left-to-right, plus skip-links,
+  //     so every row reads as a continuous horizontal river.
+  for (let r = 0; r < NROW; r++) {
+    const rowIdx = [];
+    nodes.forEach((n, i) => { if (n.row === r) rowIdx.push(i); });
+    rowIdx.sort((p, q) => nodes[p].a3.x - nodes[q].a3.x);
+    for (let k = 0; k + 1 < rowIdx.length; k++) addReality(rowIdx[k], rowIdx[k+1]);
+    for (let k = 0; k + 2 < rowIdx.length; k += 2) addReality(rowIdx[k], rowIdx[k+2]);
   }
-  // 2 · Local web — each node links to nearby-column nodes, biased toward the
-  //     longer vertical span of two candidates (flow, not clutter).
+  // 2 · Local web — each node links to nearby-row nodes, biased toward the
+  //     longer horizontal span of two candidates (flow, not clutter).
   for (let i = 0; i < NN; i++) {
     const cand = [];
     for (let j = 0; j < NN; j++)
-      if (j !== i && Math.abs(nodes[j].col - nodes[i].col) <= 2) cand.push(j);
+      if (j !== i && Math.abs(nodes[j].row - nodes[i].row) <= 2) cand.push(j);
     if (!cand.length) continue;
     const links = 3 + ((rnd() * 3) | 0);
     for (let k = 0; k < links; k++) {
       const p1 = cand[(rnd() * cand.length) | 0], p2 = cand[(rnd() * cand.length) | 0];
-      const dy1 = Math.abs(nodes[p1].a3.y - nodes[i].a3.y);
-      const dy2 = Math.abs(nodes[p2].a3.y - nodes[i].a3.y);
-      addReality(i, dy1 > dy2 ? p1 : p2);
+      const dx1 = Math.abs(nodes[p1].a3.x - nodes[i].a3.x);
+      const dx2 = Math.abs(nodes[p2].a3.x - nodes[i].a3.x);
+      addReality(i, dx1 > dx2 ? p1 : p2);
     }
   }
-  // 3 · Long sweeps — big cross-map arcs spanning most of the height.
+  // 3 · Long sweeps — big cross-map arcs spanning most of the width.
   for (let s = 0; s < 130; s++) {
     const a = (rnd() * NN) | 0, b = (rnd() * NN) | 0;
-    if (Math.abs(nodes[a].a3.y - nodes[b].a3.y) > 0.30) addReality(a, b);
+    if (Math.abs(nodes[a].a3.x - nodes[b].a3.x) > 0.30) addReality(a, b);
   }
   const REAL_TOTAL = realityEdges.length;
 
@@ -396,12 +396,12 @@
     const dx = bx - ax, dy = by - ay, len = Math.hypot(dx, dy) || 1;
     if (e.lane != null) {
       // Bundled routing (reality edges): both control points pull toward the
-      // edge's column lane so live geometry (tokens, case trace) follows the
+      // edge's row lane so live geometry (tokens, case trace) follows the
       // same rivers the static layers draw.
-      const lx = px(e.lane);
+      const ly = py(e.lane);
       return { ax, ay, bx, by, len,
-        c1x: ax + (lx - ax) * 0.85, c1y: ay + dy * 0.30,
-        c2x: bx + (lx - bx) * 0.85, c2y: ay + dy * 0.70 };
+        c1x: ax + dx * 0.30, c1y: ay + (ly - ay) * 0.85,
+        c2x: ax + dx * 0.70, c2y: by + (ly - by) * 0.85 };
     }
     const nxp = -dy / len, nyp = dx / len, off = e.curv * len;
     return { ax, ay, bx, by, len,
@@ -800,10 +800,13 @@
     for (let i = 0; i < nodes.length; i++) {
       const el = labelEls[i]; if (!el) continue;
       const n = nodes[i];
-      const right = n.nx <= 0.6;
-      el.style.left = (n.sx + (right ? 16 : -16)) + 'px';
-      el.style.top  = n.sy + 'px';
-      el.style.transform = `translate(${right ? '0' : '-100%'}, -50%)`;
+      // Horizontal flow: labels sit above/below their node. Spine labels
+      // alternate sides so neighbours never collide; branch labels go on the
+      // side away from the band edge they sit against.
+      const below = n.kind === 'main' ? (i % 2 === 1) : n.ny < 0.5;
+      el.style.left = n.sx + 'px';
+      el.style.top  = (n.sy + (below ? 18 : -18)) + 'px';
+      el.style.transform = `translate(-50%, ${below ? '0' : '-100%'})`;
       el.style.opacity = n.labA.toFixed(3);
     }
     for (const { el, e } of badgeEls) {

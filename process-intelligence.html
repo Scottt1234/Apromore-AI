@@ -257,6 +257,8 @@
        'Now you can.' answers at full chapter scale in blue */
     #cap-title .fin-q { font-size: clamp(20px, 2.4vw, 32px); display: inline-block; color: #fff; transition: opacity 0.4s ease; }
     #cap-title .fin-q.fin-out { opacity: 0; }
+    /* the finale answer renders at the same size as the fin-q line it replaces */
+    #app.finale-mode #cap-title .hl { font-size: clamp(20px, 2.4vw, 32px); }
     @media (prefers-reduced-motion: reduce) {
       #app.finale-mode .pi-card, #app.finale-mode #pillar { animation: none !important; }
     }
@@ -307,6 +309,9 @@
     .tm-scene.playing .pm-sys-cyl,
     .tm-scene.playing .pm-sys-cyl-top { animation: pmFade 0.5s 0.3s ease both; }
     .tm-scene.playing .pm-sys-label { animation: pmFade 0.5s 0.5s ease both; }
+    /* carried-over logo grid: appears together, early — !important beats the
+       per-logo inline stagger delays that the PM scene uses */
+    .tm-scene.playing .pm-logo      { animation: pmFade 0.4s ease both; animation-delay: 0.4s !important; }
     .tm-scene.playing .pm-rec       { animation: pmRow 0.45s ease both; }
     .tm-scene.playing .pm-rt        { animation: pmStream 1.4s ease-out infinite; }
     .tm-scene.playing .pm-eng       { animation: pmFade 0.6s 0.3s ease both; }
@@ -355,7 +360,7 @@
     @keyframes tmConnLive { to { opacity: 0.6; } }
 
     @media (prefers-reduced-motion: reduce) {
-      .tm-scene .pm-sys-box, .tm-scene .pm-sys-cyl, .tm-scene .pm-sys-cyl-top, .tm-scene .pm-sys-label,
+      .tm-scene .pm-sys-box, .tm-scene .pm-sys-cyl, .tm-scene .pm-sys-cyl-top, .tm-scene .pm-sys-label, .tm-scene .pm-logo,
       .tm-scene .pm-rec, .tm-scene .pm-core, .tm-scene .pm-label, .tm-scene .pm-bottle-glow, .tm-scene .pm-alt-glow,
       .tm-scene .pm-eng, .tm-scene .pm-eng-halo, .tm-scene .tm-extra
         { opacity: 1 !important; animation: none !important; }
@@ -495,6 +500,7 @@
       opacity: 0; }
     .pm-sys-cyl-top { fill: rgba(143,184,255,0.22); stroke: #8fb8ff; stroke-width: 1.5; opacity: 0; }
     .pm-sys-label { fill: rgba(255,255,255,0.92); font: 700 13px var(--font-body); letter-spacing: 0.04em; opacity: 0; }
+    .pm-logo      { opacity: 0; }
     .pm-rec       { fill: rgba(143,184,255,0.55); rx: 2; opacity: 0;
       transform-box: fill-box; transform-origin: left center; transform: scaleX(0);
       filter: drop-shadow(0 0 2px rgba(143,184,255,0.35)); }
@@ -559,6 +565,7 @@
     .pm-scene.playing .pm-sys-cyl,
     .pm-scene.playing .pm-sys-cyl-top { animation: pmFade 0.5s 1.1s ease both; }
     .pm-scene.playing .pm-sys-label { animation: pmFade 0.5s 1.3s ease both; }
+    .pm-scene.playing .pm-logo      { animation: pmFade 0.5s ease both; }
     .pm-scene.playing .pm-rec       { animation: pmRow 0.45s ease both; }
     .pm-scene.playing .pm-rt        { animation: pmStream 1.4s ease-out infinite; }
     .pm-scene.playing .pm-out       { animation: pmStream 0.6s ease-out both; }
@@ -596,7 +603,7 @@
     @keyframes pmRingPulse { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.32); opacity: 0.18; } }
 
     @media (prefers-reduced-motion: reduce) {
-      .pm-scene .pm-sys-box, .pm-scene .pm-sys-cyl, .pm-scene .pm-sys-cyl-top, .pm-scene .pm-sys-label,
+      .pm-scene .pm-sys-box, .pm-scene .pm-sys-cyl, .pm-scene .pm-sys-cyl-top, .pm-scene .pm-sys-label, .pm-scene .pm-logo,
       .pm-scene .pm-rec, .pm-scene .pm-core, .pm-scene .pm-label, .pm-scene .pm-bottle-glow, .pm-scene .pm-alt-glow, .pm-scene .pm-tok,
       .pm-scene .pm-eng, .pm-scene .pm-eng-halo
         { opacity: 1 !important; animation: none !important; }
@@ -1011,13 +1018,12 @@
   <script>
     const _q = new URLSearchParams(location.search);
     if (_q.get('embed') === '1') document.body.classList.add('embed');
-    // A/B mock: ?nosubs=1 hides the per-frame subs (the finale recap stays).
-    if (_q.get('nosubs') === '1') document.body.classList.add('nosubs');
   </script>
   <style>
-    body.nosubs #app:not(.finale-mode) #cap-sub { display: none; }
+    /* Per-frame subs are permanently hidden (the finale recap stays). */
+    #app:not(.finale-mode) #cap-sub { display: none; }
     /* without the sub, give the title a touch more air above the rail */
-    body.nosubs #app:not(.finale-mode):not(.intro-mode) #rail-wrap { margin-top: 38px; }
+    #app:not(.finale-mode):not(.intro-mode) #rail-wrap { margin-top: 38px; }
   </style>
 
   <div class="brand">
@@ -1103,42 +1109,22 @@
   const ALL = LAYERS.concat([FOUNDATION]);    // index aligned with focus steps 1..7
 
   // ── Task Mining animation (the work between the systems) ────────
-  // One SVG (viewBox 1000×560). A single source system opens centre-top (echoing
-  // Process Mining), generic app windows fade in around it, faint between-tool
-  // activity (a dashed rim with ghost tokens) surfaces, then a central intelligence
-  // element ignites and captures it — every source spoked inward with bright inflow.
-  // Generic app glyphs (drawn in a ~14px local box) used for the TM extras.
-  // The four "non-logged" sources that fade in around the System in Beat 2 —
-  // each drawn as a miniature app window (chrome dots + name + app-specific
-  // content) so they read as the real tools the work happens in. The pulsing
-  // .tm-act elements are each app's live activity: a loading page, an unread
-  // mail, an active cell, a line being written.
+  // One SVG (viewBox 1000×560). The systems panel opens left (carried over from
+  // Process Mining), the four desktop tools — real app logos, white-cut in
+  // assets/logos/app-*.png — fade in around it, then a central intelligence
+  // element ignites and captures their activity — every source spoked inward
+  // with bright inflow. Each chip's pulsing .tm-act dot is its live activity.
+  // Chip positions stay below viewBox y≈150 — the caption overlay reaches that
+  // deep on short/wide cards, and anything higher gets covered by the text.
+  // Chips sit in two symmetric pairs: 16px clear of the panel (and of each
+  // other), tops inset 20px from the panel's top edge, bottoms inset 20px from
+  // its bottom edge. Nothing above viewBox y≈150 — the caption overlay reaches
+  // that deep on short/wide cards, and anything higher gets covered by text.
   const TM_APPS = [
-    { cx: 130, cy: 120, name: 'Browser', body: `
-        <rect class="tm-ui" x="-42" y="-19" width="84" height="9" rx="4.5"/>
-        <circle class="tm-ui-dot" cx="-37" cy="-14.5" r="1.6"/>
-        <rect class="tm-ui-fill" x="-42" y="-4" width="36" height="22" rx="2"/>
-        <rect class="tm-ui-fill" x="-1" y="-4" width="43" height="8" rx="2"/>
-        <rect class="tm-ui-fill" x="-1" y="8" width="43" height="8" rx="2"/>
-        <rect class="tm-act" x="-1" y="22" width="30" height="4" rx="2" style="animation-delay:6.2s"/>` },
-    { cx: 260, cy: 130, name: 'Email', body: `
-        <circle class="tm-ui-dot" cx="-40" cy="-15" r="2.6"/><rect class="tm-ui-fill" x="-32" y="-18" width="64" height="6" rx="2"/>
-        <circle class="tm-ui-dot" cx="-40" cy="-2" r="2.6"/><rect class="tm-ui-fill" x="-32" y="-5" width="52" height="6" rx="2"/>
-        <circle class="tm-ui-dot" cx="-40" cy="11" r="2.6"/><rect class="tm-ui-fill" x="-32" y="8" width="58" height="6" rx="2"/>
-        <circle class="tm-act" cx="-40" cy="24" r="2.6" style="animation-delay:6.35s"/>
-        <rect class="tm-act" x="-32" y="21" width="44" height="6" rx="2" style="animation-delay:6.35s"/>` },
-    { cx: 260, cy: 470, name: 'Spreadsheet', body: `
-        <rect class="tm-ui-fill" x="-42" y="-19" width="86" height="11.5"/>
-        <path class="tm-ui" d="M-42,-19 H44 M-42,-7.5 H44 M-42,4 H44 M-42,15.5 H44 M-42,27 H44 M-42,-19 V27 M-20.5,-19 V27 M1,-19 V27 M22.5,-19 V27 M44,-19 V27"/>
-        <rect class="tm-act" x="1" y="4" width="21.5" height="11.5" style="animation-delay:6.5s"/>` },
-    { cx: 130, cy: 480, name: 'Notes', body: `
-        <rect class="tm-ui" x="-42" y="-19" width="8" height="8" rx="1.5"/><path class="tm-ui" d="M-40.5,-15.5 l2,2.2 l3.6,-4.4"/>
-        <rect class="tm-ui-fill" x="-29" y="-17" width="60" height="5" rx="2"/>
-        <rect class="tm-ui" x="-42" y="-4" width="8" height="8" rx="1.5"/><path class="tm-ui" d="M-40.5,-0.5 l2,2.2 l3.6,-4.4"/>
-        <rect class="tm-ui-fill" x="-29" y="-2" width="48" height="5" rx="2"/>
-        <rect class="tm-ui" x="-42" y="11" width="8" height="8" rx="1.5"/>
-        <rect class="tm-act" x="-29" y="13" width="52" height="5" rx="2" style="animation-delay:6.65s"/>
-        <rect class="tm-act" x="-29" y="22" width="34" height="5" rx="2" style="animation-delay:6.8s"/>` },
+    { cx: 252, cy: 176, logo: 'chrome'  },   // near column sits 10px prouder…
+    { cx: 352, cy: 186, logo: 'outlook' },
+    { cx: 352, cy: 404, logo: 'excel'   },
+    { cx: 252, cy: 414, logo: 'pdf'     },   // …top and bottom — a mild cascade
   ];
 
   function buildTaskMining() {
@@ -1150,14 +1136,14 @@
       const N = 30, BASE_DELAY = 1.5;
       let html = '';
       for (let i = 0; i < N; i++) {
-        const sy = 268 + Math.floor(rnd() * 100);
+        const sy = 180 + Math.floor(rnd() * 240);
         const endX = 365 + Math.floor(rnd() * 10);
         const endY = 295 + Math.floor(rnd() * 10);
-        const tx = endX - 190;
+        const tx = endX - 194;
         const ty = endY - sy;
         const dur = (1.0 + rnd() * 0.6).toFixed(2);
         const delay = (BASE_DELAY + rnd() * 1.4).toFixed(2);
-        html += `<circle class="pm-rt" cx="190" cy="${sy}" r="2.5" style="--tx:${tx}px;--ty:${ty}px;animation-duration:${dur}s;animation-delay:${delay}s"/>`;
+        html += `<circle class="pm-rt" cx="194" cy="${sy}" r="2.5" style="--tx:${tx}px;--ty:${ty}px;animation-duration:${dur}s;animation-delay:${delay}s"/>`;
       }
       return html;
     })();
@@ -1185,18 +1171,15 @@
       return html;
     })();
 
-    // Extras: enlarged again to 100×75 (33% wider, 36% taller than previous 75×55).
-    // Glyph scaled 2.4× from its 14×14 base. Faded in during Beat 2.
+    // Extras: glass chips carrying the real desktop-app logos, faded in during
+    // Beat 2. The corner .tm-act dot pulses as each tool's live activity.
     const extrasHTML = TM_APPS.map((ex, i) => {
       const delay = (5.5 + i * 0.12).toFixed(2);
+      const act = (6.2 + i * 0.15).toFixed(2);
       return `<g class="tm-extra" transform="translate(${ex.cx},${ex.cy})" style="animation-delay:${delay}s">
-        <rect class="tm-extra-box" x="-50" y="-37.5" width="100" height="75" rx="12"/>
-        <circle class="tm-win-dot" cx="-42" cy="-30" r="2"/>
-        <circle class="tm-win-dot" cx="-35.5" cy="-30" r="2"/>
-        <circle class="tm-win-dot" cx="-29" cy="-30" r="2"/>
-        <text class="tm-win-name" x="-21" y="-27.2">${ex.name}</text>
-        <line class="tm-ui-div" x1="-50" y1="-24" x2="50" y2="-24"/>
-        ${ex.body}
+        <rect class="tm-extra-box" x="-42" y="-26" width="84" height="52" rx="11"/>
+        <image href="assets/logos/app-${ex.logo}.png" x="-26" y="-18" width="52" height="36" preserveAspectRatio="xMidYMid meet"/>
+        <circle class="tm-act" cx="32" cy="-16" r="2.6" style="animation-delay:${act}s"/>
       </g>`;
     }).join('');
 
@@ -1206,20 +1189,9 @@
       <div class="pi-narr"></div>
       <svg class="pi-cardsvg" viewBox="0 0 1000 540" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
 
-        <!-- ── System (carried over from Process Mining; appears at t=0) ── -->
-        <g class="pm-sys">
-          <rect class="pm-sys-box" x="50" y="190" width="140" height="200" rx="14"/>
-          <ellipse class="pm-sys-cyl-top" cx="82" cy="226" rx="18" ry="5.5"/>
-          <path class="pm-sys-cyl" d="M64,226 V250 a18,5.5 0 0 0 36,0 V226"/>
-          <path class="pm-sys-cyl" d="M64,238 a18,5.5 0 0 0 36,0" opacity="0.7"/>
-          <text class="pm-sys-label" x="112" y="232">System</text>
-          <rect class="pm-rec" x="66" y="280" width="106" height="6" rx="2" style="animation-delay:0.5s"/>
-          <rect class="pm-rec" x="66" y="296" width="86"  height="6" rx="2" style="animation-delay:0.55s"/>
-          <rect class="pm-rec" x="66" y="312" width="106" height="6" rx="2" style="animation-delay:0.6s"/>
-          <rect class="pm-rec" x="66" y="328" width="68"  height="6" rx="2" style="animation-delay:0.65s"/>
-          <rect class="pm-rec" x="66" y="344" width="96"  height="6" rx="2" style="animation-delay:0.7s"/>
-          <rect class="pm-rec" x="66" y="358" width="78"  height="6" rx="2" style="animation-delay:0.75s"/>
-        </g>
+        <!-- ── Systems panel (carried over from Process Mining; appears at t=0).
+             Nudged left in this scene to give the desktop chips breathing room. ── -->
+        <g transform="translate(-16,0)">${SYS_PANEL}</g>
 
         <!-- ── System → Engine streaming dots (Beat 1+, infinite from t=1.5s) ── -->
         ${sysStream}
@@ -1246,10 +1218,10 @@
 
         <!-- ── Dark connections (Beat 2): the routes exist but carry nothing;
              they brighten when task mining switches on in Beat 3 ── -->
-        <line class="tm-conn" x1="172" y1="152" x2="316" y2="260" style="animation-delay:6.10s, 10.20s"/>
-        <line class="tm-conn" x1="288" y1="166" x2="334" y2="244" style="animation-delay:6.22s, 10.20s"/>
-        <line class="tm-conn" x1="288" y1="434" x2="334" y2="356" style="animation-delay:6.34s, 10.20s"/>
-        <line class="tm-conn" x1="172" y1="448" x2="316" y2="340" style="animation-delay:6.46s, 10.20s"/>
+        <line class="tm-conn" x1="288" y1="200" x2="330" y2="254" style="animation-delay:6.10s, 10.20s"/>
+        <line class="tm-conn" x1="366" y1="212" x2="369" y2="240" style="animation-delay:6.22s, 10.20s"/>
+        <line class="tm-conn" x1="366" y1="378" x2="369" y2="352" style="animation-delay:6.34s, 10.20s"/>
+        <line class="tm-conn" x1="288" y1="390" x2="330" y2="346" style="animation-delay:6.46s, 10.20s"/>
 
         <!-- ── Extras → Engine streaming dots (Beat 3+, infinite from t=10.4s) ── -->
         ${extraStream}
@@ -1329,36 +1301,37 @@
     const N = 30;
     const BASE_DELAY = 2.4;
     for (let i = 0; i < N; i++) {
-      const sy   = 268 + Math.floor(rnd() * 100);    // 268–368, scattered across the system's record area
+      const sy   = 180 + Math.floor(rnd() * 240);    // 180–420, scattered down the systems panel
       const endX = 365 + Math.floor(rnd() * 10);     // converge into the engine area, slightly scattered
       const endY = 295 + Math.floor(rnd() * 10);
-      const tx = endX - 190;
+      const tx = endX - 210;
       const ty = endY - sy;
       const dur   = (1.0 + rnd() * 0.6).toFixed(2);  // 1.0–1.6s — varied speed per dot
       const delay = (BASE_DELAY + rnd() * 1.4).toFixed(2);  // 2.4–3.8s — initial offset within one cycle
-      html += `<circle class="pm-rt" cx="190" cy="${sy}" r="2.5" style="--tx:${tx}px;--ty:${ty}px;animation-duration:${dur}s;animation-delay:${delay}s"/>`;
+      html += `<circle class="pm-rt" cx="210" cy="${sy}" r="2.5" style="--tx:${tx}px;--ty:${ty}px;animation-duration:${dur}s;animation-delay:${delay}s"/>`;
     }
     return html;
   })();
+  // Real source platforms shown inside the systems panel (white-cut logos in
+  // assets/logos/sys-*.png) — "we bring data in from many systems". Shared by
+  // the Process Mining scene and the Task Mining scene (visual carry-over).
+  const SYS_LOGOS = ['salesforce','sap','oracle','microsoft','workday','servicenow','snowflake','databricks','pega','appian'];
+  const SYS_PANEL = `
+        <g class="pm-sys">
+          <rect class="pm-sys-box" x="34" y="140" width="176" height="310" rx="14"/>
+          <text class="pm-sys-label" x="122" y="168" text-anchor="middle">Your systems</text>
+          ${SYS_LOGOS.map((n, i) => {
+            const col = i % 2, row = (i / 2) | 0;
+            return `<image class="pm-logo" href="assets/logos/sys-${n}.png" x="${44 + col * 80}" y="${186 + row * 51}" width="70" height="36" preserveAspectRatio="xMidYMid meet" style="animation-delay:${(1.3 + i * 0.12).toFixed(2)}s"/>`;
+          }).join('\n          ')}
+        </g>`;
   const PROCESS_MINING = `
     <div class="pm-scene pi-cardscene">
       <div class="pi-narr"></div>
       <svg class="pi-cardsvg" viewBox="0 0 1000 540" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
 
-        <!-- ── source system: database cylinder + record rows (Beat 1) ── -->
-        <g class="pm-sys">
-          <rect class="pm-sys-box" x="50" y="190" width="140" height="200" rx="14"/>
-          <ellipse class="pm-sys-cyl-top" cx="82" cy="226" rx="18" ry="5.5"/>
-          <path class="pm-sys-cyl" d="M64,226 V250 a18,5.5 0 0 0 36,0 V226"/>
-          <path class="pm-sys-cyl" d="M64,238 a18,5.5 0 0 0 36,0" opacity="0.7"/>
-          <text class="pm-sys-label" x="112" y="232">System</text>
-          <rect class="pm-rec" x="66" y="280" width="106" height="6" rx="2" style="animation-delay:1.3s"/>
-          <rect class="pm-rec" x="66" y="296" width="86"  height="6" rx="2" style="animation-delay:1.45s"/>
-          <rect class="pm-rec" x="66" y="312" width="106" height="6" rx="2" style="animation-delay:1.6s"/>
-          <rect class="pm-rec" x="66" y="328" width="68"  height="6" rx="2" style="animation-delay:1.75s"/>
-          <rect class="pm-rec" x="66" y="344" width="96"  height="6" rx="2" style="animation-delay:1.9s"/>
-          <rect class="pm-rec" x="66" y="358" width="78"  height="6" rx="2" style="animation-delay:2.05s"/>
-        </g>
+        <!-- ── source systems: ten real platforms stream their event logs (Beat 1) ── -->
+        ${SYS_PANEL}
 
         <!-- ── streaming dots (Beat 1 → Beat 2): 24 glowing dots flow to the engine ── -->
         ${PM_STREAM_DOTS}
@@ -2578,12 +2551,12 @@
     capTitle.innerHTML = step === 0
       ? 'How does <span class="hl">Apromore</span><br/>Process Intelligence <span class="hl">solve this?</span>'
       : step === FINALE
-        ? '<span class="hl">Now you can.</span>'
+        ? '<span class="hl">And exactly how Agents can add value.</span>'
         : ALL[step - 1].name + ': <span class="hl">' + ALL[step - 1].claim + '</span>';
     capSub.innerHTML = step === 0
       ? ''
       : step === FINALE
-        ? 'See how you run. Size what\'s at stake. Fix it, test it, keep it fixed.'
+        ? 'See how you run, what it costs, where agents belong, and how they perform &mdash; before you deploy them.'
         : ALL[step - 1].sub;
     const capEls = [capEyebrow, capTitle, capSub];
     capEls.forEach(el => el.classList.remove('cap-bounce'));
@@ -2647,8 +2620,8 @@
     FT(() => {
       // 2) stage the question and the (hidden) sub while the caption is
       //    invisible, so the layout the stack slides into never reflows
-      capTitle.innerHTML = '<span class="fin-q">Do you understand how your business runs?</span>';
-      capSub.innerHTML = 'See how you run. Size what\'s at stake. Fix it, test it, keep it fixed.';
+      capTitle.innerHTML = '<span class="fin-q">Now you can see how your business runs</span>';
+      capSub.innerHTML = 'See how you run, what it costs, where agents belong, and how they perform &mdash; before you deploy them.';
       capSub.style.opacity = '0';                   // space reserved, revealed at the end
       capSub.classList.remove('cap-bounce');        // its filled animation would override the inline opacity
       const r1 = railWrap.getBoundingClientRect();
@@ -2667,7 +2640,7 @@
           const q = capTitle.querySelector('.fin-q'); if (q) q.classList.add('fin-out');
           // 5) the answer lands at full scale and the pulse travels the stack
           FT(() => {
-            capTitle.innerHTML = '<span class="hl">Now you can.</span>';
+            capTitle.innerHTML = '<span class="hl">And exactly how Agents can add value.</span>';
             capTitle.classList.remove('cap-bounce'); void capTitle.offsetWidth; capTitle.classList.add('cap-bounce');
             app.classList.add('finale-go');
             // 6) the recap line follows a beat later
