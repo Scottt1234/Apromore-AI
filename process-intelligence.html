@@ -1045,7 +1045,11 @@
     .tm-scene .pi-narr { white-space: normal; }
 
     /* ── Intro morph: question words → Apromore mark → Processforce ── */
-    #morph { position: fixed; inset: 0; z-index: 60; pointer-events: none; }
+    #morph { position: fixed; inset: 0; z-index: 60; pointer-events: none; transition: opacity .55s ease, transform .55s ease; }
+    /* graceful exit: the whole mark + name drift up and fade as one on leave */
+    #morph.m-exit { opacity: 0; transform: translateY(-16px); }
+    /* the real key words tint in step with their clones before the rest fades */
+    #cap-title .mw { transition: color .45s ease; }
     /* each ball is born as a CLONE of its word, then contracts into a brand ball */
     #morph .morph-ball {
       position: absolute; display: flex; align-items: center; justify-content: center;
@@ -2807,16 +2811,18 @@
       b.appendChild(t);
       morphEl.appendChild(b);
     });
-    // choreography: clones cover the words as the question fades → words take
-    // on their future colours → contract into balls → fly to orbit → static
-    // ring + core land → balls hand over to the orbiting copy → name
-    MT(() => { caption.style.opacity = '0'; morphEl.classList.add('m-born'); }, 60);
-    MT(() => morphEl.classList.add('m-tint'),  550);
-    MT(() => morphEl.classList.add('m-morph'), 1150);
-    MT(() => morphEl.classList.add('m-fly'),   1900);
-    MT(() => morphEl.classList.add('m-ring'),  2950);
-    MT(() => morphEl.classList.add('m-orbit'), 3400);
-    MT(() => morphEl.classList.add('m-name'),  3850);
+    // choreography: (1) the four key words change to their future colours while
+    // the rest of the question stays put → (2) the rest of the text fades, the
+    // coloured words remaining → (3) each word contracts into its ball → fly to
+    // orbit → static ring + core land → balls hand to the orbiting copy → name
+    morphEl.classList.add('m-born');
+    MT(() => { morphEl.classList.add('m-tint'); words.forEach((w, i) => w.style.color = BALL[i].c); }, 80);
+    MT(() => { caption.style.opacity = '0'; }, 950);
+    MT(() => morphEl.classList.add('m-morph'), 1550);
+    MT(() => morphEl.classList.add('m-fly'),   2300);
+    MT(() => morphEl.classList.add('m-ring'),  3350);
+    MT(() => morphEl.classList.add('m-orbit'), 3800);
+    MT(() => morphEl.classList.add('m-name'),  4250);
   }
 
   btnPrev.addEventListener('click', () => stepBackward());
@@ -2835,6 +2841,11 @@
 
   function stepForward()  {
     if (step === 0 && introPhase === 0) { runIntroMorph(); return; }   // question → Processforce reveal
+    if (step === 0 && introPhase === 1) {                              // reveal → layer 1: fade the mark out first
+      if (morphEl) { morphEl.classList.add('m-exit'); MT(() => goTo(1), 560); }
+      else goTo(1);
+      return;
+    }
     if (step < FINALE) goTo(step + 1); else if (embedded) toParent({ type: 'deck-next' });
   }
   function stepBackward() {
