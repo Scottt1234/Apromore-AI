@@ -234,13 +234,13 @@
     #app.finale-mode #rail-wrap { margin-top: 36px; }
     #app.finale-mode #pillar-wrap { margin-bottom: 4vh; }
     #app.finale-mode .pi-card, #app.finale-mode #pillar { opacity: 1; transform: none; }
+    /* pulse briefly (~1s) then rest, so the whole cycle repeats every 10s */
     @keyframes finPulse {
-      0%   { box-shadow: 0 0 0 rgba(143,184,255,0); }
-      40%  { box-shadow: 0 0 26px rgba(143,184,255,0.55); border-color: rgba(143,184,255,1); background: rgba(143,184,255,0.28); }
-      100% { box-shadow: 0 0 0 rgba(143,184,255,0); }
+      0%, 10%, 100% { box-shadow: 0 0 0 rgba(143,184,255,0); border-color: rgba(143,184,255,0.55); background: rgba(143,184,255,0.12); }
+      4%            { box-shadow: 0 0 26px rgba(143,184,255,0.55); border-color: rgba(143,184,255,1); background: rgba(143,184,255,0.28); }
     }
-    /* the pulse waits for .finale-go (added once the slide-down has landed) */
-    #app.finale-mode.finale-go .pi-card, #app.finale-mode.finale-go #pillar { animation: finPulse 1.05s ease both; }
+    /* the pulse waits for .finale-go (added once the slide-down has landed), then loops every 10s */
+    #app.finale-mode.finale-go .pi-card, #app.finale-mode.finale-go #pillar { animation: finPulse 10s ease infinite; }
     #app.finale-mode .pi-card:nth-child(1) { animation-delay: 0.15s; }
     #app.finale-mode .pi-card:nth-child(2) { animation-delay: 0.30s; }
     #app.finale-mode .pi-card:nth-child(3) { animation-delay: 0.45s; }
@@ -448,7 +448,7 @@
     .cv-q { position: relative; align-self: flex-start; max-width: 100%;
       display: flex; align-items: flex-start; gap: 10px;
       background: rgba(10,28,68,0.85); border: 1px solid rgba(143,184,255,0.55);
-      border-radius: 999px; padding: 10px 18px 10px 15px; font-size: 13.5px; line-height: 1.4;
+      border-radius: 999px; padding: 9px 15px 9px 14px; font-size: 13px; line-height: 1.4;
       color: #fff; box-shadow: 0 8px 24px rgba(0,0,0,0.3);
       animation: cvQIn 0.4s cubic-bezier(0.22,1,0.36,1) both; }
     .cv-q-av { flex: 0 0 auto; width: 18px; height: 18px; margin-top: 1px;
@@ -933,7 +933,8 @@
     .mo-scene.playing .mo-phead-dot { animation: moBlink 2.2s 3.0s ease-in-out infinite; }
     .mo-phead-label { fill: rgba(255,255,255,0.78); font: 700 10.5px var(--font-body); letter-spacing: 0.14em; }
     /* steady trace: a bright segment loops along the baseline */
-    .mo-ekg-base { fill: none; stroke: rgba(143,184,255,0.18); stroke-width: 1.6; }
+    .mo-ekg-base { fill: none; stroke: rgba(143,184,255,0.18); stroke-width: 1.6; opacity: 0; }
+    .mo-scene.playing .mo-ekg-base { animation: piFade 0.5s 2.7s ease forwards; }
     .mo-ekg { fill: none; stroke: #5fe3a0; stroke-width: 2; stroke-linecap: round; opacity: 0;
       filter: drop-shadow(0 0 5px rgba(95,227,160,0.6)); stroke-dasharray: 150 850; }
     .mo-scene.playing .mo-ekg { animation: piFade 0.5s 3.0s ease forwards, moTrace 3.6s 3.0s linear infinite; }
@@ -999,7 +1000,7 @@
       .si-gone, .si-simtok { opacity: 0 !important; animation: none !important; }
       .si-shimmer { animation: none !important; }
       /* Monitor — settle on the drift-caught end state */
-      .mo-live, .mo-panel, .mo-phead, .mo-ekg, .mo-row, .mo-flag, .mo-drift-in
+      .mo-live, .mo-panel, .mo-phead, .mo-ekg, .mo-ekg-base, .mo-row, .mo-flag, .mo-drift-in
         { opacity: 1 !important; transform: none !important; animation: none !important; }
       .mo-newvar { opacity: 0.92 !important; stroke-dashoffset: 0 !important; animation: none !important; }
       .mo-tok, .mo-newvar-tok, .mo-ok-swap { opacity: 0 !important; animation: none !important; }
@@ -1217,11 +1218,11 @@
         const sy = 180 + Math.floor(rnd() * 240);
         const endX = 365 + Math.floor(rnd() * 10);
         const endY = 295 + Math.floor(rnd() * 10);
-        const tx = endX - 166;
+        const tx = endX - 176;
         const ty = endY - sy;
         const dur = (1.0 + rnd() * 0.6).toFixed(2);
         const delay = (BASE_DELAY + rnd() * 1.4).toFixed(2);
-        html += `<circle class="pm-rt" cx="166" cy="${sy}" r="2.5" style="--tx:${tx}px;--ty:${ty}px;animation-duration:${dur}s;animation-delay:${delay}s"/>`;
+        html += `<circle class="pm-rt" cx="176" cy="${sy}" r="2.5" style="--tx:${tx}px;--ty:${ty}px;animation-duration:${dur}s;animation-delay:${delay}s"/>`;
       }
       return html;
     })();
@@ -1382,11 +1383,11 @@
       const sy   = 180 + Math.floor(rnd() * 240);    // 180–420, scattered down the systems panel
       const endX = 365 + Math.floor(rnd() * 10);     // converge into the engine area, slightly scattered
       const endY = 295 + Math.floor(rnd() * 10);
-      const tx = endX - 166;
+      const tx = endX - 176;
       const ty = endY - sy;
       const dur   = (1.0 + rnd() * 0.6).toFixed(2);  // 1.0–1.6s — varied speed per dot
       const delay = (BASE_DELAY + rnd() * 1.4).toFixed(2);  // 2.4–3.8s — initial offset within one cycle
-      html += `<circle class="pm-rt" cx="166" cy="${sy}" r="2.5" style="--tx:${tx}px;--ty:${ty}px;animation-duration:${dur}s;animation-delay:${delay}s"/>`;
+      html += `<circle class="pm-rt" cx="176" cy="${sy}" r="2.5" style="--tx:${tx}px;--ty:${ty}px;animation-duration:${dur}s;animation-delay:${delay}s"/>`;
     }
     return html;
   })();
@@ -1395,7 +1396,7 @@
   // the Process Mining scene and the Task Mining scene (visual carry-over).
   const SYS_LOGOS = ['salesforce','sap','oracle','microsoft','workday','servicenow','snowflake','databricks','pega','appian'];
   const SYS_PANEL = `
-        <g class="pm-sys" transform="translate(-44,0)">
+        <g class="pm-sys" transform="translate(-34,0)">
           <rect class="pm-sys-box" x="34" y="140" width="176" height="310" rx="14"/>
           <text class="pm-sys-label" x="122" y="168" text-anchor="middle">Your systems</text>
           ${SYS_LOGOS.map((n, i) => {
@@ -2018,7 +2019,6 @@
       <text class="rc-mech" x="54" y="336">Automate the manual check &mdash; removing</text>
       <text class="rc-mech" x="54" y="354">the rework loop behind your bottleneck</text>
       <line class="rc-div" x1="54" y1="368" x2="386" y2="368"/>
-      <text class="rc-proj" x="54" y="386">PROJECTED IMPACT</text>
       ${rows}
       <g class="rc-btn">
         <rect class="rc-btn-box" x="54" y="470" width="104" height="30" rx="8"/>
@@ -2435,7 +2435,7 @@
     let qi = 0;
     const addBubble = () => {
       const b = document.createElement('div'); b.className = 'cv-q';
-      b.style.maxWidth = (72 + Math.random() * 26).toFixed(0) + '%';        // slight width variation
+      b.style.width = 'fit-content';   // size to the question; wrap only if it exceeds the column
       const av = document.createElement('span');
       av.className = 'cv-q-av';
       av.innerHTML = '<svg viewBox="-10 -10 20 20" aria-hidden="true"><path d="M-7,-7 a3,3 0 0 1 3,-3 H7 a3,3 0 0 1 3,3 V1 a3,3 0 0 1 -3,3 H-1 L-6,8 V4 a3,3 0 0 1 -4,-3 z" transform="translate(0,-1) scale(0.85)"/></svg>';
@@ -2478,7 +2478,7 @@
     const n = CONVO_QUESTIONS.length;
     const q = CONVO_QUESTIONS[((idx % n) + n) % n];
     const b = document.createElement('div'); b.className = 'cv-q';
-    b.style.maxWidth = (72 + Math.random() * 26).toFixed(0) + '%';
+    b.style.width = 'fit-content';   // size to the question; wrap only if it exceeds the column
     const av = document.createElement('span'); av.className = 'cv-q-av';
     av.innerHTML = '<svg viewBox="-10 -10 20 20" aria-hidden="true"><path d="M-7,-7 a3,3 0 0 1 3,-3 H7 a3,3 0 0 1 3,3 V1 a3,3 0 0 1 -3,3 H-1 L-6,8 V4 a3,3 0 0 1 -4,-3 z" transform="translate(0,-1) scale(0.85)"/></svg>';
     const body = document.createElement('span'); body.className = 'cv-q-body';
