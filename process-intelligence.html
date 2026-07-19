@@ -147,7 +147,7 @@
        flat fill, 1px border, 2px electric-blue top accent, no resting shadow. The
        electric-blue accent contrasts with the cloud-blue process cards above. */
     .pi-big {
-      --c: #8fb8ff; position: absolute; inset: 24px 48px 84px;
+      --c: #8fb8ff; position: absolute; inset: 6px 48px 80px;
       max-width: 944px; margin: 0 auto; left: 0; right: 0;
       display: flex; flex-direction: column;
       border: 1px solid rgba(255,255,255,0.12);
@@ -628,7 +628,7 @@
     .pi-cardscene::before { content: ''; position: absolute; inset: 0; pointer-events: none;
       background: radial-gradient(52% 60% at 50% 52%, rgba(20,86,220,0.18), transparent 70%); }
     .pi-cardsvg { position: relative; width: 100%; height: 100%; display: block; }
-    .pi-narr { position: absolute; top: 20px; left: 28px; right: 28px; z-index: 4;
+    .pi-narr { position: absolute; top: 6px; left: 28px; right: 28px; z-index: 4;
       font-family: var(--font-display); font-weight: 700; font-size: clamp(15px, 2.1vw, 20px);
       letter-spacing: -0.01em; line-height: 1.25; color: #fff; white-space: nowrap; pointer-events: none; }
     .pi-narr.wipe { animation: piNarrWipe 0.6s ease forwards; }
@@ -1199,10 +1199,10 @@
   // its bottom edge. Nothing above viewBox y≈150 — the caption overlay reaches
   // that deep on short/wide cards, and anything higher gets covered by text.
   const TM_APPS = [
-    { cx: 252, cy: 176, logo: 'chrome'  },   // near column sits 10px prouder…
-    { cx: 352, cy: 186, logo: 'outlook' },
-    { cx: 352, cy: 404, logo: 'excel'   },
-    { cx: 252, cy: 414, logo: 'pdf'     },   // …top and bottom — a mild cascade
+    { cx: 248, cy: 135, logo: 'chrome'  },   // near column sits prouder…
+    { cx: 360, cy: 158, logo: 'outlook' },
+    { cx: 360, cy: 432, logo: 'excel'   },
+    { cx: 248, cy: 455, logo: 'pdf'     },   // …top and bottom — a mild cascade
   ];
 
   function buildTaskMining() {
@@ -1217,11 +1217,11 @@
         const sy = 180 + Math.floor(rnd() * 240);
         const endX = 365 + Math.floor(rnd() * 10);
         const endY = 295 + Math.floor(rnd() * 10);
-        const tx = endX - 194;
+        const tx = endX - 166;
         const ty = endY - sy;
         const dur = (1.0 + rnd() * 0.6).toFixed(2);
         const delay = (BASE_DELAY + rnd() * 1.4).toFixed(2);
-        html += `<circle class="pm-rt" cx="194" cy="${sy}" r="2.5" style="--tx:${tx}px;--ty:${ty}px;animation-duration:${dur}s;animation-delay:${delay}s"/>`;
+        html += `<circle class="pm-rt" cx="166" cy="${sy}" r="2.5" style="--tx:${tx}px;--ty:${ty}px;animation-duration:${dur}s;animation-delay:${delay}s"/>`;
       }
       return html;
     })();
@@ -1269,7 +1269,7 @@
 
         <!-- ── Systems panel (carried over from Process Mining; appears at t=0).
              Nudged left in this scene to give the desktop chips breathing room. ── -->
-        <g transform="translate(-16,0)">${SYS_PANEL}</g>
+        ${SYS_PANEL}
 
         <!-- ── System → Engine streaming dots (Beat 1+, infinite from t=1.5s) ── -->
         ${sysStream}
@@ -1296,10 +1296,10 @@
 
         <!-- ── Dark connections (Beat 2): the routes exist but carry nothing;
              they brighten when task mining switches on in Beat 3 ── -->
-        <line class="tm-conn" x1="288" y1="200" x2="330" y2="254" style="animation-delay:6.10s, 10.20s"/>
-        <line class="tm-conn" x1="366" y1="212" x2="369" y2="240" style="animation-delay:6.22s, 10.20s"/>
-        <line class="tm-conn" x1="366" y1="378" x2="369" y2="352" style="animation-delay:6.34s, 10.20s"/>
-        <line class="tm-conn" x1="288" y1="390" x2="330" y2="346" style="animation-delay:6.46s, 10.20s"/>
+        <line class="tm-conn" x1="284" y1="159" x2="330" y2="254" style="animation-delay:6.10s, 10.20s"/>
+        <line class="tm-conn" x1="374" y1="184" x2="369" y2="240" style="animation-delay:6.22s, 10.20s"/>
+        <line class="tm-conn" x1="374" y1="406" x2="369" y2="352" style="animation-delay:6.34s, 10.20s"/>
+        <line class="tm-conn" x1="284" y1="431" x2="330" y2="346" style="animation-delay:6.46s, 10.20s"/>
 
         <!-- ── Extras → Engine streaming dots (Beat 3+, infinite from t=10.4s) ── -->
         ${extraStream}
@@ -1382,11 +1382,11 @@
       const sy   = 180 + Math.floor(rnd() * 240);    // 180–420, scattered down the systems panel
       const endX = 365 + Math.floor(rnd() * 10);     // converge into the engine area, slightly scattered
       const endY = 295 + Math.floor(rnd() * 10);
-      const tx = endX - 210;
+      const tx = endX - 166;
       const ty = endY - sy;
       const dur   = (1.0 + rnd() * 0.6).toFixed(2);  // 1.0–1.6s — varied speed per dot
       const delay = (BASE_DELAY + rnd() * 1.4).toFixed(2);  // 2.4–3.8s — initial offset within one cycle
-      html += `<circle class="pm-rt" cx="210" cy="${sy}" r="2.5" style="--tx:${tx}px;--ty:${ty}px;animation-duration:${dur}s;animation-delay:${delay}s"/>`;
+      html += `<circle class="pm-rt" cx="166" cy="${sy}" r="2.5" style="--tx:${tx}px;--ty:${ty}px;animation-duration:${dur}s;animation-delay:${delay}s"/>`;
     }
     return html;
   })();
@@ -1395,7 +1395,7 @@
   // the Process Mining scene and the Task Mining scene (visual carry-over).
   const SYS_LOGOS = ['salesforce','sap','oracle','microsoft','workday','servicenow','snowflake','databricks','pega','appian'];
   const SYS_PANEL = `
-        <g class="pm-sys">
+        <g class="pm-sys" transform="translate(-44,0)">
           <rect class="pm-sys-box" x="34" y="140" width="176" height="310" rx="14"/>
           <text class="pm-sys-label" x="122" y="168" text-anchor="middle">Your systems</text>
           ${SYS_LOGOS.map((n, i) => {
