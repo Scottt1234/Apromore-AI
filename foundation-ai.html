@@ -651,6 +651,17 @@
     .slide[data-section="The Pressures"] .s2-statement { margin-top: 30px; }
     /* breathing room between title and cards (slides 2 & 3 match) */
     .slide[data-section="The Pressures"] .card-grid-3 { margin-top: 36px; }
+    /* neutral blue tag for the proof card (expectation = green, reality = amber) */
+    .ew-tag--proof { color: #8fb8ff; border-color: rgba(143,184,255,0.45); background: rgba(143,184,255,0.08); }
+    /* cards build one per narration beat: hidden until their beat marks them seen */
+    .slide[data-section="The Pressures"] .pressure-card {
+      opacity: 0; transform: translateY(16px) scale(0.97);
+      transition: opacity .5s var(--ease-out, ease), transform .5s var(--ease-out, ease);
+    }
+    .slide[data-section="The Pressures"] .pressure-card.beat-seen { opacity: 1; transform: none; }
+    @media (prefers-reduced-motion: reduce) {
+      .slide[data-section="The Pressures"] .pressure-card { opacity: 1 !important; transform: none !important; }
+    }
 
     /* ── Slide 3 · the 10-20-70 iceberg (hero visual) ──────────────── */
     .s3-split { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); gap: 48px; align-items: center; margin: 30px 0 6px; }
@@ -690,8 +701,8 @@
     .slide[data-section="The Common Thread"] .cv-node { margin: 0 !important; text-align: left; width: auto; max-width: none; box-sizing: border-box; padding: 36px 38px !important; border-radius: 18px; }
     .cv-hero-n {
       font-family: var(--font-display); font-weight: 700; line-height: 1;
-      font-size: clamp(56px, 5.4vw, 88px); letter-spacing: -0.03em; color: var(--sf-blue-l);
-      text-shadow: 0 0 36px rgba(143,184,255,0.45); margin: 8px 0 12px;
+      font-size: clamp(72px, 7vw, 116px); letter-spacing: -0.03em; color: var(--sf-blue-l);
+      text-shadow: 0 0 42px rgba(143,184,255,0.5); margin: 0 0 16px;
     }
     .cv-hero-t { font-size: clamp(20px, 2vw, 27px); font-weight: 700; color: #fff; line-height: 1.45; }
     .cv-hero-p {
@@ -718,6 +729,9 @@
       font-size: clamp(15px, 1.45vw, 20px); color: rgba(255,255,255,0.66); line-height: 1.7;
     }
     @media (max-width: 760px) { .bridge-sub { white-space: normal; } }
+    /* "mistakes included" — bold, bright, and breathing to draw the eye */
+    .bridge-sub .ai-mistakes { font-weight: 700; color: #fff; }
+    .slide-bridge.active .bridge-sub .ai-mistakes { animation: hlPulse 2.4s 2.6s ease-in-out infinite; }
 
     /* ── Slide 1 · hero sizing: title + lead each hold a single line ── */
     .slide-hero .open-h1 { font-size: clamp(26px, 5.6vw, 76px); white-space: nowrap; }
@@ -790,7 +804,7 @@
           <span class="w"><span>An</span></span> <span class="w"><span>agent</span></span> <span class="w"><span>is</span></span> <span class="w"><span>like</span></span><br/>
           <span class="bq-hl">a brilliant digital employee or assistant.</span>
         </div>
-        <p class="bridge-sub" data-animate="fade-up" data-anim-delay="1500">Given clear direction, they&rsquo;re extraordinary.<br/>Point them at a process nobody understands, and they&rsquo;ll execute it perfectly &mdash; mistakes included.</p>
+        <p class="bridge-sub" data-animate="fade-up" data-anim-delay="1500">Given clear direction, they&rsquo;re extraordinary.<br/>Point them at a process nobody understands, and they&rsquo;ll execute it perfectly &mdash; <span class="ai-mistakes">mistakes included</span>.</p>
       </div>
     </div>
 
@@ -798,42 +812,35 @@
     <div class="slide sd" data-section="The Pressures">
       <div class="slide-body">
         <div class="eyebrow" data-animate="fade-up" data-anim-delay="0">The AI promise</div>
-        <div class="section-title" data-animate="fade-up" data-anim-delay="60">The AI promise<br/><span style="color:var(--sf-blue-l)">Hasn&rsquo;t delivered yet.</span></div>
+        <div class="section-title" data-animate="fade-up" data-anim-delay="60">Many have deployed Agents.<br/><span style="color:var(--sf-blue-l)">But few received the outcome they expected.</span></div>
         <div class="card-grid-3">
 
-          <div class="card card-accent-blue pressure-card" data-animate="scale-in" data-anim-delay="200">
-            <span class="ew-tag ew-tag--best" style="position:static;align-self:flex-start;">The promise</span>
-            <div class="card-title" style="margin-top:14px;">What is expected of AI</div>
-            <ul class="pr-list">
-              <li class="pr-item"><span class="pr-glyph pr-glyph--yes"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6.5l2.5 2.5L10 3"/></svg></span><span><strong>100% automation</strong> of routine work</span></li>
-              <li class="pr-item"><span class="pr-glyph pr-glyph--yes"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6.5l2.5 2.5L10 3"/></svg></span><span>AI doing the <strong>grunt work</strong></span></li>
-              <li class="pr-item"><span class="pr-glyph pr-glyph--yes"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6.5l2.5 2.5L10 3"/></svg></span><span>Humans doing the <strong>strategic work</strong></span></li>
-              <li class="pr-item"><span class="pr-glyph pr-glyph--yes"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6.5l2.5 2.5L10 3"/></svg></span><span><strong>Continuous improvement</strong>, compounding</span></li>
+          <div class="card card-accent-blue pressure-card">
+            <span class="ew-tag ew-tag--best" style="position:static;align-self:flex-start;">The expectation</span>
+            <ul class="pr-list" style="margin-top:20px;">
+              <li class="pr-item"><span class="pr-glyph pr-glyph--yes"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6.5l2.5 2.5L10 3"/></svg></span><span>A <strong>tireless digital workforce</strong></span></li>
+              <li class="pr-item"><span class="pr-glyph pr-glyph--yes"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6.5l2.5 2.5L10 3"/></svg></span><span>Routine work handled <strong>end to end</strong></span></li>
+              <li class="pr-item"><span class="pr-glyph pr-glyph--yes"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6.5l2.5 2.5L10 3"/></svg></span><span>People freed for <strong>judgement and strategy</strong></span></li>
+              <li class="pr-item"><span class="pr-glyph pr-glyph--yes"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6.5l2.5 2.5L10 3"/></svg></span><span>Results that <strong>compound</strong> month on month</span></li>
             </ul>
           </div>
 
-          <div class="card card-accent-blue pressure-card" data-animate="scale-in" data-anim-delay="280">
-            <span class="ew-tag ew-tag--worst" style="position:static;align-self:flex-start;">Today&rsquo;s reality</span>
-            <div class="card-title" style="margin-top:14px;">The reality of most projects</div>
-            <ul class="pr-list">
-              <li class="pr-item"><span class="pr-glyph pr-glyph--no"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg></span><span><strong>20% automation</strong>, at best</span></li>
-              <li class="pr-item"><span class="pr-glyph pr-glyph--no"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg></span><span>Prompts that <strong>fail in production</strong></span></li>
-              <li class="pr-item"><span class="pr-glyph pr-glyph--no"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg></span><span>Probabilistic &ne; <strong>enterprise-grade</strong></span></li>
-              <li class="pr-item"><span class="pr-glyph pr-glyph--no"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg></span><span><strong>Two-year</strong> engineering projects</span></li>
-              <li class="pr-item"><span class="pr-glyph pr-glyph--no"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg></span><span><strong>PoC purgatory</strong></span></li>
+          <div class="card card-accent-blue pressure-card">
+            <span class="ew-tag ew-tag--worst" style="position:static;align-self:flex-start;">The reality</span>
+            <ul class="pr-list" style="margin-top:20px;">
+              <li class="pr-item"><span class="pr-glyph pr-glyph--no"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg></span><span>Pilots that <strong>never reach production</strong></span></li>
+              <li class="pr-item"><span class="pr-glyph pr-glyph--no"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg></span><span><strong>Fragments</strong> automated, not processes</span></li>
+              <li class="pr-item"><span class="pr-glyph pr-glyph--no"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg></span><span>Confident outputs, <strong>unreliable outcomes</strong></span></li>
+              <li class="pr-item"><span class="pr-glyph pr-glyph--no"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg></span><span>Value <strong>nobody can measure</strong></span></li>
             </ul>
           </div>
 
-          <div class="card card-accent-blue pressure-card pr-stat" data-animate="scale-in" data-anim-delay="360">
+          <div class="card card-accent-blue pressure-card pr-stat">
             <div class="pr-stat-n">95%</div>
             <div class="pr-stat-k">of enterprise AI pilots fail before production</div>
             <div class="pr-stat-src">MIT NANDA, State of AI in Business 2025</div>
           </div>
 
-        </div>
-
-        <div class="s2-statement" data-animate="fade-up" data-anim-delay="440">
-          <div class="statement">The assistants are ready. <span class="hl">The instructions aren&rsquo;t.</span></div>
         </div>
       </div>
     </div>
@@ -842,7 +849,7 @@
     <div class="slide sd" data-section="The Common Thread">
       <div class="slide-body">
         <div class="eyebrow" data-animate="fade-up" data-anim-delay="0">Why it fails</div>
-        <div class="section-title" data-animate="fade-up" data-anim-delay="60">Technology is not the problem.<br/><span style="color:var(--sf-blue-l)">Leaders follow the 10-20-70 principle to create value.</span></div>
+        <div class="section-title" data-animate="fade-up" data-anim-delay="60">Technology is not the problem.<br/><span style="color:var(--sf-blue-l)">70% of success sits below the waterline.</span></div>
 
         <div class="s3-split">
           <div class="iceberg-wrap" data-animate="fade-up" data-anim-delay="200">
@@ -934,7 +941,6 @@
 
           <div class="s3-right">
             <div class="cv-node">
-              <span class="cv-node-k">&hellip;but</span>
               <div class="cv-hero-n">2 in 3</div>
               <div class="cv-hero-t">companies struggle to reimagine their <span style="color:var(--sf-blue-l)">processes</span> and drive change.</div>
               <span class="cv-node-src">BCG AI Radar 2025 Survey (n=1,803)</span>
@@ -1343,7 +1349,10 @@
     function applyPressureBeat() {
       const cards = slides[current].querySelectorAll('.pressure-card');
       const activeIdx = pBeat - 2;   // beat 2→card 0, 3→card 1, 4→card 2; beat 1 → none
-      cards.forEach((c, i) => c.classList.toggle('beat-spot', i === activeIdx));
+      cards.forEach((c, i) => {
+        c.classList.toggle('beat-spot', i === activeIdx);
+        c.classList.toggle('beat-seen', i <= activeIdx);   // cards build as narrated
+      });
     }
 
     // ── In-slide beats · Why Now (slide 7) ───────────────────────────

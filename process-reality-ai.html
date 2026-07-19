@@ -70,8 +70,15 @@
       letter-spacing: -0.025em; color: #fff; margin: 0 0 12px;
     }
     #cap-title .hl { color: var(--sf-blue-l); }
+    /* Act-3 emphasis: "This" breathes to draw the eye to the delegation payoff. */
+    #cap-title .cap-pulse { animation: capWordPulse 2.4s 1.2s ease-in-out infinite; }
+    @keyframes capWordPulse {
+      0%, 100% { opacity: 1; text-shadow: 0 0 18px rgba(143,184,255,0.5); }
+      50%      { opacity: 0.6; text-shadow: 0 0 4px rgba(143,184,255,0.1); }
+    }
     .cap-fade { animation: capIn 0.7s cubic-bezier(0,0,0.2,1) both; }
     @keyframes capIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+    @media (prefers-reduced-motion: reduce) { #cap-title .cap-pulse { animation: none; } }
 
     /* Stats live inside the deck's 1080px content column rather than at the viewport
        edge — same alignment as slide-body content and the caption block above. */
@@ -501,7 +508,7 @@
     2: { eyebrow:'HOW YOU THINK IT RUNS',
          title:'The process you think you have.<br/><span class="hl">A few detours you already know about.</span>' },
     3: { eyebrow:'AND HOW IT REALLY LOOKS',
-         title:'The process you actually have.<br/><span class="hl">This is the process you are about to delegate.</span>' },
+         title:'The process you actually have.<br/><span class="hl"><span class="cap-pulse">This</span> is the process you are about to delegate.</span>' },
   };
 
   let act = 1;
