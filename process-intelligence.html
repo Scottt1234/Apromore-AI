@@ -1055,13 +1055,13 @@
       position: absolute; display: flex; align-items: center; justify-content: center;
       border-radius: 10px; background-color: transparent; overflow: hidden;
       transform: translate(-50%, -50%);
-      transition: width .55s cubic-bezier(.22,1,.36,1), height .55s cubic-bezier(.22,1,.36,1),
-                  border-radius .55s ease, background-color .45s ease,
-                  box-shadow .55s ease, transform .95s cubic-bezier(.22,1,.36,1);
+      transition: width .7s cubic-bezier(.5,0,.2,1), height .7s cubic-bezier(.5,0,.2,1),
+                  border-radius .6s ease, background-color .5s ease,
+                  box-shadow .6s ease, transform 1.15s cubic-bezier(.5,0,.2,1);
     }
     #morph .morph-word {
       color: var(--sf-blue-l); white-space: nowrap; line-height: 1;
-      transition: color .45s ease, transform .5s ease, opacity .4s ease;
+      transition: color .5s ease, transform .55s cubic-bezier(.5,0,.2,1), opacity .5s ease;
     }
     /* phase 1: each word takes on its future ball colour before morphing */
     #morph.m-tint .morph-word { color: var(--bc); }
@@ -2816,13 +2816,19 @@
     // coloured words remaining → (3) each word contracts into its ball → fly to
     // orbit → static ring + core land → balls hand to the orbiting copy → name
     morphEl.classList.add('m-born');
-    MT(() => { morphEl.classList.add('m-tint'); words.forEach((w, i) => w.style.color = BALL[i].c); }, 80);
-    MT(() => { caption.style.opacity = '0'; }, 950);
-    MT(() => morphEl.classList.add('m-morph'), 1550);
-    MT(() => morphEl.classList.add('m-fly'),   2300);
-    MT(() => morphEl.classList.add('m-ring'),  3350);
+    // (1) key words take their brand colours — small hold
+    MT(() => { morphEl.classList.add('m-tint'); words.forEach((w, i) => w.style.color = BALL[i].c); }, 120);
+    // (2) the rest of the question fades — small hold
+    MT(() => { caption.style.opacity = '0'; }, 1050);
+    // (3) each word contracts into its ball AND glides to its orbit slot in one
+    //     continuous motion (the fly starts before the contract finishes so it
+    //     reads as a single shrink-and-swoop, not two steps)
+    MT(() => morphEl.classList.add('m-morph'), 1800);
+    MT(() => morphEl.classList.add('m-fly'),   2100);
+    // arcs + core land just as the balls arrive, then hand to the orbiting copy
+    MT(() => morphEl.classList.add('m-ring'),  3300);
     MT(() => morphEl.classList.add('m-orbit'), 3800);
-    MT(() => morphEl.classList.add('m-name'),  4250);
+    MT(() => morphEl.classList.add('m-name'),  3800);
   }
 
   btnPrev.addEventListener('click', () => stepBackward());
