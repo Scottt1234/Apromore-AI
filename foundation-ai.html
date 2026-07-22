@@ -505,27 +505,22 @@
     .setup-eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--sf-blue-l); margin-bottom: 14px; }
     .setup-title { font-family: var(--font-display); font-size: clamp(26px, 4.4vw, 44px); font-weight: 700; color: #fff; letter-spacing: -0.02em; line-height: 1.12; margin: 0 0 34px; }
 
-    /* Narration accent selector (sits below the mode cards, above the help note) */
-    .setup-accent { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; margin: 0 0 24px; }
-    .setup-accent-label { font-size: 13px; font-weight: 600; letter-spacing: 0.04em; color: rgba(255,255,255,0.66); }
-    .setup-accent-opts { display: inline-flex; gap: 4px; padding: 4px; border-radius: 11px;
-      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.16); }
-    .accent-opt { font: inherit; font-family: var(--font-display); font-size: 14px; font-weight: 600;
-      color: rgba(255,255,255,0.72); background: transparent; border: 0; border-radius: 8px;
-      padding: 7px 20px; cursor: pointer; transition: background 0.15s ease, color 0.15s ease; }
-    .accent-opt:hover { color: #fff; }
-    .accent-opt.on { background: var(--sf-blue-m); color: #fff; }
-    .accent-opt:focus-visible { outline: 2px solid var(--sf-blue-l); outline-offset: 2px; }
-    /* Start-muted toggle, sits beside the accent picker */
-    .setup-mute { display: inline-flex; align-items: center; gap: 8px; font: inherit;
-      font-family: var(--font-display); font-size: 14px; font-weight: 600;
-      color: rgba(255,255,255,0.78); cursor: pointer; padding: 7px 16px; border-radius: 10px;
-      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.16);
-      transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease; }
-    .setup-mute:hover { color: #fff; }
-    .setup-mute:focus-visible { outline: 2px solid var(--sf-blue-l); outline-offset: 2px; }
-    .setup-mute.muted { color: #ffd5d5; border-color: rgba(255,120,120,0.5); background: rgba(255,80,80,0.10); }
-    .setup-mute-ico { font-size: 16px; line-height: 1; }
+    /* Oversized Apromore mark behind the setup content: centred, larger than
+       the viewport, balls orbiting slowly. Low opacity + a slow breathing glow
+       keeps it atmospheric rather than competing with the text on top. */
+    .setup-mark {
+      position: absolute; left: 50%; top: 50%; width: max(115vh, 115vw); height: auto;
+      transform: translate(-50%, -50%);
+      opacity: 0; pointer-events: none;
+      animation: setupMarkIn 1.6s 0.2s ease forwards;
+    }
+    @keyframes setupMarkIn { to { opacity: 0.11; } }
+    .setup-mark .sm-orbit { transform-box: fill-box; transform-origin: center; animation: cmSpin 90s linear infinite; }
+    .setup-inner { position: relative; }   /* content sits above the mark */
+    @media (prefers-reduced-motion: reduce) {
+      .setup-mark { animation: none; opacity: 0.11; }
+      .setup-mark .sm-orbit { animation: none; }
+    }
 
     /* Two large mode buttons */
     .setup-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
@@ -547,6 +542,13 @@
       background: rgba(143,184,255,0.12); border: 1px solid rgba(143,184,255,0.4);
     }
     .setup-choice-h { font-family: var(--font-display); font-size: 23px; font-weight: 700; color: #fff; margin-bottom: 9px; letter-spacing: -0.01em; }
+    /* Audio state chip — makes each mode's sound default obvious at a glance */
+    .setup-audio-tag { display: inline-flex; align-items: center; gap: 7px; margin-top: 14px;
+      font-family: var(--font-display); font-size: 12.5px; font-weight: 700; letter-spacing: 0.05em;
+      text-transform: uppercase; padding: 6px 14px; border-radius: 999px; }
+    .setup-audio-tag .sat-ico { font-size: 14px; line-height: 1; }
+    .setup-audio-tag.on  { color: #9df0d2; background: rgba(4,225,150,0.10); border: 1px solid rgba(4,225,150,0.35); }
+    .setup-audio-tag.off { color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.22); }
     .setup-choice-s { font-size: 14px; color: rgba(255,255,255,0.72); line-height: 1.55; max-width: 270px; }
     .setup-rec {
       position: absolute; top: 16px; right: 16px; font-size: 9.5px; font-weight: 800;
@@ -1250,6 +1252,22 @@
        unlocks audio, so no separate "click to start" prompt is needed.
        Reopen any time with the gear button or Esc. -->
   <div id="setup" class="setup-cover">
+    <!-- Oversized Apromore mark, slowly orbiting behind the setup content -->
+    <svg class="setup-mark" viewBox="0 0 300 300" aria-hidden="true">
+      <g fill="none" stroke-linecap="round" stroke-width="8">
+        <path d="M168.7,62 A90,90 0 0 1 238,131.3" stroke="#F6A21D"/>
+        <path d="M238,168.7 A90,90 0 0 1 168.7,238" stroke="#7CC3E8"/>
+        <path d="M131.3,238 A90,90 0 0 1 62,168.7" stroke="#F05A22"/>
+        <path d="M62,131.3 A90,90 0 0 1 131.3,62" stroke="#CFE6F2"/>
+      </g>
+      <circle cx="150" cy="150" r="38" fill="#C0334E"/>
+      <g class="sm-orbit">
+        <circle cx="150" cy="60" r="22" fill="#F6A21D"/>
+        <circle cx="240" cy="150" r="22" fill="#7CC3E8"/>
+        <circle cx="150" cy="240" r="22" fill="#F05A22"/>
+        <circle cx="60" cy="150" r="22" fill="#CFE6F2"/>
+      </g>
+    </svg>
     <div class="setup-inner">
       <div class="setup-eyebrow">Before we start</div>
       <h2 class="setup-title">How would you like to experience Apromore?</h2>
@@ -1259,27 +1277,17 @@
           <div class="setup-choice-ico">&#9654;</div>
           <div class="setup-choice-h">Auto&nbsp;play</div>
           <div class="setup-choice-s">Sit back &mdash; the slides progress automatically, in time with the narration.</div>
+          <span class="setup-audio-tag on"><span class="sat-ico">&#128266;</span> Audio enabled</span>
         </button>
         <button class="setup-choice" data-auto="0" data-audio="1" data-loop="0">
           <div class="setup-choice-ico">&#8592;&#8202;&#8594;</div>
           <div class="setup-choice-h">Manual</div>
           <div class="setup-choice-s">Use the left and right arrows to progress at your own pace.</div>
-        </button>
-      </div>
-      <div class="setup-accent">
-        <span class="setup-accent-label">Narration accent</span>
-        <div class="setup-accent-opts" role="group" aria-label="Narration accent">
-          <button type="button" class="accent-opt" data-accent="us">US</button>
-          <button type="button" class="accent-opt" data-accent="uk">UK</button>
-          <button type="button" class="accent-opt" data-accent="au">AU</button>
-        </div>
-        <button type="button" id="setup-mute" class="setup-mute" aria-pressed="false">
-          <span class="setup-mute-ico">&#128266;</span>
-          <span class="setup-mute-txt">Narration on</span>
+          <span class="setup-audio-tag off"><span class="sat-ico">&#128263;</span> Audio disabled</span>
         </button>
       </div>
       <div class="setup-help">
-        <p class="setup-help-audio"><span class="setup-help-ico">&#128266;</span> Turn the audio off at any time with the audio button, bottom&#8209;right.</p>
+        <p class="setup-help-audio"><span class="setup-help-ico">&#128266;</span> Toggle the audio at any time with the audio button, bottom&#8209;right.</p>
         <p class="setup-help-esc">Return to this screen at any time by pressing <span class="kbd">Esc</span>.</p>
       </div>
     </div>
@@ -1357,8 +1365,9 @@
       // Either Way (slide 9): forward = first beat; reverse = final beat (both lit + statement).
       eBeat = (isEither(current) && opts.reverse) ? E_BEATS : 1;
       if (isEither(current)) applyEitherBeat();
-      // Silent lead-in before the slide's first clip (forward entry only) — see LEAD_IN.
-      pendingIntroMs = (!opts.reverse && LEAD_IN[slides[current].dataset.section || '']) || 0;
+      // Silent lead-in before the slide's first clip (forward entry only) — the
+      // SLIDE_LEAD default, or a per-slide override from LEAD_IN.
+      pendingIntroMs = opts.reverse ? 0 : (LEAD_IN[slides[current].dataset.section || ''] ?? SLIDE_LEAD);
       // Thread (slide 3): forward = first beat (diagram held); reverse = fully revealed.
       if (isThread(current)) {
         tBeat = opts.reverse ? T_BEATS : 1;
@@ -1530,7 +1539,9 @@
         } else {
           applyThreadSpot();
           beatChanged();
-          if (tBeat === 4) armThreadReveal();   // cue the reveal ~0.8s before B04 ends
+          // Autoplay only: cue the reveal ~0.8s before B04 ends. Manual waits
+          // for the arrow (advance() at beat 4 runs revealThreadTogether()).
+          if (tBeat === 4 && autoplayOn) armThreadReveal();
         }
       } else if (isLayers(current)) {
         postIframe(slides[current], { type: 'deck-advance' });   // iframe steps, or replies deck-next
@@ -1603,8 +1614,16 @@
         if (e.data.key === 'ArrowLeft'  || e.data.key === 'ArrowUp')   reverse();
         return;
       }
-      // The layers embed reports each internal step — drives the autoplay dwell lookup.
-      if (e.data.type === 'embed-step') { piStep = e.data.step; beatChanged(); return; }
+      // The layers embed reports each internal step + beat — drives the clip
+      // choice (S07FxxByy) and the autoplay dwell lookup.
+      if (e.data.type === 'embed-step') {
+        const ns = e.data.step, nb = e.data.beat || 1;
+        // A new FRAME (its first beat) carries the half-second lead-in so audio
+        // starts a beat after the frame begins; beats within a frame chain on.
+        if (nb === 1 && ns !== piStep) pendingIntroMs = SLIDE_LEAD;
+        piStep = ns; piBeat = nb; piBeats = e.data.beats || 1;
+        beatChanged(); return;
+      }
       // Generic embed-nav: the iframe hit its first/last step and is handing control back.
       if (e.data.type === 'deck-next') { go(current + 1); return; }
       if (e.data.type === 'deck-prev') { go(current - 1, { reverse: true }); return; }
@@ -1639,24 +1658,32 @@
     let beatTimer = null;   // manual mode: auto-sequences in-slide beats (stops at slide edge)
     let introTimer = null;  // optional silent lead-in before a slide's first clip
     let pendingIntroMs = 0;
-    // Per-slide silent lead-in (ms) before the slide's first clip, keyed by section.
+    // Default silent lead-in before a slide's (or slide-7 frame's) first clip —
+    // a half-second so the visual starts a beat before the narration.
+    const SLIDE_LEAD = 500;
+    // Per-slide override where the visual wants longer to settle. Anything not
+    // listed uses SLIDE_LEAD. Process Intelligence isn't listed: its frames each
+    // carry SLIDE_LEAD (applied per-frame in the embed-step handler).
     const LEAD_IN = {
-      'The Common Thread': 1500,     // slide 3
-      'The Question': 1500,          // slide 4
-      'Process Intelligence': 1000,  // slide 6 · frame 00
-      'Why Now': 1500,               // slide 7 (1s + 0.5s)
-      'Evidence': 500,               // slide 8
-      'Either Way': 500,             // slide 9
+      'The Common Thread': 1500,     // iceberg — let the berg settle
+      'The Question': 1500,          // the standalone question
+      'Why Now': 1500,               // (deck-hidden)
+      'Either Way': 500,             // (deck-hidden)
     };
     let loopOn = false;   // option 1 only: restart the deck after a pause at the end
     let piStep = 0;    // the layers embed's internal step, reported via 'embed-step'
+    let piBeat = 1;    // …and its beat within that step (one recorded clip per beat)
+    let piBeats = 1;   // beats in the current embed step (for the in-slide sequencing)
     const autoBtn = document.getElementById('autoplay-btn');
 
     function currentDwell() {
       const d = AUTO_DWELL[slides[current].dataset.section || ''] ?? AUTO_DWELL.default;
       if (!Array.isArray(d)) return d;
       const i = isProcessReality(current) ? prAct - 1 : isLayers(current) ? piStep : 0;
-      return d[Math.max(0, Math.min(i, d.length - 1))];
+      const v = d[Math.max(0, Math.min(i, d.length - 1))];
+      // The layers frames advance per BEAT when silent — share the frame's dwell
+      // across its beats so an un-recorded run keeps roughly the same pacing.
+      return isLayers(current) ? Math.max(3000, Math.round(v / (piBeats || 1))) : v;
     }
     // autoToken invalidates a beat's pending advance once it (or a newer beat)
     // has fired, so the 'ended' event and the backstop timer can never both
@@ -1683,9 +1710,10 @@
     function scheduleAuto() {
       clearTimeout(autoTimer);
       pendingAudioAdvance = null;
-      // Slide 3 beat 4 doesn't advance on its clip end — the reveal is cued ~0.8s
-      // before B04 ends (see armThreadReveal), which then drives B05.
-      if (isThread(current) && tBeat === 4) return;
+      // Slide 4 beat 4 doesn't advance on its clip end — the reveal is cued ~0.8s
+      // before B04 ends, which then drives B05. (Re-)arm here so resuming
+      // autoplay mid-B04 (after a manual stretch) can't stall the deck.
+      if (isThread(current) && tBeat === 4) { armThreadReveal(); return; }
       const myToken = ++autoToken;
       const step = () => {
         if (!autoplayOn || myToken !== autoToken) return;   // stale (paused or superseded)
@@ -1732,21 +1760,31 @@
     autoBtn.addEventListener('click', () => setAutoplay(!autoplayOn));
 
     // ── Slide narration audio ────────────────────────────────────────
-    // One <audio> element walks the deck: whenever the active beat changes
-    // (slide entry, or a Process Reality act), it plays the matching clip if one
-    // exists. Filenames follow SxxFyy — xx = slide number, yy = frame. Add files
-    // to assets/audio/ and list them in AUDIO_FILES to bring more beats online.
+    // One <audio> element walks the deck: whenever the active beat changes,
+    // it plays the matching clip if one exists. Filenames follow the recording
+    // convention SxxFyy[Bzz] — slide / frame / beat (see currentClipName).
+    // Drop files into assets/audio/ (or an accent folder) as they're recorded —
+    // each name below lights up the moment its file exists; missing = silence.
     // Browsers block audio-with-sound until a user gesture, so playback is gated
     // behind audioUnlocked, flipped true when a mode is chosen on the setup overlay.
     const AUDIO_FILES = new Set([
-      'S01B00', 'S04F00',
-      'S02B01', 'S02B02', 'S02B03', 'S02B04',   // slide 2 in-slide beats (intro + 3 cards)
-      'S03B01', 'S03B02', 'S03B03', 'S03B04', 'S03B05',   // slide 3 beats (intro, 3 cards, together+tagline)
-      'S05F01', 'S05F02', 'S05F03',
-      'S06F00', 'S06F01', 'S06F02', 'S06F03', 'S06F04', 'S06F05', 'S06F06', 'S06F07', 'S06F08',
-      'S07B01', 'S07B02', 'S07B03', 'S07B04',   // slide 7 in-slide beats (intro + 3 cards)
-      'S09B01', 'S09B02', 'S09B03', 'S09B04',   // slide 9 in-slide beats (intro, 2 cards, both+statement)
-      'S08F00', 'S10F00',
+      'S01F01',                                              // 1 · hero
+      'S02F01',                                              // 2 · analogy
+      'S03F00B01', 'S03F00B02', 'S03F00B03',                 // 3 · 95% / expectation / reality
+      'S04F00B01', 'S04F00B02', 'S04F00B03', 'S04F00B04', 'S04F00B05',   // 4 · iceberg + 2-in-3
+      'S05F01',                                              // 5 · the question
+      'S06F00', 'S06F01', 'S06F02',                          // 6 · designed / expected / actual
+      'S07F00B01', 'S07F00B02',                              // 7 · chapter question / logo reveal
+      'S07F01B01', 'S07F01B02', 'S07F01B03',                 // 7 · Process Mining
+      'S07F02B01', 'S07F02B02', 'S07F02B03',                 // 7 · Task Mining
+      'S07F03B01', 'S07F03B02', 'S07F03B03',                 // 7 · Analysis
+      'S07F04B01', 'S07F04B02', 'S07F04B03',                 // 7 · Recommendation
+      'S07F05B01', 'S07F05B02', 'S07F05B03',                 // 7 · Simulation
+      'S07F06B01', 'S07F06B02', 'S07F06B03',                 // 7 · Monitor
+      'S07F07B01', 'S07F07B02', 'S07F07B03',                 // 7 · Conversational Interface
+      'S07F08B01', 'S07F08B02',                              // 7 · finale question / answer
+      'S08F01',                                              // 8 · evidence
+      'S09F01',                                              // 9 · close
     ]);
     const narration = new Audio();
     narration.preload = 'auto';
@@ -1759,7 +1797,9 @@
     // without ever leaving the deck silent.
     const ACCENT_DIRS = { us: 'assets/audio-us', uk: 'assets/audio-uk', au: 'assets/audio-au' };
     const AUDIO_BASE = 'assets/audio';
-    let accent = localStorage.getItem('deckAccent') || 'us';
+    // US narration only for now — the picker is gone from the setup screen, but
+    // the accent folders + fallback stay so other accents can return later.
+    let accent = 'us';
     if (!ACCENT_DIRS[accent]) accent = 'us';
 
     // If the accent-specific clip 404s, retry once on the base set.
@@ -1775,19 +1815,14 @@
       // pace (so the on-screen questions still appear in sequence) rather than
       // flashing past, and so a not-yet-recorded clip can't stall the deck.
       if (f7qIndex >= 0) { clearTimeout(f7qTimer); f7qTimer = setTimeout(stepF7Questions, 2600); }
-      // The main S06F07 clip is missing — still run the questions (the deck drives
+      // The S07F07B03 clip is missing — still run the questions (the deck drives
       // the on-screen ones when embedded, so otherwise none would appear).
-      else if (isLayers(current) && piStep === 7 && !f7qTriggered) startF7Questions(autoplayOn);
+      else if (isLayers(current) && piStep === 7 && piBeat === 3 && !f7qTriggered) startF7Questions(autoplayOn);
     });
 
     // During autoplay, a clip finishing drives the advance — a short breath, then
     // the deck moves on. pendingAudioAdvance / autoToken (set in scheduleAuto)
     // guard against double-advancing if the backstop timer also fires.
-    // More beats left to play inside the current slide? (auto-sequences in any mode)
-    function inSlideBeatsRemain() {
-      return (isPressures(current) && pBeat < P_BEATS) || (isThread(current) && tBeat < T_BEATS)
-          || (isWhyNow(current) && wBeat < W_BEATS) || (isEither(current) && eBeat < E_BEATS);
-    }
 
     narration.addEventListener('ended', () => {
       // A frame-7 question clip just finished → play the next one (or wrap up).
@@ -1798,38 +1833,39 @@
         if (!pendingAudioAdvance) return;
         const fn = pendingAudioAdvance;
         pendingAudioAdvance = null;
-        // Slide 6 frame 7: don't hold — narrate the on-screen questions, then advance.
-        if (isLayers(current) && piStep === 7 && !f7qTriggered) { startF7Questions(true); return; }
-        // Per-beat hold before moving on: slide 3 close (reduced), slide 6 frame 03, else ~0.6s.
-        const breath = (isThread(current) && tBeat === T_BEATS) ? 1500   // slide 3 close
-                     : (isLayers(current) && piStep === 3)       ? 3500   // slide 6 · frame 03
+        // Slide 7 frame 7, last beat: don't hold — narrate the on-screen questions, then advance.
+        if (isLayers(current) && piStep === 7 && piBeat === 3 && !f7qTriggered) { startF7Questions(true); return; }
+        // Per-beat hold before moving on: slide 4 close (reduced), Analysis last
+        // beat (let the figures land), each Process Reality frame (a beat to
+        // absorb the map before it morphs), else ~0.6s.
+        const breath = (isThread(current) && tBeat === T_BEATS)               ? 1500   // slide 4 close
+                     : (isLayers(current) && piStep === 3 && piBeat === 3)     ? 3500   // slide 7 · Analysis figures
+                     : isProcessReality(current)                              ? 1200   // slide 6 · pause after each frame
                      : 600;
         setTimeout(() => { if (autoplayOn) fn(); }, breath);
         return;
       }
-      // Slide 6 frame 7 (manual): still narrate the questions in sequence; the
-      // presenter controls when to move on to the next frame.
-      if (isLayers(current) && piStep === 7 && !f7qTriggered) { startF7Questions(false); return; }
-      // Manual: in-slide beats still auto-sequence within the slide, then stop at
-      // the slide boundary so the presenter controls slide-to-slide movement.
-      if (inSlideBeatsRemain()) {
+      // Slide 7 frame 7 (manual), last beat: still run the questions in
+      // sequence; the presenter controls when to move on to the next frame.
+      if (isLayers(current) && piStep === 7 && piBeat === 3 && !f7qTriggered) { startF7Questions(false); return; }
+      // Manual is strictly arrow-driven — every slide, frame and beat waits.
+      // The ONE exception is slide 7 (Process Intelligence): a frame's beats
+      // chain automatically (the muted clips carry the timing), then the deck
+      // sits at the end of the frame until the presenter advances.
+      if (isLayers(current) && piBeat < piBeats) {
         clearTimeout(beatTimer);
-        beatTimer = setTimeout(() => { if (!autoplayOn && inSlideBeatsRemain()) advance(); }, 600);
+        beatTimer = setTimeout(() => { if (!autoplayOn && isLayers(current) && piBeat < piBeats) advance(); }, 600);
       }
     });
 
     // ── Mute toggle ──────────────────────────────────────────────────
     // Muting only silences the element: a muted clip still plays through and
-    // fires 'ended', so autoplay's beat timing is unchanged. Preference persists.
-    // Two independent things:
-    //  • `muted` — the live state of the in-deck mute button during the show.
-    //  • `startMuted` — the setup-screen choice for how the deck begins. It only
-    //    seeds `muted` when a mode is picked, and always defaults to Sound on on
-    //    each load (it is not persisted), so viewers always start with audio on.
+    // fires 'ended', so autoplay's beat timing is unchanged. The deck always
+    // starts with narration on (the setup-screen start-muted toggle is gone);
+    // the in-deck button bottom-right mutes during the show.
     const muteBtn = document.getElementById('mute-btn');
-    const setupMuteBtn = document.getElementById('setup-mute');
     let muted = false;
-    let startMuted = false;
+    const startMuted = false;   // narration always starts on
     function applyMute() {
       narration.muted = muted;
       muteBtn.classList.toggle('on', muted);
@@ -1843,39 +1879,28 @@
     muteBtn.addEventListener('click', toggleMute);
     applyMute();
 
-    // Setup-screen start toggle — only governs the opening state.
-    function applyStartMute() {
-      setupMuteBtn.classList.toggle('muted', startMuted);
-      setupMuteBtn.setAttribute('aria-pressed', startMuted ? 'true' : 'false');
-      setupMuteBtn.querySelector('.setup-mute-ico').innerHTML = startMuted ? '&#128263;' : '&#128266;';
-      setupMuteBtn.querySelector('.setup-mute-txt').textContent = startMuted ? 'Muted' : 'Narration on';
-    }
-    setupMuteBtn.addEventListener('click', () => { startMuted = !startMuted; applyStartMute(); });
-    applyStartMute();
-
     // The clip for the current beat, or null if none is on file.
-    // Frame index: Process Reality uses its act (1–3 → F01–F03, matching the
-    // uploaded files); the layers embed uses its step; plain slides are F00.
+    // Naming: S = slide, F = frame, B = beat (recording convention).
+    //  · Single-clip slides:  S01F01, S02F01, S05F01, S08F01, S09F01
+    //  · Card build-ups:      S03F00B01–03 (Pressures), S04F00B01–05 (iceberg)
+    //  · Process Reality:     S06F00–02 (one clip per act)
+    //  · Process Intelligence: S07FxxByy — frame = embed step (00 intro … 08
+    //    finale), beat = its line within the frame, reported via 'embed-step'.
     function currentClipName() {
-      const nn = String(current + 1).padStart(2, '0');
-      let name;
-      if (current === 0) {
-        name = 'S01B00';                                  // slide 1 (hero) uses a beat-named clip
-      } else if (isPressures(current)) {
-        name = 'S02B' + String(pBeat).padStart(2, '0');   // S02B01–04, one per beat
-      } else if (isThread(current)) {
-        name = 'S03B' + String(tBeat).padStart(2, '0');   // S03B01–05, one per beat
-      } else if (isWhyNow(current)) {
-        name = 'S07B' + String(wBeat).padStart(2, '0');   // S07B01–04, one per beat
-      } else if (isEither(current)) {
-        name = 'S09B' + String(eBeat).padStart(2, '0');   // S09B01–04, one per beat
-      } else {
-        const ff = isProcessReality(current) ? prAct
-                 : isLayers(current)         ? piStep
-                 : 0;
-        name = 'S' + nn + 'F' + String(ff).padStart(2, '0');
-      }
-      return AUDIO_FILES.has(name) ? name : null;
+      const p2 = n => String(n).padStart(2, '0');
+      const sec = slides[current].dataset.section || '';
+      let name = null;
+      if (current === 0)                       name = 'S01F01';
+      else if (sec === 'The Analogy')          name = 'S02F01';
+      else if (isPressures(current))           name = 'S03F00B' + p2(pBeat);
+      else if (isThread(current))              name = 'S04F00B' + p2(tBeat);
+      else if (sec === 'The Question')         name = 'S05F01';
+      else if (isProcessReality(current))      name = 'S06F' + p2(prAct - 1);
+      else if (isLayers(current))              name = 'S07F' + p2(piStep) + 'B' + p2(piBeat);
+      else if (sec === 'Evidence')             name = 'S08F01';
+      else if (sec === 'Knowledge Is Power')   name = 'S09F01';
+      // (Why Now / Either Way are deck-hidden and carry no clips.)
+      return name && AUDIO_FILES.has(name) ? name : null;
     }
     function playBeatAudio() {
       const name = currentClipName();
@@ -1893,14 +1918,14 @@
       narration.play().catch(() => {});            // ignore transient play() rejections
     }
 
-    // ── Slide 6, frame 7 · Conversational Interface question audio ────
-    // After the main S06F07 clip, the embed streams questions on screen; play
-    // matching clips S06F07Q1..Q4 in sequence, then move on (this replaces the
+    // ── Slide 7, frame 7 · Conversational Interface question audio ────
+    // After the frame's last beat (S07F07B03), the embed streams questions on
+    // screen; play clips S07F07Q1..Q4 in sequence, then move on (this replaces the
     // old long hold). These are audio-only sub-beats — no extra visual frame —
     // and live alongside the others (assets/audio/ + accent folders, same
     // fallback). A missing or stalled clip can't hang the deck (see backstop +
     // the error handler), so the questions are safe to add incrementally.
-    const F7_QUESTIONS = ['S06F07Q1', 'S06F07Q2', 'S06F07Q3', 'S06F07Q4'];
+    const F7_QUESTIONS = ['S07F07Q1', 'S07F07Q2', 'S07F07Q3', 'S07F07Q4'];
     let f7qIndex = -1;       // -1 = idle; 0..3 = the question clip currently playing
     let f7qAuto = false;     // true when autoplay should advance after the last one
     let f7qTimer = null;     // safety backstop so a missing/stalled clip can't stall
@@ -1922,7 +1947,10 @@
       f7qTriggered = true;        // don't restart this run if 'ended' fires again
       f7qIndex = 0;
       clearTimeout(autoTimer);    // cancel the main clip's autoplay backstop
-      playClip(F7_QUESTIONS[0]);
+      // A half-second breath after "…in their own words" before the first
+      // question lands. cancelF7Questions() clears this timer if we navigate away.
+      clearTimeout(f7qTimer);
+      f7qTimer = setTimeout(() => { if (f7qIndex === 0) playClip(F7_QUESTIONS[0]); }, 500);
     }
     function stepF7Questions() {
       clearTimeout(f7qTimer);
@@ -1963,9 +1991,10 @@
       setupEl.style.display = 'flex';
     }
     function startDeck(auto, withAudio, loop) {
-      // Begin in the state chosen on the setup screen (defaults to Sound on);
-      // the in-deck mute button then takes over for the rest of the show.
-      muted = startMuted;
+      // Autoplay starts with sound; Manual starts MUTED (the presenter speaks —
+      // clips still play silently so slide 7's frame beats keep their timing).
+      // The in-deck mute button (bottom-right) overrides either way.
+      muted = !auto;
       applyMute();
       audioUnlocked = true;
       loopOn = !!loop;
@@ -1978,19 +2007,6 @@
         playBeatAudio();       // narrate the current slide (silent if muted)
       }
     }
-    // Accent picker (US / UK / AU) — sets which audio folder clips load from.
-    // Picking an accent doesn't start the deck; the mode cards below do that.
-    const accentOpts = setupEl.querySelectorAll('.accent-opt');
-    function applyAccent() {
-      accentOpts.forEach(b => b.classList.toggle('on', b.dataset.accent === accent));
-    }
-    accentOpts.forEach(b => b.addEventListener('click', () => {
-      accent = b.dataset.accent;
-      localStorage.setItem('deckAccent', accent);
-      applyAccent();
-    }));
-    applyAccent();
-
     setupEl.querySelectorAll('.setup-choice').forEach(card =>
       card.addEventListener('click', () =>
         startDeck(card.dataset.auto === '1', card.dataset.audio === '1', card.dataset.loop === '1')));

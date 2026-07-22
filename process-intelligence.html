@@ -1663,6 +1663,37 @@
 
   // ── Navigation state ───────────────────────────────────────────
   let step = 0;            // 0 = overview; 1..STEPS = focus a layer / pillar; FINALE = full stack
+  // ── Narration beats ────────────────────────────────────────────
+  // Each step is subdivided into beats — one recorded clip (S07FxxByy) per beat.
+  // Step 0: question / Processforce reveal. Layers 1–7: their three caption
+  // lines. Finale: question / answer. The deck advances one BEAT per
+  // deck-advance and we report {step, beat, beats} so it plays the right clip;
+  // each beat's caption line types as its beat fires (option-2 lock-step).
+  const BEAT_COUNTS = [2, 3, 3, 3, 3, 3, 3, 3, 2];   // indexed by step 0..FINALE
+  let beat = 1;
+  function reportBeat() { if (embedded) toParent({ type: 'embed-step', step: step, beat: beat, beats: BEAT_COUNTS[step] || 1 }); }
+  // Fire beat b's caption line in the open card's scene (registered by play*).
+  function fireNarBeat(el, b) {
+    if (!el) return;
+    const scene = el.querySelector('.pm-scene, .tm-scene, .an-scene, .rc-scene, .si-scene, .mo-scene, .cv-scene');
+    if (!scene || !scene._narBeats) return;
+    const fn = scene._narBeats[b - 1];
+    if (fn) fn();
+  }
+  // A beat-gated caption line for the .pi-narr scenes: the first line types
+  // straight in (after the card-raise breath); later lines wipe the previous
+  // one, then type. `after` runs once the line has been queued.
+  function narLine(scene, nar, segments, after) {
+    return () => {
+      const first = !nar.innerHTML;
+      const go = () => { cardType(scene, nar, segments, 46, first ? 350 : 0); if (after) after(); };
+      if (first) { nar.classList.remove('wipe'); go(); }
+      else {
+        nar.classList.add('wipe');
+        if (scene._t) scene._t.push(setTimeout(() => { nar.classList.remove('wipe'); nar.innerHTML = ''; go(); }, 360));
+      }
+    };
+  }
   let currentBig = null;
   let swapTimer = null;
 
@@ -1729,6 +1760,7 @@
     else if (el.querySelector('.si-scene')) playSI(el);
     else if (el.querySelector('.mo-scene')) playMO(el);
     else if (el.querySelector('.cv-scene')) playConvo(el);
+    fireNarBeat(el, beat);   // type the current beat's caption (1 on forward entry, last on reverse)
   }
   function stopScene(el) {
     if (!el) return;
@@ -1895,22 +1927,13 @@
     const scene = el.querySelector('.an-scene'); if (!scene) return;
     cardPlay(scene);
     const nar = scene.querySelector('.pi-narr');
-    // Beat 1 — caption types first (0.35–1.73s); scan starts at 2.0s and lasts 2.6s,
-    //   revealing each dot AS the line passes its x-position; 2s breath afterwards.
-    cardType(scene, nar, [{ t: 'Your whole process is then ' }, { t: 'analyzed', hl: true }, { t: '.' }], 46, 350);
-    // Beat 2 — wipes immediately as the scan finishes (4.6s); pills land while
-    //   "Quantified across cost, time and resource." types.
-    if (scene._t) scene._t.push(setTimeout(() => nar.classList.add('wipe'), 4600));
-    if (scene._t) scene._t.push(setTimeout(() => {
-      nar.classList.remove('wipe'); nar.innerHTML = '';
-      cardType(scene, nar, [{ t: 'And quantified across ' }, { t: 'cost, time and resource', hl: true }, { t: '.' }], 46, 0);
-    }, 4950));
-    if (scene._t) scene._t.push(setTimeout(() => nar.classList.add('wipe'), 8880));
-    // Beat 2 figures — count up as the pills land, while the caption types.
-    if (scene._t) scene._t.push(setTimeout(() => {
-      nar.classList.remove('wipe'); nar.innerHTML = '';
-      cardType(scene, nar, [{ t: 'Giving you the ' }, { t: 'understanding', hl: true }, { t: ' you need to make informed decisions.' }], 46, 0);
-    }, 9230));
+    // Captions are beat-gated (one clip per line — S07F03B01..03); the visual
+    // timeline (scan, pills, figures) still runs off .playing as before.
+    scene._narBeats = [
+      narLine(scene, nar, [{ t: 'Your whole process is then ' }, { t: 'analyzed', hl: true }, { t: '.' }]),
+      narLine(scene, nar, [{ t: 'And quantified across ' }, { t: 'cost, time and resource', hl: true }, { t: '.' }]),
+      narLine(scene, nar, [{ t: 'Giving you the ' }, { t: 'understanding', hl: true }, { t: ' you need to make informed decisions.' }]),
+    ];
     cardCount(scene, scene.querySelector('.an-fig--cost'),     1.2,   1200, 5700,  v => '$' + v.toFixed(1) + 'M');
     cardCount(scene, scene.querySelector('.an-fig--resource'), 12400, 1100, 6300, v => Math.round(v).toLocaleString());
     cardCount(scene, scene.querySelector('.an-fig--time'),     9,     1000, 6000, v => String(Math.round(v)));
@@ -2112,19 +2135,13 @@
     const scene = el.querySelector('.rc-scene'); if (!scene) return;
     cardPlay(scene);
     const nar = scene.querySelector('.pi-narr');
-    const T = (fn, ms) => { if (scene._t) scene._t.push(setTimeout(fn, ms)); };
-    // Beat 1 — caption types first (0.35–1.7s); the priority chips land 1.9s, the
-    //   cursor picks Cost at 2.9s, the hotspot surges in answer at 3.3s. Breath after.
-    cardType(scene, nar, [{ t: 'Then ' }, { t: 'you confirm', hl: true }, { t: ' your priority objectives.' }], 46, 350);
-    // Beat 2 — engine returns 5.6s, the hotspot streams into it from 5.9s, and the
-    //   proposal card materialises beneath it while the caption types.
-    T(() => nar.classList.add('wipe'), 4900);
-    T(() => { nar.classList.remove('wipe'); nar.innerHTML = '';
-      cardType(scene, nar, [{ t: 'Agentforce uses ' }, { t: 'Process 360', hl: true }, { t: ', curated by Apromore, to find the best way to achieve them.' }], 46, 0); }, 5250);
-    // Beat 3 — the fix previews on the map; Review / Approve appear, cursor hovers. Held.
-    T(() => nar.classList.add('wipe'), 10600);
-    T(() => { nar.classList.remove('wipe'); nar.innerHTML = '';
-      cardType(scene, nar, [{ t: 'A recommendation is presented for ' }, { t: 'your review', hl: true }, { t: '.' }], 46, 0); }, 10950);
+    // Captions beat-gated (S07F04B01..03); chips/engine/streams/card run on the
+    // CSS timeline off .playing as before.
+    scene._narBeats = [
+      narLine(scene, nar, [{ t: 'Then ' }, { t: 'you confirm', hl: true }, { t: ' your priority objectives.' }]),
+      narLine(scene, nar, [{ t: 'Agentforce uses ' }, { t: 'Process 360', hl: true }, { t: ', curated by Apromore, to find the best way to achieve them.' }]),
+      narLine(scene, nar, [{ t: 'A recommendation is presented for ' }, { t: 'your review', hl: true }, { t: '.' }]),
+    ];
   }
 
   // ── Shared carry-over map (the Analysis / Recommendation geometry) ──────
@@ -2254,21 +2271,17 @@
     const scene = el.querySelector('.si-scene'); if (!scene) return;
     cardPlay(scene);
     const nar = scene.querySelector('.pi-narr');
-    const T = (fn, ms) => { if (scene._t) scene._t.push(setTimeout(fn, ms)); };
-    // Beat 1 — caption first (0.35–2.0s); boundary draws 2.2s, shimmer + tag follow.
-    cardType(scene, nar, [{ t: 'Your process is cloned to create a ' }, { t: 'Digital Twin', hl: true }, { t: '.' }], 46, 350);
-    // Beat 2 — the fix applies in the twin while cases replay and the counter runs.
-    T(() => nar.classList.add('wipe'), 4900);
-    T(() => { nar.classList.remove('wipe'); nar.innerHTML = '';
-      cardType(scene, nar, [{ t: 'The recommended fix is applied, and ' }, { t: 'your own data', hl: true }, { t: ' runs through the new process.' }], 46, 0); }, 5250);
-    // Beat 3 — before → after results, still only a projection.
-    T(() => nar.classList.add('wipe'), 10600);
-    T(() => { nar.classList.remove('wipe'); nar.innerHTML = '';
-      cardType(scene, nar, [{ t: 'The result is ' }, { t: 'mathematically proven', hl: true }, { t: ' before you commit.' }], 46, 0); }, 10950);
-    // Beat 3 closer — appended once the after-figures have landed.
-    T(() => {
-      cardType(scene, nar, [{ t: ' Underpinning your ' }, { t: 'business case', hl: true }, { t: '.' }], 46, 0, true);
-    }, 13300);
+    // Captions beat-gated (S07F05B01..03). The "business case" closer stays
+    // welded to beat 3, appended ~2.4s after the line starts (figures landing).
+    scene._narBeats = [
+      narLine(scene, nar, [{ t: 'Your process is cloned to create a ' }, { t: 'Digital Twin', hl: true }, { t: '.' }]),
+      narLine(scene, nar, [{ t: 'The recommended fix is applied, and ' }, { t: 'your own data', hl: true }, { t: ' runs through the new process.' }]),
+      narLine(scene, nar, [{ t: 'The result is ' }, { t: 'mathematically proven', hl: true }, { t: ' before you commit.' }], () => {
+        if (scene._t) scene._t.push(setTimeout(() => {
+          cardType(scene, nar, [{ t: ' Underpinning your ' }, { t: 'business case', hl: true }, { t: '.' }], 46, 0, true);
+        }, 2350));
+      }),
+    ];
     cardCount(scene, scene.querySelector('.si-count'), 100, 2600, 6700, v => Math.round(v) + '%');
     cardCount(scene, scene.querySelector('.si-after--cost'), 560, 900, 11900,
       v => v >= 1000 ? '$' + (v / 1000).toFixed(1) + 'M / yr' : '$' + Math.round(v) + 'K / yr', 1200);
@@ -2363,17 +2376,12 @@
     const scene = el.querySelector('.mo-scene'); if (!scene) return;
     cardPlay(scene);
     const nar = scene.querySelector('.pi-narr');
-    const T = (fn, ms) => { if (scene._t) scene._t.push(setTimeout(fn, ms)); };
-    // Beat 1 — caption first (0.35–1.7s); LIVE badge 2.0s, panel 2.4s, trace 3.0s.
-    cardType(scene, nar, [{ t: 'The fix is ' }, { t: 'live', hl: true }, { t: ', and is then monitored in real time.' }], 46, 350);
-    // Beat 2 — the baselines report in while the caption types.
-    T(() => nar.classList.add('wipe'), 4900);
-    T(() => { nar.classList.remove('wipe'); nar.innerHTML = '';
-      cardType(scene, nar, [{ t: 'Every case, checked against the ' }, { t: 'new baseline', hl: true }, { t: '.' }], 46, 0); }, 5250);
-    // Beat 3 — drift caught: map node warms 10.2s, flag 10.5s, TIME row flips 10.7s.
-    T(() => nar.classList.add('wipe'), 9300);
-    T(() => { nar.classList.remove('wipe'); nar.innerHTML = '';
-      cardType(scene, nar, [{ t: 'New variants are ' }, { t: 'caught immediately', hl: true }, { t: ', and you\'re notified.' }], 46, 0); }, 9650);
+    // Captions beat-gated (S07F06B01..03); LIVE badge / trace / drift stay on CSS timers.
+    scene._narBeats = [
+      narLine(scene, nar, [{ t: 'The fix is ' }, { t: 'live', hl: true }, { t: ', and is then monitored in real time.' }]),
+      narLine(scene, nar, [{ t: 'Every case, checked against the ' }, { t: 'new baseline', hl: true }, { t: '.' }]),
+      narLine(scene, nar, [{ t: 'New variants are ' }, { t: 'caught immediately', hl: true }, { t: ', and you\'re notified.' }]),
+    ];
   }
 
   // ── Task Mining: same shared cardPlay/cardType pattern as Process Mining and
@@ -2390,17 +2398,12 @@
     const scene = el.querySelector('.tm-scene'); if (!scene) return;
     cardPlay(scene);
     const nar = scene.querySelector('.pi-narr');
-    const T = (fn, ms) => { if (scene._t) scene._t.push(setTimeout(fn, ms)); };
-    // Beat 1 — "Process Mining only sees what is logged within your systems."
-    cardType(scene, nar, [{ t: 'Process mining can only see what your systems ' }, { t: 'log', hl: true }, { t: '.' }], 46, 350);
-    T(() => nar.classList.add('wipe'), 5600);          // +1s read time on beat 1
-    // Beat 2 — "But the real work happens between them, where nothing is logged."
-    T(() => { nar.classList.remove('wipe'); nar.innerHTML = '';
-      cardType(scene, nar, [{ t: 'But so much of the real work happens ' }, { t: 'between them', hl: true }, { t: ', where nothing gets logged.' }], 46, 0); }, 5950);
-    T(() => nar.classList.add('wipe'), 11400);         // +1s read time on beat 2
-    // Beat 3 — "Task mining captures what process mining misses."
-    T(() => { nar.classList.remove('wipe'); nar.innerHTML = '';
-      cardType(scene, nar, [{ t: 'Task mining ' }, { t: 'complements', hl: true }, { t: ' Process mining using ' }, { t: 'desktop agents', hl: true }, { t: ' to capture what is missed.' }], 46, 0); }, 11750);
+    // Captions beat-gated (S07F02B01..03); the System/extras/map visuals keep their CSS schedule.
+    scene._narBeats = [
+      narLine(scene, nar, [{ t: 'Process mining can only see what your systems ' }, { t: 'log', hl: true }, { t: '.' }]),
+      narLine(scene, nar, [{ t: 'But so much of the real work happens ' }, { t: 'between them', hl: true }, { t: ', where nothing gets logged.' }]),
+      narLine(scene, nar, [{ t: 'Task mining ' }, { t: 'complements', hl: true }, { t: ' Process mining using ' }, { t: 'desktop agents', hl: true }, { t: ' to capture what is missed.' }]),
+    ];
   }
   function stopTM(el) {
     const scene = el.querySelector('.tm-scene'); if (!scene) return;
@@ -2421,17 +2424,12 @@
     const scene = el.querySelector('.pm-scene'); if (!scene) return;
     cardPlay(scene);
     const nar = scene.querySelector('.pi-narr');
-    const T = (fn, ms) => { if (scene._t) scene._t.push(setTimeout(fn, ms)); };
-    // Beat 1 — extract: "We extract the data your systems already capture."
-    cardType(scene, nar, [{ t: 'Process mining ' }, { t: 'extracts', hl: true }, { t: ' the data your systems already capture.' }], 46, 350);
-    T(() => nar.classList.add('wipe'), 5300);          // +1s read time on beat 1
-    // Beat 2 — connect: "We connect those records to understand exactly what's happening."
-    T(() => { nar.classList.remove('wipe'); nar.innerHTML = '';
-      cardType(scene, nar, [{ t: 'It ' }, { t: 'connects', hl: true }, { t: " those records to map exactly what's happening." }], 46, 0); }, 5650);
-    T(() => nar.classList.add('wipe'), 10400);         // +1s read time on beat 2
-    // Beat 3 — real process: "Your real process appears, with every detour, bottleneck and loop exposed."
-    T(() => { nar.classList.remove('wipe'); nar.innerHTML = '';
-      cardType(scene, nar, [{ t: 'Your ' }, { t: 'real process', hl: true }, { t: ' appears, with every detour, bottleneck and loop exposed.' }], 46, 0); }, 10750);
+    // Captions beat-gated (S07F01B01..03); system/engine/map visuals keep their CSS schedule.
+    scene._narBeats = [
+      narLine(scene, nar, [{ t: 'Process mining ' }, { t: 'extracts', hl: true }, { t: ' the data your systems already capture.' }]),
+      narLine(scene, nar, [{ t: 'It ' }, { t: 'connects', hl: true }, { t: " those records to map exactly what's happening." }]),
+      narLine(scene, nar, [{ t: 'Your ' }, { t: 'real process', hl: true }, { t: ' appears, with every detour, bottleneck and loop exposed.' }]),
+    ];
   }
 
   // Crowd → question pulse: a small token travels from a random person to a new question bubble.
@@ -2601,26 +2599,37 @@
     const CPS = 67;                                       // ~40% slower typing
     const T = (fn, ms) => scene._cvTimers.push(setTimeout(fn, ms));
 
-    // 1) "Everything you've just seen used to take experts." on the left; experts appear once it finishes.
-    typeLine(scene, narrate, [{ t: "Everything you've just seen used to take " }, { t: 'experts', hl: true }, { t: '.' }], CPS, () => scene.classList.add('experts'));
-    // 2) hold, then wipe the line away.
-    T(() => narrate.classList.add('wipe'), 4800);
-    // 3) experts shrink + crowd fades in while "Now anyone can get the answers they need." types
-    //    on the left (and then stays there).
-    T(() => {
-      narrate.classList.remove('wipe'); narrate.innerHTML = '';
-      scene.classList.add('revealed');
-      typeLine(scene, narrate, [{ t: 'Now ' }, { t: 'anyone', hl: true }, { t: ' can get the answers they need.' }], CPS);
-    }, 5650);
-    // 4) after a small beat, the right-hand title types at the same height; the questions (and
-    //    their pulses) wait until it has finished typing before they begin to stream in.
-    //    Embedded in the deck, the questions are deck-driven (one per S06F07Qn
-    //    audio clip, via 'convo-q'); standalone, they auto-stream as a demo.
-    T(() => typeLine(scene, rtitle, [{ t: 'Simply by asking, in their own words.' }], CPS,
-      () => { if (scene._cvTimers) scene._cvTimers.push(setTimeout(() => {
-        // Stream locally unless the deck's narration has taken over (via 'convo-q').
-        if (!scene._deckDrove) startConvoQuestions(scene);
-      }, embedded ? 1500 : 650)); }), 9300);
+    // Beat-gated narration (S07F07B01..03). B01: the experts line (experts appear
+    // once it finishes). B02: experts shrink + crowd reveals while the "anyone"
+    // line types. B03: the right-hand title; then the questions — deck-driven
+    // (one per S07F07Qn clip via 'convo-q') when embedded, auto-streamed standalone.
+    scene._narBeats = [
+      () => {
+        typeLine(scene, narrate, [{ t: "Everything you've just seen used to take " }, { t: 'experts', hl: true }, { t: '.' }], CPS, () => scene.classList.add('experts'));
+      },
+      () => {
+        rtitle.innerHTML = '';                           // stepping back from B03 clears the right title
+        narrate.classList.add('wipe');
+        T(() => {
+          narrate.classList.remove('wipe'); narrate.innerHTML = '';
+          scene.classList.add('revealed');
+          typeLine(scene, narrate, [{ t: 'Now ' }, { t: 'anyone', hl: true }, { t: ' can get the answers they need.' }], CPS);
+        }, 360);
+      },
+      () => {
+        // Reverse entry lands here directly — restore beats 1–2's end state first.
+        if (!scene.classList.contains('revealed')) {
+          scene.classList.add('experts', 'revealed');
+          narrate.classList.remove('wipe');
+          narrate.innerHTML = 'Now <span class="cv-hl">anyone</span> can get the answers they need.';
+        }
+        typeLine(scene, rtitle, [{ t: 'Simply by asking, in their own words.' }], CPS,
+          () => { if (scene._cvTimers) scene._cvTimers.push(setTimeout(() => {
+            // Stream locally unless the deck's narration has taken over (via 'convo-q').
+            if (!scene._deckDrove) startConvoQuestions(scene);
+          }, embedded ? 1500 : 650)); });
+      },
+    ];
   }
   function stopConvo(el) {
     const scene = el.querySelector('.cv-scene'); if (!scene) return;
@@ -2660,6 +2669,7 @@
   // button and the deck's replay button via the 'replay' message).
   function replayCurrent() {
     const el = currentBig; if (!el) return;
+    beat = 1; reportBeat();     // replay restarts the frame from its first beat
     playScene(el);
   }
 
@@ -2684,7 +2694,8 @@
       caption.style.opacity = '';         // the reveal faded the caption; let this frame's caption show
       if (step === FINALE) heroMorph(); else hideMorph();
     }
-    if (step === 0) introPhase = 0;       // re-entering the intro resets to the question
+    if (step === 0) { introPhase = 0; beat = 1; }   // re-entering the intro resets to the question
+    if (step === FINALE) beat = 2;        // render() shows the completed finale (jump/reverse/reduced motion)
     app.classList.toggle('finale-mode', step === FINALE);
     app.classList.toggle('finale-go', step === FINALE);
     // reset any in-flight finale entry choreography
@@ -2719,8 +2730,8 @@
     btnPrev.disabled = step === 0;
     btnNext.disabled = step === FINALE;
 
-    // Report the step to the deck — drives the autoplay dwell lookup.
-    if (embedded) toParent({ type: 'embed-step', step: step });
+    // Report step + beat to the deck — drives clip choice and the autoplay dwell.
+    reportBeat();
   }
 
   function goTo(n) {
@@ -2728,6 +2739,9 @@
     if (n === step) return;
     const from = step;
     step = n;
+    // Forward entry starts a frame at beat 1; stepping backward lands on its last
+    // beat (render() overrides for step 0 and the finale's completed state).
+    beat = (n < from) ? (BEAT_COUNTS[n] || 1) : 1;
     clearFinaleTimers();
     if (step === FINALE && from === STEPS && !REDUCED_MOTION) enterFinale();
     else render();
@@ -2763,8 +2777,8 @@
     progLabel.textContent = 'Together';
     navCount.textContent = FINALE + ' / ' + FINALE;
     btnPrev.disabled = false;
-    btnNext.disabled = true;
-    if (embedded) toParent({ type: 'embed-step', step: FINALE });
+    btnNext.disabled = false;   // beat 2 (the answer) is still to come
+    reportBeat();
     // 1) the previous frame's caption fades out (big card is closing meanwhile)
     caption.classList.add('cap-hidden');
     FT(() => {
@@ -2781,28 +2795,46 @@
       const p2 = pillarWrap.getBoundingClientRect();
       slideFrom(railWrap, r1.top - r2.top);
       slideFrom(pillarWrap, p1.top - p2.top);
-      // 3) the deck's master question returns once the stack has settled
+      // 3) the deck's master question returns once the stack has settled.
+      //    Beat 1 (S07F08B01) HOLDS here — the answer is beat 2, fired on advance.
       FT(() => {
         caption.classList.remove('cap-hidden');
         heroMorph();                                  // mark fades in in step with the returning title
         capTitle.classList.remove('cap-bounce'); void capTitle.offsetWidth; capTitle.classList.add('cap-bounce');
-        // 4) hold, then the question fades away
-        FT(() => {
-          const q = capTitle.querySelector('.fin-q'); if (q) q.classList.add('fin-out');
-          // 5) the answer lands at full scale and the pulse travels the stack
-          FT(() => {
-            capTitle.innerHTML = '<span class="hl">...and exactly how Agents can add value.</span>';
-            capTitle.classList.remove('cap-bounce'); void capTitle.offsetWidth; capTitle.classList.add('cap-bounce');
-            app.classList.add('finale-go');
-            // 6) the recap line follows a beat later
-            FT(() => {
-              capSub.style.opacity = '';
-              capSub.classList.remove('cap-bounce'); void capSub.offsetWidth; capSub.classList.add('cap-bounce');
-            }, 420);
-          }, 460);
-        }, 2300);
       }, 780);
     }, 430);
+  }
+
+  // Finale beat 2 (S07F08B02): the question fades away, the answer lands at
+  // full scale, the pulse travels the stack, and the recap line follows.
+  function finaleBeat2() {
+    const app = document.getElementById('app');
+    btnNext.disabled = true;    // the answer is the deck's last beat
+    // Advanced before the entry choreography staged the question (rapid clicks):
+    // skip the fade dance and land the completed finale via render().
+    if (!capTitle.querySelector('.fin-q')) { render(); return; }
+    const q = capTitle.querySelector('.fin-q'); q.classList.add('fin-out');
+    FT(() => {
+      capTitle.innerHTML = '<span class="hl">...and exactly how Agents can add value.</span>';
+      capTitle.classList.remove('cap-bounce'); void capTitle.offsetWidth; capTitle.classList.add('cap-bounce');
+      app.classList.add('finale-go');
+      FT(() => {
+        capSub.style.opacity = '';
+        capSub.classList.remove('cap-bounce'); void capSub.offsetWidth; capSub.classList.add('cap-bounce');
+      }, 420);
+    }, 460);
+  }
+
+  // Finale back to beat 1: restore the held question state (reverse within the frame).
+  function finaleBeat1() {
+    const app = document.getElementById('app');
+    clearFinaleTimers();
+    btnNext.disabled = false;
+    app.classList.remove('finale-go');
+    capTitle.innerHTML = '<span class="fin-q">Now you can see how your business runs</span>';
+    capSub.style.opacity = '0';
+    capSub.classList.remove('cap-bounce');
+    capTitle.classList.remove('cap-bounce'); void capTitle.offsetWidth; capTitle.classList.add('cap-bounce');
   }
 
   // ── Intro morph: the four blue words become the Apromore mark ────
@@ -2933,17 +2965,41 @@
   const isFwdKey   = k => k === 'ArrowRight' || k === 'ArrowDown';
 
   function stepForward()  {
-    if (step === 0 && introPhase === 0) { runIntroMorph(); return; }   // question → Processforce reveal
+    if (step === 0 && introPhase === 0) {                              // question → Processforce reveal (beat 2)
+      runIntroMorph();
+      if (step === 0) {                             // (skip if the morph fell through to layer 1)
+        beat = 2;
+        // Hold the B02 report until the mark has assembled (balls fly ~2.1–3.3s,
+        // name line lands 3.8s) so the clip speaks over the finished logo, not
+        // the morph. Stale-guarded in case the presenter moves on meanwhile.
+        setTimeout(() => { if (step === 0 && introPhase === 1 && beat === 2) reportBeat(); }, 3500);
+      }
+      return;
+    }
     if (step === 0 && introPhase === 1) {                              // reveal → layer 1: fade the mark out FULLY first
       hideMorph();
       btnNext.disabled = btnPrev.disabled = true;                      // ignore input during the fade
       setTimeout(() => { btnNext.disabled = btnPrev.disabled = false; goTo(1); }, 620);
       return;
     }
+    // More beats left in this frame? Advance the beat, not the frame.
+    if (step > 0 && beat < (BEAT_COUNTS[step] || 1)) {
+      beat++;
+      if (step === FINALE) finaleBeat2(); else fireNarBeat(currentBig, beat);
+      reportBeat();
+      return;
+    }
     if (step < FINALE) goTo(step + 1); else if (embedded) toParent({ type: 'deck-next' });
   }
   function stepBackward() {
     if (step === 0 && introPhase === 1) { render(); return; }          // reveal → back to the question
+    // Step back a beat within the frame first.
+    if (step > 0 && beat > 1) {
+      beat--;
+      if (step === FINALE) finaleBeat1(); else fireNarBeat(currentBig, beat);
+      reportBeat();
+      return;
+    }
     if (step > 0)     goTo(step - 1); else if (embedded) toParent({ type: 'deck-prev' });
   }
 
@@ -2960,7 +3016,7 @@
     switch (e.data.type) {
       // Entered the slide (fwd/reverse). Set the step and ALWAYS render so the title
       // bounces on entry too — goTo() would no-op if the step index is unchanged.
-      case 'deck-enter':       step = (e.data.dir === 'rev') ? FINALE : 0; render(); break;
+      case 'deck-enter':       step = (e.data.dir === 'rev') ? FINALE : 0; beat = (e.data.dir === 'rev') ? 2 : 1; render(); break;
       case 'deck-advance':     stepForward();  break;
       case 'deck-reverse':     stepBackward(); break;
       case 'replay':           replayCurrent(); break;     // deck replay button
