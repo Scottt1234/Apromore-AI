@@ -162,6 +162,9 @@
       transition: opacity 0.5s cubic-bezier(0.2,0.8,0.2,1),
                   transform 0.6s cubic-bezier(0.2,0.8,0.2,1);
     }
+    /* Conversational Interface card runs a little wider so the question pills
+       fit on one line without starving the crowd/narration half. */
+    .pi-big--convo { max-width: 1080px; }
     .pi-big.active { opacity: 1; transform: none; pointer-events: auto; }
     .pi-big.closing { opacity: 0; transform: translateY(34px) scale(0.99); }
 
@@ -221,6 +224,11 @@
     /* a breath before the chapter question lands — entry was too abrupt */
     #app.intro-mode .cap-bounce { animation-delay: 0.5s; }
     /* intro question: the second line arrives a beat after the first */
+    #cap-title .intro-l1 { display: block; }
+    /* small hairline separating the two question lines */
+    #cap-title .intro-div { display: block; width: 88px; height: 2px; margin: 16px auto; border-radius: 2px;
+      background: linear-gradient(90deg, transparent, var(--sf-blue-l), transparent); opacity: 0; }
+    #app.intro-mode #cap-title.cap-bounce .intro-div { animation: introL2In 0.6s 1.2s cubic-bezier(0,0,0.2,1) both; }
     #cap-title .intro-l2 { display: inline-block; opacity: 0; }
     #app.intro-mode #cap-title.cap-bounce .intro-l2 { animation: introL2In 0.6s 1.35s cubic-bezier(0,0,0.2,1) both; }
     @keyframes introL2In { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
@@ -386,13 +394,13 @@
     /* same soft radial atmosphere the other cards carry over the navy fill */
     .cv-scene::before { content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
       background: radial-gradient(52% 60% at 50% 52%, rgba(20,86,220,0.18), transparent 70%); }
-    .cv-people { position: relative; flex: 1.7 1 0; overflow: hidden; }
+    .cv-people { position: relative; flex: 1.55 1 0; overflow: hidden; }
     /* soft cloud-blue glow behind the crowd (atmosphere / depth) */
     .cv-people::before { content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
       background: radial-gradient(46% 52% at 50% 62%, rgba(0,179,255,0.14), transparent 72%);
       opacity: 0; transition: opacity 1.4s ease; }
     .cv-scene.revealed .cv-people::before { opacity: 1; }
-    .cv-questions { position: relative; flex: 1.2 1 0; min-width: 0; display: flex; flex-direction: column;
+    .cv-questions { position: relative; flex: 1.35 1 0; min-width: 0; display: flex; flex-direction: column;
       justify-content: flex-start; padding: 26px 16px 16px; }
     /* softened divider — a gradient hairline that fades at top & bottom */
     .cv-questions::before { content: ''; position: absolute; left: 0; top: 9%; bottom: 9%; width: 1px; pointer-events: none;
@@ -786,6 +794,14 @@
     @keyframes rcSurge { 0% { opacity: 0; transform: scale(0.55); } 25% { opacity: 0.95; } 100% { opacity: 0; transform: scale(1.9); } }
 
     /* ── engine (PM motif, Beat 2) + hotspot→engine stream + engine→card tokens ── */
+    /* Agent badge beside the engine: fades in with it, then rocks gently —
+       actively at work. Rotation lives on the inner group so it composes with
+       the outer fade. */
+    .rc-agent2 { opacity: 0; }
+    .rc-scene.playing .rc-agent2 { animation: pmFade 0.6s 5.6s ease both; }
+    .rc-agent2-rot { transform-box: fill-box; transform-origin: center; }
+    .rc-scene.playing .rc-agent2-rot { animation: rcAgentRock 2.2s 6.2s ease-in-out infinite; }
+    @keyframes rcAgentRock { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
     .rc-scene.playing .pm-eng      { animation: pmFade 0.6s 5.6s ease both; }
     .rc-scene.playing .pm-eng-halo { animation: pmEngHalo 0.7s 6.0s ease forwards; }
     .rc-scene.playing .pm-eng-core { animation: pmEngPulse 1.6s 6.0s ease-in-out infinite; }
@@ -983,7 +999,8 @@
       .an-pulse { opacity: 0.85 !important; transform: none !important; animation: none !important; }
       .an-pill-bar-f { transform: scaleX(var(--bar, 0.7)) !important; animation: none !important; }
       /* Recommendation — settle on the Beat-3 end state: proposal up, fix previewed, held for approval */
-      .rc-scene .pm-eng, .rc-scene .pm-eng-halo { opacity: 1 !important; animation: none !important; }
+      .rc-scene .pm-eng, .rc-scene .pm-eng-halo, .rc-scene .rc-agent2 { opacity: 1 !important; animation: none !important; }
+      .rc-scene .rc-agent2-rot { animation: none !important; }
       .rc-scene .pm-eng-core, .rc-scene .pm-eng-ring { animation: none !important; transform: none !important; }
       .rc-rt, .rc-out { opacity: 0 !important; animation: none !important; }
       .rc-prio { opacity: 1 !important; animation: none !important; }
@@ -1506,7 +1523,7 @@
   // ("Every team"). Right 1/3: broad, plain-English questions stream in and get answered.
   const CONVO_QUESTIONS = [
     'How could an Agent reduce call handling time?',
-    'Which process should we hand to an Agent first?',
+    'Which onboarding task should we hand to an Agent first?',
     'Where would an Agent cut claims rework?',
     'What would an Agent save us on invoicing?',
     'Could an Agent speed up new-policy approvals?',
@@ -1612,7 +1629,7 @@
   const bigs = [];
   ALL.forEach((l) => {
     const el = document.createElement('div');
-    el.className = 'pi-big'; el.style.setProperty('--c', l.color);
+    el.className = 'pi-big pi-big--' + l.anim; el.style.setProperty('--c', l.color);
     // No header/text — the whole card is the animation slot.
     const stage = document.createElement('div'); stage.className = 'pi-big-stage';
     if (l.anim === 'mining')         stage.innerHTML = PROCESS_MINING;
@@ -1839,7 +1856,7 @@
     const PILLS = [
       { c: 'cost',     y: 82,  label: 'COST',     init: '$0', sub: 'PER YEAR',     bar: 0.92, dly: 5.10 },
       { c: 'time',     y: 212, label: 'TIME',     init: '0',  sub: 'DAYS / CASE',  bar: 0.55, dly: 5.25 },
-      { c: 'resource', y: 342, label: 'RESOURCE', init: '0',  sub: 'HOURS / YEAR', bar: 0.70, dly: 5.40 },
+      { c: 'resource', y: 342, label: 'RESOURCE UTILIZATION', init: '0',  sub: 'HOURS / YEAR', bar: 0.70, dly: 5.40 },
     ];
     const pills = PILLS.map(p => {
       const dotCx = PILL_X + 22, dotCy = p.y + 28;
@@ -1974,7 +1991,7 @@
 
     // ── engine (same markup as PM/TM, parked on the left at the column the
     //    proposal card will share) ──
-    const engine = `<g class="pm-eng" transform="translate(220,178)">
+    const engine = `<g class="pm-eng" transform="translate(283,178)">
         <circle class="pm-eng-halo" cx="0" cy="0" r="55"/>
         <g class="pm-eng-ring">
           <path class="pm-eng-arc" d="M0,-30 A30,30 0 0 1 30,0"/>
@@ -1987,6 +2004,12 @@
           <circle class="pm-eng-orb pm-eng-orb-4" cx="-30" cy="0"   r="7"/>
         </g>
         <circle class="pm-eng-core" cx="0" cy="0" r="11"/>
+      </g>
+      <!-- Agent badge: sits beside the engine, a third of the card in from its
+           left edge (engine sits at the right third). Fades in with the engine;
+           the inner group rocks gently to read as "actively working". -->
+      <g class="rc-agent2" transform="translate(157,178)">
+        <g class="rc-agent2-rot"><image href="assets/logos/agent2.png" x="-34" y="-34" width="68" height="68"/></g>
       </g>`;
 
     // ── Beat-1 stream: the flaring hotspot feeds the engine (infinite, base 2.7s —
@@ -1999,18 +2022,38 @@
       for (let i = 0; i < N; i++) {
         const sx = 700 + (rnd() - 0.5) * 48;
         const sy = 300 + (rnd() - 0.5) * 36;
-        const ex = 240 + Math.floor(rnd() * 14);
+        const ex = 303 + Math.floor(rnd() * 14);   // engine right edge (engine at x=283)
         const ey = 172 + Math.floor(rnd() * 14);
         const dur = (1.0 + rnd() * 0.5).toFixed(2);
         const delay = (BASE_DELAY + rnd() * 1.4).toFixed(2);
         html += `<circle class="pm-rt rc-rt" cx="${sx.toFixed(0)}" cy="${sy.toFixed(0)}" r="2.5" style="--tx:${(ex - sx).toFixed(0)}px;--ty:${(ey - sy).toFixed(0)}px;animation-duration:${dur}s;animation-delay:${delay}s"/>`;
       }
+      // second hop: refined data leaves the engine's left edge for the Agent
+      for (let i = 0; i < 9; i++) {
+        const sx = 243 + (rnd() - 0.5) * 10;       // engine left edge
+        const sy = 178 + (rnd() - 0.5) * 20;
+        const ex = 198 + Math.floor(rnd() * 8);    // Agent right edge (agent at x=157)
+        const ey = 172 + Math.floor(rnd() * 12);
+        const dur = (0.55 + rnd() * 0.3).toFixed(2);
+        const delay = (BASE_DELAY + 0.7 + rnd() * 1.4).toFixed(2);
+        html += `<circle class="pm-rt rc-rt" cx="${sx.toFixed(0)}" cy="${sy.toFixed(0)}" r="2.5" style="--tx:${(ex - sx).toFixed(0)}px;--ty:${(ey - sy).toFixed(0)}px;animation-duration:${dur}s;animation-delay:${delay}s"/>`;
+      }
+      // third hop: the Agent's output drips down into the proposal card
+      for (let i = 0; i < 6; i++) {
+        const sx = 157 + (rnd() - 0.5) * 16;       // Agent bottom edge
+        const sy = 214 + (rnd() - 0.5) * 8;
+        const ex = 155 + Math.floor(rnd() * 8);    // card top (rect y=250)
+        const ey = 244 + Math.floor(rnd() * 8);
+        const dur = (0.5 + rnd() * 0.25).toFixed(2);
+        const delay = (BASE_DELAY + 1.4 + rnd() * 1.4).toFixed(2);
+        html += `<circle class="pm-rt rc-rt" cx="${sx.toFixed(0)}" cy="${sy.toFixed(0)}" r="2.5" style="--tx:${(ex - sx).toFixed(0)}px;--ty:${(ey - sy).toFixed(0)}px;animation-duration:${dur}s;animation-delay:${delay}s"/>`;
+      }
       return html;
     })();
 
-    // ── Beat-2 ordered tokens: engine bottom → proposal card ──
+    // ── Beat-2 ordered tokens: Agent bottom → proposal card ──
     const tokens = [7.3, 7.47, 7.64].map(d =>
-      `<circle class="pm-out rc-out" cx="220" cy="222" r="3.5" style="--tx:0px;--ty:36px;animation-delay:${d}s"/>`).join('');
+      `<circle class="pm-out rc-out" cx="157" cy="218" r="3.5" style="--tx:0px;--ty:40px;animation-delay:${d}s"/>`).join('');
 
     // ── proposal card (left column — same x as the Analysis pills) ──
     const ROWS = [
@@ -2077,7 +2120,7 @@
     //   proposal card materialises beneath it while the caption types.
     T(() => nar.classList.add('wipe'), 4900);
     T(() => { nar.classList.remove('wipe'); nar.innerHTML = '';
-      cardType(scene, nar, [{ t: 'Agentforce uses the ' }, { t: 'Process 360', hl: true }, { t: ', powered by Apromore, to find the best way to achieve them.' }], 46, 0); }, 5250);
+      cardType(scene, nar, [{ t: 'Agentforce uses ' }, { t: 'Process 360', hl: true }, { t: ', curated by Apromore, to find the best way to achieve them.' }], 46, 0); }, 5250);
     // Beat 3 — the fix previews on the map; Review / Approve appear, cursor hovers. Held.
     T(() => nar.classList.add('wipe'), 10600);
     T(() => { nar.classList.remove('wipe'); nar.innerHTML = '';
@@ -2357,7 +2400,7 @@
     T(() => nar.classList.add('wipe'), 11400);         // +1s read time on beat 2
     // Beat 3 — "Task mining captures what process mining misses."
     T(() => { nar.classList.remove('wipe'); nar.innerHTML = '';
-      cardType(scene, nar, [{ t: 'Task mining ' }, { t: 'complements', hl: true }, { t: ' Process mining using ' }, { t: 'desktop agents', hl: true }, { t: ' to capture what it misses.' }], 46, 0); }, 11750);
+      cardType(scene, nar, [{ t: 'Task mining ' }, { t: 'complements', hl: true }, { t: ' Process mining using ' }, { t: 'desktop agents', hl: true }, { t: ' to capture what is missed.' }], 46, 0); }, 11750);
   }
   function stopTM(el) {
     const scene = el.querySelector('.tm-scene'); if (!scene) return;
@@ -2632,14 +2675,14 @@
     showBig(step);
     const app = document.getElementById('app');
     app.classList.toggle('intro-mode', step === 0);
-    // The Apromore mark persists once revealed: removed only when we return to
-    // the question, docked (top-right) on the working frames, hero (centre) on
-    // the finale.
+    // The Apromore mark lives on after the reveal but stays hidden on the
+    // working frames; it fades back in (centre, hero size) on the finale and is
+    // removed only when we return to the question.
     if (step === 0) {
       clearIntroMorph();
     } else if (morphEl) {
       caption.style.opacity = '';         // the reveal faded the caption; let this frame's caption show
-      if (step === FINALE) heroMorph(); else dockMorph();
+      if (step === FINALE) heroMorph(); else hideMorph();
     }
     if (step === 0) introPhase = 0;       // re-entering the intro resets to the question
     app.classList.toggle('finale-mode', step === FINALE);
@@ -2655,14 +2698,14 @@
     // Step 0 poses the bridging question; steps 1+ carry the layer's claim
     // ("Process Mining: See how you actually run.") with the claim in accent blue.
     capTitle.innerHTML = step === 0
-      ? '<span class="intro-l1">How do you <span class="hl mw">reimagine</span> this <span class="hl mw">process</span>?</span><br/><span class="intro-l2">And, understand how <span class="hl mw">Agents</span> drive tangible <span class="hl mw">value</span>?</span>'
+      ? '<span class="intro-l1">How do you <span class="hl mw">reimagine</span> this <span class="hl mw">process</span>?</span><span class="intro-div"></span><span class="intro-l2">And know where <span class="hl mw">Agents</span> deliver tangible <span class="hl mw">value</span>?</span>'
       : step === FINALE
-        ? '<span class="hl">And exactly how Agents can add value.</span>'
+        ? '<span class="hl">...and exactly how Agents can add value.</span>'
         : ALL[step - 1].name + ': <span class="hl">' + ALL[step - 1].claim + '</span>';
     capSub.innerHTML = step === 0
       ? ''
       : step === FINALE
-        ? 'See how you run, what it costs, where agents belong, and how they perform &mdash; before you deploy them.'
+        ? 'See how you run, what it costs, where agents belong, and how they&rsquo;d perform &mdash; before you deploy them.'
         : ALL[step - 1].sub;
     const capEls = [capEyebrow, capTitle, capSub];
     capEls.forEach(el => el.classList.remove('cap-bounce'));
@@ -2711,7 +2754,7 @@
 
   function enterFinale() {
     const app = document.getElementById('app');
-    heroMorph();                                      // docked mark grows back to centre
+    // the hidden mark fades back in later — synced with the title reveal (step 3)
     // chrome bookkeeping: same end state render() would set for the finale
     railCards.forEach(c => { c.classList.remove('active'); c.classList.add('done'); });
     pillar.classList.remove('active');
@@ -2728,7 +2771,7 @@
       // 2) stage the question and the (hidden) sub while the caption is
       //    invisible, so the layout the stack slides into never reflows
       capTitle.innerHTML = '<span class="fin-q">Now you can see how your business runs</span>';
-      capSub.innerHTML = 'See how you run, what it costs, where agents belong, and how they perform &mdash; before you deploy them.';
+      capSub.innerHTML = 'See how you run, what it costs, where agents belong, and how they&rsquo;d perform &mdash; before you deploy them.';
       capSub.style.opacity = '0';                   // space reserved, revealed at the end
       capSub.classList.remove('cap-bounce');        // its filled animation would override the inline opacity
       const r1 = railWrap.getBoundingClientRect();
@@ -2741,13 +2784,14 @@
       // 3) the deck's master question returns once the stack has settled
       FT(() => {
         caption.classList.remove('cap-hidden');
+        heroMorph();                                  // mark fades in in step with the returning title
         capTitle.classList.remove('cap-bounce'); void capTitle.offsetWidth; capTitle.classList.add('cap-bounce');
         // 4) hold, then the question fades away
         FT(() => {
           const q = capTitle.querySelector('.fin-q'); if (q) q.classList.add('fin-out');
           // 5) the answer lands at full scale and the pulse travels the stack
           FT(() => {
-            capTitle.innerHTML = '<span class="hl">And exactly how Agents can add value.</span>';
+            capTitle.innerHTML = '<span class="hl">...and exactly how Agents can add value.</span>';
             capTitle.classList.remove('cap-bounce'); void capTitle.offsetWidth; capTitle.classList.add('cap-bounce');
             app.classList.add('finale-go');
             // 6) the recap line follows a beat later
@@ -2775,10 +2819,16 @@
     if (morphEl) { morphEl.remove(); morphEl = null; }
     caption.style.opacity = '';
   }
-  // Persistent-mark states: dock (small, top-right) for the working frames and
-  // hero (centre, enlarged) for the finale. The mark keeps orbiting throughout.
-  function dockMorph() { if (!morphEl) return; morphEl.classList.remove('m-hero', 'm-exit'); morphEl.classList.add('m-dock'); }
-  function heroMorph() { if (!morphEl) return; morphEl.classList.remove('m-dock', 'm-exit'); morphEl.classList.add('m-hero'); }
+  // Mark visibility: after the intro reveal the mark FADES OUT on the working
+  // frames (no docking), then fades back in — centred, hero size — on the
+  // finale. m-hero is applied while hidden, so the fade-in involves no travel.
+  function hideMorph() {
+    if (!morphEl) return;
+    const el = morphEl;
+    el.classList.add('m-exit');
+    setTimeout(() => { if (morphEl === el) el.classList.add('m-hero'); }, 600);
+  }
+  function heroMorph() { if (!morphEl) return; morphEl.classList.remove('m-dock'); morphEl.classList.add('m-hero'); morphEl.classList.remove('m-exit'); }
   function runIntroMorph() {
     introPhase = 1;
     const words = [...capTitle.querySelectorAll('.mw')];
@@ -2790,9 +2840,13 @@
       { c: '#CFE6F2', a: 180 },
       { c: '#F05A22', a: 90  },
     ];
-    const cx = window.innerWidth / 2;
-    const cy = window.innerHeight * 0.42;
-    const R  = Math.min(120, window.innerHeight * 0.17);
+    // innerWidth/Height can read 0 in embedded/headless edge cases — fall back
+    // to the document element's box so the mark geometry is always real.
+    const VW = window.innerWidth  || document.documentElement.clientWidth;
+    const VH = window.innerHeight || document.documentElement.clientHeight;
+    const cx = VW / 2;
+    const cy = VH * 0.42;
+    const R  = Math.min(120, VH * 0.17);
     const D  = Math.max(44, R * 0.5);
     const rad = (d) => d * Math.PI / 180;
     morphEl = document.createElement('div');
@@ -2818,9 +2872,9 @@
     // visual centre is (cx,cy); we scale + translate so that centre lands at the
     // dock (top-right) or hero (centre, larger) target.
     const dS = 0.34, hS = 0.65;
-    const dockCX = window.innerWidth - 92, dockCY = 90;
+    const dockCX = VW - 92, dockCY = 90;
     // finale: centred horizontally in the open band ABOVE the caption
-    const heroCX = window.innerWidth / 2, heroCY = window.innerHeight * 0.20;
+    const heroCX = VW / 2, heroCY = VH * 0.20;
     morphEl.style.setProperty('--dock-tf', 'translate(' + (dockCX - dS * cx).toFixed(1) + 'px,' + (dockCY - dS * cy).toFixed(1) + 'px) scale(' + dS + ')');
     morphEl.style.setProperty('--hero-tf', 'translate(' + (heroCX - hS * cx).toFixed(1) + 'px,' + (heroCY - hS * cy).toFixed(1) + 'px) scale(' + hS + ')');
     // one ball per word — born as a pixel-perfect CLONE of the word itself,
@@ -2880,9 +2934,10 @@
 
   function stepForward()  {
     if (step === 0 && introPhase === 0) { runIntroMorph(); return; }   // question → Processforce reveal
-    if (step === 0 && introPhase === 1) {                              // reveal → layer 1: dock the mark to the corner
-      dockMorph();
-      goTo(1);
+    if (step === 0 && introPhase === 1) {                              // reveal → layer 1: fade the mark out FULLY first
+      hideMorph();
+      btnNext.disabled = btnPrev.disabled = true;                      // ignore input during the fade
+      setTimeout(() => { btnNext.disabled = btnPrev.disabled = false; goTo(1); }, 620);
       return;
     }
     if (step < FINALE) goTo(step + 1); else if (embedded) toParent({ type: 'deck-next' });

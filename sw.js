@@ -19,7 +19,7 @@
  * self-unregistering stub (registration.unregister() + caches.delete) and it
  * will tear itself down the next time each device loads the deck.
  */
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const CACHE = 'apromore-offline-' + CACHE_VERSION;
 const NET_TIMEOUT = 2500;   // ms to wait for the network before falling back to cache
 
@@ -60,7 +60,14 @@ self.addEventListener('fetch', (event) => {
   // it doesn't answer within NET_TIMEOUT we serve the cached copy instead, and
   // the in-flight fetch still updates the cache for next time.
   event.respondWith((async () => {
-    const net = fetch(req).then(async (res) => {
+    // Fetch from the URL string (not the Request) with cache:'reload' so the
+    // "network" in network-first genuinely bypasses the browser's HTTP disk
+    // cache (GitHub Pages serves everything max-age=600). Passing the Request
+    // object with a RequestInit throws for navigation requests (the deck page
+    // and the slide-7 iframe are both mode:'navigate'), which the catch below
+    // would silently swallow — serving the stale copy. Keying the cache put on
+    // the original `req` keeps offline lookups matching.
+    const net = fetch(req.url, { cache: 'reload' }).then(async (res) => {
       if (res && res.ok) (await caches.open(CACHE)).put(req, res.clone());
       return res;
     }).catch(() => null);

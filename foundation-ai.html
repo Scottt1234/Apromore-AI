@@ -425,6 +425,20 @@
     .close-inner { max-width: 1100px; }
     .close-title { font-size: clamp(36px, 7vw, 100px); line-height: 1.06; margin-bottom: 24px; }
     .close-title .hl2 { color: var(--sf-blue-l); }
+    /* "deploy your Agents on evidence" — white, with a light glint sweeping
+       across once every 4s (sweep ~1.4s, then hold). */
+    .close-title .shimmer {
+      background: linear-gradient(110deg, #fff 40%, #9fd8ff 50%, #fff 60%);
+      background-size: 250% 100%;
+      -webkit-background-clip: text; background-clip: text;
+      color: transparent;
+      animation: closeShimmer 4s linear infinite;
+    }
+    @keyframes closeShimmer {
+      0%   { background-position: 120% 0; }
+      35%  { background-position: -80% 0; }
+      100% { background-position: -80% 0; }
+    }
     .close-title .w { display: inline-block; overflow: hidden; vertical-align: top; padding: 0 0.08em 0.16em 0.04em; margin: 0 -0.08em -0.16em -0.04em; }
     .close-title .w > span { display: inline-block; transform: translateY(115%); }
     .slide-close.active .close-title .w > span { animation: bMaskUp 0.72s cubic-bezier(0.22,1,0.36,1) both; }
@@ -441,6 +455,7 @@
     @media (prefers-reduced-motion: reduce) {
       .close-title .w > span { transform: none !important; animation: none !important; }
       .close-title .hl2 { opacity: 1 !important; animation: none !important; }
+      .close-title .shimmer { animation: none !important; background: none !important; color: #fff !important; }
     }
   </style>
 
@@ -755,7 +770,10 @@
     /* …and the mark centred in the space above it (between screen top and text) */
     .close-mark {
       position: absolute; left: 50%; top: 26vh; z-index: 1;
-      width: clamp(208px, 30vh, 320px); height: auto;
+      /* sized to match the Slide 7 finale hero mark: its visible diameter is
+         (2R+D)*0.65 with R=min(120,0.17·VH) — this clamp tracks that across
+         heights (caps ~195px, floors ~155px, coincident in between). */
+      width: clamp(208px, 37vh, 261px); height: auto;
       opacity: 0; transform: translate(-50%, -50%) translateY(14px);
     }
     .slide-close.active .close-mark { animation: closeMarkIn 0.7s 1.6s cubic-bezier(0.22,1,0.36,1) both; }
@@ -851,8 +869,8 @@
             <span class="ew-tag ew-tag--worst" style="position:static;align-self:flex-start;">The reality</span>
             <ul class="pr-list" style="margin-top:20px;">
               <li class="pr-item"><span class="pr-glyph pr-glyph--no"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg></span><span>Pilots that <strong>never reach production</strong></span></li>
-              <li class="pr-item"><span class="pr-glyph pr-glyph--no"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg></span><span><strong>Fragments</strong> automated, not processes</span></li>
-              <li class="pr-item"><span class="pr-glyph pr-glyph--no"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg></span><span>Confident outputs, <strong>unreliable outcomes</strong></span></li>
+              <li class="pr-item"><span class="pr-glyph pr-glyph--no"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg></span><span><strong>Tasks</strong> automated, not processes</span></li>
+              <li class="pr-item"><span class="pr-glyph pr-glyph--no"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg></span><span><strong>Unreliable responses</strong>, confidently delivered</span></li>
               <li class="pr-item"><span class="pr-glyph pr-glyph--no"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg></span><span>Value that is <strong>hard to measure</strong></span></li>
             </ul>
           </div>
@@ -951,7 +969,7 @@
                 </g>
                 <g class="thread-card ib-tag" data-slice="2">
                   <path class="ib-lead" d="M306 136 L392 136"/>
-                  <text x="402" y="146"><tspan class="ib-pct" font-size="30">20%</tspan><tspan class="ib-word" font-size="12.5" dx="12">Technology</tspan></text>
+                  <text x="402" y="146"><tspan class="ib-pct" font-size="30">20%</tspan><tspan class="ib-word" font-size="12.5" dx="12">TECHNOLOGY &amp; DATA</tspan></text>
                 </g>
                 <g class="thread-card ib-tag" data-slice="3">
                   <path class="ib-lead" d="M348 390 L392 390"/>
@@ -1134,7 +1152,7 @@
           </div>
           <div class="ev-stat" data-animate="scale-in" data-anim-delay="700">
             <div class="ev-stat-n">60+%</div>
-            <div class="ev-stat-k">Workforce cost savings compared to Classic</div>
+            <div class="ev-stat-k">Workforce cost savings compared to legacy bank</div>
           </div>
           <div class="ev-stat" data-animate="scale-in" data-anim-delay="780">
             <div class="ev-stat-n">40%</div>
@@ -1204,7 +1222,7 @@
         </svg>
         <div class="close-title">
           <span class="w"><span>The</span></span> <span class="w"><span style="color:var(--sf-blue-l)">Agentic</span></span> <span class="w"><span>Era has arrived</span></span><br/>
-          <span class="hl2">Processforce by Apromore lets you deploy your Agents on evidence, not estimates.</span>
+          <span class="hl2">Processforce by Apromore lets you <span class="shimmer">deploy your Agents on evidence</span>, not estimates.</span>
         </div>
         <p class="close-body" data-animate="fade-up" data-anim-delay="900">Know where agents create value. What they&rsquo;re worth. What to hand them. <em>And how well they&rsquo;re performing.</em></p>
         <!-- Pilot-explorer CTA — temporarily removed; restore by uncommenting.
@@ -1968,6 +1986,24 @@
       card.addEventListener('click', () =>
         startDeck(card.dataset.auto === '1', card.dataset.audio === '1', card.dataset.loop === '1')));
 
+    // ── Self-heal a stale offline worker ─────────────────────────────
+    // If this device previously opted into the offline service worker it will
+    // already be controlling this page (controller is non-null on load). Force
+    // an update check; when a newer worker takes over it fires controllerchange
+    // and we reload once so a fresh deploy always appears without any manual
+    // clearing. Gated on an existing controller, so first-time/ordinary
+    // visitors (who never opted in) neither register nor reload.
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      let reloaded = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (reloaded) return;
+        reloaded = true;
+        location.reload();
+      });
+      navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
+        .then((r) => r.update()).catch(() => {});
+    }
+
     // ── Discreet offline cache ───────────────────────────────────────
     // The unlabelled dot on the setup screen: double-click (desktop) or
     // long-press (touch) to download the whole deck — every narration clip plus
@@ -2010,7 +2046,7 @@
         if (busy) return; busy = true;
         showToast('Saving for offline…', true);
         try {
-          const reg = await navigator.serviceWorker.register('/sw.js');
+          const reg = await navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' });
           await navigator.serviceWorker.ready;
           const target = reg.active || reg.waiting || reg.installing;
           if (!target) { showToast('Offline save failed — reload and retry'); busy = false; return; }
