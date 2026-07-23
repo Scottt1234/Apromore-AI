@@ -1,8 +1,15 @@
 <!DOCTYPE html>
+<!--
+  The Agentic Era - Apromore x Salesforce pitch deck
+  Created by Scott Treller (c) 2026. Built with Claude.
+  Use by permission only - retain this notice and creator credit in any copy
+  or derivative. See NOTICE.md.
+-->
 <html lang="en"
   data-deck-name="Apromore · Process Intelligence">
 <head>
   <meta charset="UTF-8" />
+  <meta name="author" content="Scott Treller" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Apromore-AI · The Agentic Era</title>
   <link rel="stylesheet" href="tokens.css" />
@@ -111,7 +118,7 @@
     .open-hero { max-width: 1100px; margin: 0 auto; }
     .hero .open-h1 {
       font-family: var(--font-display);
-      font-size: clamp(28px, 8.2vw, 104px);
+      font-size: clamp(28px, 8.2vw, 104px);   /* overridden by .slide-hero .open-h1 below */
       font-weight: 700; color: #fff; line-height: 1.0; letter-spacing: -0.03em;
       margin-bottom: 28px;
     }
@@ -251,6 +258,10 @@
     .slide-hero.active .open-h1 .w:nth-child(1) > span { animation-delay: 0.15s; }
     .slide-hero.active .open-h1 .w:nth-child(2) > span { animation-delay: 0.29s; }
     .slide-hero.active .open-h1 .w:nth-child(3) > span { animation-delay: 0.43s; }
+    /* exec hero runs to six word-chunks — keep the stagger going */
+    .slide-hero.active .open-h1 .w:nth-child(4) > span { animation-delay: 0.57s; }
+    .slide-hero.active .open-h1 .w:nth-child(5) > span { animation-delay: 0.71s; }
+    .slide-hero.active .open-h1 .w:nth-child(6) > span { animation-delay: 0.85s; }
     /* accent rule under headline */
     .b-rule {
       height: 4px; width: 128px; border-radius: 3px; margin: 8px 0 26px;
@@ -445,6 +456,9 @@
     .slide-close.active .close-title .w:nth-child(1) > span { animation-delay: 0.15s; }
     .slide-close.active .close-title .w:nth-child(2) > span { animation-delay: 0.29s; }
     .slide-close.active .close-title .w:nth-child(3) > span { animation-delay: 0.43s; }
+    /* exec close runs to five word-chunks — keep the stagger going */
+    .slide-close.active .close-title .w:nth-child(4) > span { animation-delay: 0.57s; }
+    .slide-close.active .close-title .w:nth-child(5) > span { animation-delay: 0.71s; }
     /* the blue payoff line rises after the white words have landed */
     .close-title .hl2 { display: inline-block; opacity: 0; font-size: 0.72em; line-height: 1.15; }
     .slide-close.active .close-title .hl2 { animation: fallInUp 0.6s 0.75s cubic-bezier(0.22,1,0.36,1) both; }
@@ -760,6 +774,7 @@
     .slide-bridge.active .bridge-sub .ai-mistakes { animation: hlPulse 2.4s 2.6s ease-in-out infinite; }
 
     /* ── Slide 1 · hero sizing: title + lead each hold a single line ── */
+    /* exec cut: "The era of the Agentic Enterprise" — 33 chars holds one line at the standard size */
     .slide-hero .open-h1 { font-size: clamp(26px, 5.6vw, 76px); white-space: nowrap; }
     .slide-hero .open-lead { font-size: clamp(16px, 1.9vw, 27px); max-width: none; white-space: nowrap; }
     @media (max-width: 760px) {
@@ -773,7 +788,7 @@
     /* ── Slide 9 · close sizing (title + four-point line fit one line each) ── */
     .slide-close .close-title { font-size: clamp(32px, 5.6vw, 76px); white-space: nowrap; }
     /* payoff line sized so its rendered width matches the title line above */
-    .slide-close .close-title .hl2 { font-size: 0.44em; }
+    .slide-close .close-title .hl2 { font-size: 0.52em; }
     /* the Apromore mark fades in above the text once it has landed, balls
        orbiting the core — echoing the slide 7 finale */
     /* text block anchored just below the half-way line… */
@@ -841,10 +856,9 @@
         <div class="b-hero-aura" aria-hidden="true"></div>
         <div class="b-hero-grid" aria-hidden="true"></div>
         <div class="open-hero">
-          <h1 class="open-h1"><span class="w"><span>The</span></span> <span class="w"><span style="color:var(--sf-blue-l)">Agentic</span></span> <span class="w"><span>Era has arrived</span></span></h1>
+          <h1 class="open-h1"><span class="w"><span>The</span></span> <span class="w"><span>era</span></span> <span class="w"><span>of</span></span> <span class="w"><span>the</span></span> <span class="w"><span style="color:var(--sf-blue-l)">Agentic&nbsp;Enterprise</span></span></h1>
           <div class="b-rule" aria-hidden="true"></div>
           <p class="open-lead" data-animate="fade-up" data-anim-delay="600"><em>Do you know where Agents would create real value in your business?</em></p>
-          <p class="open-sub" data-animate="fade-up" data-anim-delay="760">Almost every business will deploy them. Few can answer that question.</p>
         </div>
       </div>
     </div>
@@ -1011,7 +1025,7 @@
       <div class="bridge-inner">
         <div class="bridge-q">
           <span class="w"><span>Are</span></span> <span class="w"><span>you</span></span> <span class="w"><span>the</span></span> <span class="w"><span style="color:var(--sf-blue-l)">one</span></span> <span class="w"><span>in</span></span> <span class="w"><span>three</span></span><br/>
-          <span class="bq-hl">who truly understand the process they&rsquo;re about to delegate to AI?</span>
+          <span class="bq-hl">who truly understands the process you&rsquo;re about to delegate to AI?</span>
         </div>
       </div>
     </div>
@@ -1236,7 +1250,7 @@
           </g>
         </svg>
         <div class="close-title">
-          <span class="w"><span>The</span></span> <span class="w"><span style="color:var(--sf-blue-l)">Agentic</span></span> <span class="w"><span>Era has arrived</span></span><br/>
+          <span class="w"><span>The</span></span> <span class="w"><span>era</span></span> <span class="w"><span>of</span></span> <span class="w"><span>the</span></span> <span class="w"><span style="color:var(--sf-blue-l)">Agentic&nbsp;Enterprise</span></span><br/>
           <span class="hl2">Apromore lets you <span class="shimmer">deploy your Agents on evidence</span>, not estimates.</span>
         </div>
         <p class="close-body" data-animate="fade-up" data-anim-delay="900">Know where agents create value. What they&rsquo;re worth. What to hand them. <em>And how well they&rsquo;re performing.</em></p>
