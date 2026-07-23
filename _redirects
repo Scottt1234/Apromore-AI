@@ -1,0 +1,4 @@
+# Cloudflare Pages only — GitHub Pages ignores this file entirely.
+# The bare domain serves the exec cut; the standard deck stays reachable at
+# /foundation-ai (and remains the root on the GitHub Pages URL).
+/    /foundation-ai-exec    302
