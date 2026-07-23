@@ -2025,7 +2025,7 @@
         reloaded = true;
         location.reload();
       });
-      navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
+      navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
         .then((r) => r.update()).catch(() => {});
     }
 
@@ -2071,7 +2071,7 @@
         if (busy) return; busy = true;
         showToast('Saving for offline…', true);
         try {
-          const reg = await navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' });
+          const reg = await navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' });
           await navigator.serviceWorker.ready;
           const target = reg.active || reg.waiting || reg.installing;
           if (!target) { showToast('Offline save failed — reload and retry'); busy = false; return; }
