@@ -228,9 +228,9 @@
     /* small hairline separating the two question lines */
     #cap-title .intro-div { display: block; width: 88px; height: 2px; margin: 16px auto; border-radius: 2px;
       background: linear-gradient(90deg, transparent, var(--sf-blue-l), transparent); opacity: 0; }
-    #app.intro-mode #cap-title.cap-bounce .intro-div { animation: introL2In 0.6s 1.2s cubic-bezier(0,0,0.2,1) both; }
+    #app.intro-mode #cap-title.cap-bounce .intro-div { animation: introL2In 0.6s 2.7s cubic-bezier(0,0,0.2,1) both; }
     #cap-title .intro-l2 { display: inline-block; opacity: 0; }
-    #app.intro-mode #cap-title.cap-bounce .intro-l2 { animation: introL2In 0.6s 1.35s cubic-bezier(0,0,0.2,1) both; }
+    #app.intro-mode #cap-title.cap-bounce .intro-l2 { animation: introL2In 0.6s 2.85s cubic-bezier(0,0,0.2,1) both; }
     @keyframes introL2In { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
     #app.intro-mode #rail-wrap, #app.intro-mode #pillar-wrap { display: none; }
 
@@ -2139,7 +2139,7 @@
     // CSS timeline off .playing as before.
     scene._narBeats = [
       narLine(scene, nar, [{ t: 'Then ' }, { t: 'you confirm', hl: true }, { t: ' your priority objectives.' }]),
-      narLine(scene, nar, [{ t: 'Agentforce uses ' }, { t: 'Process 360', hl: true }, { t: ', curated by Apromore, to find the best way to achieve them.' }]),
+      narLine(scene, nar, [{ t: 'Agentforce, powered by ' }, { t: 'Apromore', hl: true }, { t: ', identifies the best way to achieve them.' }]),
       narLine(scene, nar, [{ t: 'A recommendation is presented for ' }, { t: 'your review', hl: true }, { t: '.' }]),
     ];
   }
@@ -2271,15 +2271,16 @@
     const scene = el.querySelector('.si-scene'); if (!scene) return;
     cardPlay(scene);
     const nar = scene.querySelector('.pi-narr');
-    // Captions beat-gated (S07F05B01..03). The "business case" closer stays
-    // welded to beat 3, appended ~2.4s after the line starts (figures landing).
+    // Captions beat-gated (S07F05B01..03). The "business case" closer is
+    // welded to beat 3 but waits until the first line has FINISHED typing
+    // (~2.5s) — starting it earlier ran two typewriters at once.
     scene._narBeats = [
       narLine(scene, nar, [{ t: 'Your process is cloned to create a ' }, { t: 'Digital Twin', hl: true }, { t: '.' }]),
       narLine(scene, nar, [{ t: 'The recommended fix is applied, and ' }, { t: 'your own data', hl: true }, { t: ' runs through the new process.' }]),
       narLine(scene, nar, [{ t: 'The result is ' }, { t: 'mathematically proven', hl: true }, { t: ' before you commit.' }], () => {
         if (scene._t) scene._t.push(setTimeout(() => {
           cardType(scene, nar, [{ t: ' Underpinning your ' }, { t: 'business case', hl: true }, { t: '.' }], 46, 0, true);
-        }, 2350));
+        }, 3100));
       }),
     ];
     cardCount(scene, scene.querySelector('.si-count'), 100, 2600, 6700, v => Math.round(v) + '%');
@@ -2898,7 +2899,7 @@
       '<div class="morph-orbit" style="left:' + Math.round(cx - R) + 'px;top:' + Math.round(cy - R) + 'px;width:' + (2 * R) + 'px;height:' + (2 * R) + 'px">' +
         BALL.map(b => '<span class="morph-oball" style="left:' + (R + R * Math.cos(rad(b.a))).toFixed(1) + 'px;top:' + (R + R * Math.sin(rad(b.a))).toFixed(1) + 'px;width:' + Math.round(D) + 'px;height:' + Math.round(D) + 'px;background:' + b.c + '"></span>').join('') +
       '</div>' +
-      '<div class="morph-intro" style="top:' + Math.round(cy + R + 74) + 'px">Introducing <strong class="morph-pf">Processforce</strong> powered by <span class="morph-ap">Apromore</span></div>';
+      '<div class="morph-intro" style="top:' + Math.round(cy + R + 74) + 'px">Introducing <span class="morph-ap">Apromore</span></div>';
     document.getElementById('app').appendChild(morphEl);
     // Precompute the two persistent-mark transforms (origin 0,0). The mark's
     // visual centre is (cx,cy); we scale + translate so that centre lands at the
