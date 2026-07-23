@@ -478,6 +478,9 @@
     .slide-bridge.active .bridge-q .w:nth-child(2) > span { animation-delay: 0.27s; }
     .slide-bridge.active .bridge-q .w:nth-child(3) > span { animation-delay: 0.39s; }
     .slide-bridge.active .bridge-q .w:nth-child(4) > span { animation-delay: 0.51s; }
+    /* exec bridge runs to six words — keep the stagger going */
+    .slide-bridge.active .bridge-q .w:nth-child(5) > span { animation-delay: 0.63s; }
+    .slide-bridge.active .bridge-q .w:nth-child(6) > span { animation-delay: 0.75s; }
     /* the blue payoff line rises after the white words, then breathes */
     .bridge-q .bq-hl { display: inline-block; color: var(--sf-blue-l); opacity: 0; }
     .slide-bridge.active .bridge-q .bq-hl {
@@ -1007,7 +1010,7 @@
     <div class="slide sd slide-bridge" data-section="The Question">
       <div class="bridge-inner">
         <div class="bridge-q">
-          <span class="w"><span>Are</span></span> <span class="w"><span>you</span></span> <span class="w"><span>one</span></span> <span class="w"><span>of</span></span> <span class="w"><span>the</span></span> <span class="w"><span>1&nbsp;in&nbsp;3,</span></span><br/>
+          <span class="w"><span>Are</span></span> <span class="w"><span>you</span></span> <span class="w"><span>the</span></span> <span class="w"><span style="color:var(--sf-blue-l)">one</span></span> <span class="w"><span>in</span></span> <span class="w"><span>three</span></span><br/>
           <span class="bq-hl">who truly understand the process they&rsquo;re about to delegate to AI?</span>
         </div>
       </div>
